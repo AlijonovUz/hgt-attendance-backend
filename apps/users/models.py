@@ -32,9 +32,6 @@ class Role(BaseModel):
 
 class Branch(BaseModel):
     name = models.CharField(max_length=255, verbose_name="Filial nomi")
-    code = models.CharField(
-        max_length=100, null=True, blank=True, verbose_name="Filial kodi"
-    )
 
     class Meta(BaseModel.Meta):
         verbose_name = "Filial"
