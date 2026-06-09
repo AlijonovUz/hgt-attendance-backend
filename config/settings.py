@@ -167,13 +167,13 @@ MEDIA_URL = '/media/'
 
 REST_FRAMEWORK = {
     "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
-    'EXCEPTION_HANDLER': 'apps.common.exceptions.exception_handler',
+    'EXCEPTION_HANDLER': 'apps.utils.exceptions.exception_handler',
     'DEFAULT_AUTHENTICATION_CLASSES': [
         'rest_framework_simplejwt.authentication.JWTAuthentication',
     ],
 
     'DEFAULT_RENDERER_CLASSES': [
-        'apps.common.renderers.ResponseRenderer',
+        'apps.utils.renderers.ResponseRenderer',
     ],
     'DEFAULT_PARSER_CLASSES': [
         'rest_framework.parsers.JSONParser',
@@ -186,7 +186,6 @@ REST_FRAMEWORK = {
     'DEFAULT_THROTTLE_CLASSES': [
         'rest_framework.throttling.AnonRateThrottle',
         'rest_framework.throttling.UserRateThrottle',
-        'apps.common.throttles.CustomScopedRateThrottle',
     ],
     'DEFAULT_THROTTLE_RATES': {
         'anon': '60/minute',
