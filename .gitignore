@@ -174,4 +174,4 @@ cython_debug/
 # PyPI configuration file
 .pypirc
 
-tz.docx
+tz_content.txt

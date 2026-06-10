@@ -1,7 +1,8 @@
 import uuid
 from django.db import models
-from django.contrib.auth.models import AbstractUser, UserManager as DefaultUserManager
+from django.contrib.auth.models import AbstractUser, BaseUserManager
 from apps.utils.models import BaseModel
+from apps.utils.validators import phone_validator
 
 
 class Permission(BaseModel):
@@ -32,9 +33,6 @@ class Role(BaseModel):
 
 class Branch(BaseModel):
     name = models.CharField(max_length=255, verbose_name="Filial nomi")
-    code = models.CharField(
-        max_length=100, null=True, blank=True, verbose_name="Filial kodi"
-    )
 
     class Meta(BaseModel.Meta):
         verbose_name = "Filial"
@@ -78,7 +76,20 @@ class Position(BaseModel):
         return self.name
 
 
-class UserManager(DefaultUserManager):
+class UserManager(BaseUserManager):
+    def create_user(self, full_name, password=None, **extra_fields):
+        if not full_name:
+            raise ValueError('Xodimning ism-sharifi (full_name) kiritilishi shart')
+        user = self.model(full_name=full_name, **extra_fields)
+        user.set_password(password)
+        user.save(using=self._db)
+        return user
+
+    def create_superuser(self, full_name, password=None, **extra_fields):
+        extra_fields.setdefault('is_staff', True)
+        extra_fields.setdefault('is_superuser', True)
+        return self.create_user(full_name, password, **extra_fields)
+
     def active(self):
         return self.filter(is_active=True, is_fired=False)
 
@@ -90,14 +101,20 @@ class UserManager(DefaultUserManager):
 
 
 class User(AbstractUser):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     full_name = models.CharField(
-        max_length=255, verbose_name="F.I.Sh", null=True, blank=True
+        max_length=255, unique=True, verbose_name="F.I.Sh"
     )
     jshshir = models.CharField(
         max_length=14, unique=True, null=True, blank=True, verbose_name="JShShIR"
     )
     phone = models.CharField(
-        max_length=20, unique=True, null=True, blank=True, verbose_name="Telefon"
+        max_length=13, 
+        unique=True, 
+        null=True, 
+        blank=True, 
+        validators=[phone_validator],
+        verbose_name="Telefon"
     )
     face_image = models.ImageField(
         upload_to="faces/", null=True, blank=True, verbose_name="Face ID rasm"
@@ -143,6 +160,10 @@ class User(AbstractUser):
     )
     updated_at = models.DateTimeField(auto_now=True, verbose_name="Yangilangan vaqti")
 
+    username = None
+    USERNAME_FIELD = "full_name"
+    REQUIRED_FIELDS = []
+
     objects = UserManager()
 
     class Meta:
@@ -153,6 +174,7 @@ class User(AbstractUser):
     def has_permission(self, perm_code):
         if self.is_superuser:
             return True
+
         if self.role:
             return self.role.permissions.filter(code=perm_code).exists()
         return False
@@ -160,9 +182,10 @@ class User(AbstractUser):
     def has_any_permission(self, perm_codes):
         if self.is_superuser:
             return True
+            
         if self.role:
             return self.role.permissions.filter(code__in=perm_codes).exists()
         return False
 
     def __str__(self):
-        return self.full_name or self.username
+        return self.full_name
