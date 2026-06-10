@@ -78,3 +78,49 @@ class Attendance(BaseModel):
 
     def __str__(self):
         return f"{self.user.full_name} - {self.get_event_type_display()}"
+
+
+class FaceLog(BaseModel):
+    user = models.ForeignKey(
+        User, on_delete=models.CASCADE, related_name="face_logs", verbose_name="Xodim"
+    )
+    is_success = models.BooleanField(default=False, verbose_name="Muvaffaqiyatli")
+    distance = models.FloatField(
+        null=True, blank=True, verbose_name="Solishtirish masofasi"
+    )
+    message = models.CharField(
+        max_length=255, null=True, blank=True, verbose_name="Xabar"
+    )
+
+    class Meta(BaseModel.Meta):
+        verbose_name = "Face ID Logi"
+        verbose_name_plural = "Face ID Loglari"
+
+    def __str__(self):
+        return f"{self.user.full_name} - {'Muvaffaqiyatli' if self.is_success else 'Xato'}"
+
+
+class GpsLog(BaseModel):
+    user = models.ForeignKey(
+        User, on_delete=models.CASCADE, related_name="gps_logs", verbose_name="Xodim"
+    )
+    is_success = models.BooleanField(default=False, verbose_name="Muvaffaqiyatli")
+    latitude = models.DecimalField(
+        max_digits=10, decimal_places=7, verbose_name="Kenglik (Latitude)"
+    )
+    longitude = models.DecimalField(
+        max_digits=10, decimal_places=7, verbose_name="Uzunlik (Longitude)"
+    )
+    distance_meters = models.FloatField(
+        null=True, blank=True, verbose_name="Masofa (metr)"
+    )
+    message = models.CharField(
+        max_length=255, null=True, blank=True, verbose_name="Xabar"
+    )
+
+    class Meta(BaseModel.Meta):
+        verbose_name = "GPS Logi"
+        verbose_name_plural = "GPS Loglari"
+
+    def __str__(self):
+        return f"{self.user.full_name} - {'Ichida' if self.is_success else 'Tashqarida'}"

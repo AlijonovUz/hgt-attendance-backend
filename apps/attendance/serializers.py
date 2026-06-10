@@ -94,13 +94,26 @@ class AttendanceCreateSerializer(serializers.ModelSerializer):
             )
 
         in_geozone = False
+        min_distance = float('inf')
         for gz in user_geozones:
             distance = haversine(
                 float(lat), float(lon), float(gz.latitude), float(gz.longitude)
             )
+            if distance < min_distance:
+                min_distance = distance
             if distance <= float(gz.radius):
                 in_geozone = True
                 break
+        
+        from .models import GpsLog
+        GpsLog.objects.create(
+            user=user,
+            is_success=in_geozone,
+            latitude=lat,
+            longitude=lon,
+            distance_meters=min_distance if min_distance != float('inf') else None,
+            message="Ichida" if in_geozone else "Tashqarida"
+        )
 
         if not in_geozone:
             raise serializers.ValidationError({"detail": "Siz ish joyida emassiz."})
@@ -111,6 +124,14 @@ class AttendanceCreateSerializer(serializers.ModelSerializer):
             )
 
         is_verified, msg = hash_compare(user, image)
+        
+        from .models import FaceLog
+        FaceLog.objects.create(
+            user=user,
+            is_success=is_verified,
+            message=msg
+        )
+        
         if not is_verified:
             raise serializers.ValidationError({"detail": msg})
 

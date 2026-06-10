@@ -90,6 +90,13 @@ class FaceVerificationView(APIView):
 
         is_verified, msg = hash_compare(user, uploaded_file)
 
+        from apps.attendance.models import FaceLog
+        FaceLog.objects.create(
+            user=user,
+            is_success=is_verified,
+            message=msg
+        )
+
         if is_verified:
             return Response(
                 {"message": msg, "verified": True}, status=status.HTTP_200_OK

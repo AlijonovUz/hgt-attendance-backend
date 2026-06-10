@@ -107,6 +107,8 @@ class UserSerializer(serializers.ModelSerializer):
 
 
 class ProfileSerializer(serializers.ModelSerializer):
+    current_month_kpi = serializers.SerializerMethodField()
+
     class Meta:
         model = User
         fields = [
@@ -119,6 +121,7 @@ class ProfileSerializer(serializers.ModelSerializer):
             "department",
             "position",
             "role",
+            "current_month_kpi",
             "created_at",
             "updated_at",
         ]
@@ -130,9 +133,36 @@ class ProfileSerializer(serializers.ModelSerializer):
             "department",
             "position",
             "role",
+            "current_month_kpi",
             "created_at",
             "updated_at",
         ]
+
+    def get_current_month_kpi(self, obj):
+        from datetime import date
+        from django.utils import timezone
+        from apps.analytics.models import KPIResult
+        from apps.analytics.services import calculate_user_kpi
+
+        now = timezone.localtime()
+        current_month = date(now.year, now.month, 1)
+
+        kpi_result = KPIResult.objects.filter(user=obj, month=current_month).first()
+
+        if not kpi_result or kpi_result.updated_at.astimezone().date() < now.date():
+            kpi_result = calculate_user_kpi(obj, now.year, now.month)
+
+        if not kpi_result:
+            return None
+
+        return {
+            "attendance_kpi": kpi_result.attendance_kpi,
+            "monthly_kpi": kpi_result.monthly_kpi,
+            "late_coefficient": kpi_result.late_coefficient,
+            "discipline_coefficient": kpi_result.discipline_coefficient,
+            "total_score": kpi_result.total_score,
+            "rating_category": kpi_result.get_rating_category_display(),
+        }
 
     def validate_face_image(self, value):
         if value:
