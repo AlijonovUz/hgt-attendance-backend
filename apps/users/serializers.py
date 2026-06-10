@@ -1,8 +1,9 @@
 from rest_framework import serializers
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
-from django.contrib.auth.hashers import make_password
-from apps.users.models import User, Permission, Role, Branch, Department, Position
+
 from apps.utils.services import verify_face_image
+
+from .models import Branch, Department, Permission, Position, Role, User
 
 
 class PermissionSerializer(serializers.ModelSerializer):
@@ -148,42 +149,43 @@ class ChangePasswordSerializer(serializers.Serializer):
         write_only=True,
         min_length=8,
         error_messages={
-            'min_length': "Parol kamida 8 ta raqamdan iborat bo'lishi kerak."
-        })
+            "min_length": "Parol kamida 8 ta raqamdan iborat bo'lishi kerak."
+        },
+    )
 
     confirm_new_password = serializers.CharField(write_only=True)
 
     def validate_old_password(self, value):
-        user = self.context['request'].user
+        user = self.context["request"].user
         if not user.check_password(value):
             raise serializers.ValidationError("Eski parol noto'g'ri.")
         return value
 
     def validate(self, attrs):
-        new_password = attrs.get('new_password')
-        confirm_new_password = attrs.get('confirm_new_password')
-        old_password = attrs.get('old_password')
+        new_password = attrs.get("new_password")
+        confirm_new_password = attrs.get("confirm_new_password")
+        old_password = attrs.get("old_password")
 
         if not new_password.isdigit():
-            raise serializers.ValidationError({
-                'new_password': "Parol faqat raqamlardan iborat bo'lishi kerak."
-            })
+            raise serializers.ValidationError(
+                {"new_password": "Parol faqat raqamlardan iborat bo'lishi kerak."}
+            )
 
         if new_password != confirm_new_password:
-            raise serializers.ValidationError({
-                'new_password': "Yangi parol maydonlari mos kelmadi."
-            })
+            raise serializers.ValidationError(
+                {"new_password": "Yangi parol maydonlari mos kelmadi."}
+            )
 
         if old_password == new_password:
-            raise serializers.ValidationError({
-                'new_password': "Yangi parol eskisidan farq qilishi kerak."
-            })
+            raise serializers.ValidationError(
+                {"new_password": "Yangi parol eskisidan farq qilishi kerak."}
+            )
 
         return attrs
 
     def save(self, **kwargs):
-        user = self.context['request'].user
-        user.set_password(self.validated_data['new_password'])
+        user = self.context["request"].user
+        user.set_password(self.validated_data["new_password"])
         user.change_password = False
         user.save()
         return user

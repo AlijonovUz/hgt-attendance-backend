@@ -1,6 +1,7 @@
 from django.db.models.signals import post_migrate
 from django.dispatch import receiver
-from apps.users.models import Permission, Role
+
+from .models import Permission, Role
 
 
 @receiver(post_migrate)

@@ -1,8 +1,12 @@
 import uuid
+
+from django.contrib.auth.models import AbstractUser
 from django.db import models
-from django.contrib.auth.models import AbstractUser, BaseUserManager
+
 from apps.utils.models import BaseModel
 from apps.utils.validators import phone_validator
+
+from .managers import UserManager
 
 
 class Permission(BaseModel):
@@ -76,45 +80,19 @@ class Position(BaseModel):
         return self.name
 
 
-class UserManager(BaseUserManager):
-    def create_user(self, full_name, password=None, **extra_fields):
-        if not full_name:
-            raise ValueError('Xodimning ism-sharifi (full_name) kiritilishi shart')
-        user = self.model(full_name=full_name, **extra_fields)
-        user.set_password(password)
-        user.save(using=self._db)
-        return user
-
-    def create_superuser(self, full_name, password=None, **extra_fields):
-        extra_fields.setdefault('is_staff', True)
-        extra_fields.setdefault('is_superuser', True)
-        return self.create_user(full_name, password, **extra_fields)
-
-    def active(self):
-        return self.filter(is_active=True, is_fired=False)
-
-    def inactive(self):
-        return self.filter(is_active=False)
-
-    def fired(self):
-        return self.filter(is_fired=True)
-
-
 class User(AbstractUser):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    full_name = models.CharField(
-        max_length=255, unique=True, verbose_name="F.I.Sh"
-    )
+    full_name = models.CharField(max_length=255, unique=True, verbose_name="F.I.Sh")
     jshshir = models.CharField(
         max_length=14, unique=True, null=True, blank=True, verbose_name="JShShIR"
     )
     phone = models.CharField(
-        max_length=13, 
-        unique=True, 
-        null=True, 
-        blank=True, 
+        max_length=13,
+        unique=True,
+        null=True,
+        blank=True,
         validators=[phone_validator],
-        verbose_name="Telefon"
+        verbose_name="Telefon",
     )
     face_image = models.ImageField(
         upload_to="faces/", null=True, blank=True, verbose_name="Face ID rasm"
@@ -182,10 +160,22 @@ class User(AbstractUser):
     def has_any_permission(self, perm_codes):
         if self.is_superuser:
             return True
-            
+
         if self.role:
             return self.role.permissions.filter(code__in=perm_codes).exists()
         return False
+
+    def has_role(self, role_names):
+        if self.is_superuser:
+            return True
+
+        if not self.role:
+            return False
+
+        if isinstance(role_names, str):
+            return self.role.name == role_names
+
+        return self.role.name in role_names
 
     def __str__(self):
         return self.full_name

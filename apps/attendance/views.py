@@ -1,3 +1,65 @@
-from django.shortcuts import render
+from django.db.models import Q
+from django_filters.rest_framework import DjangoFilterBackend
+from drf_spectacular.utils import extend_schema
+from rest_framework import filters
 
-# Create your views here.
+from apps.utils.views import BaseManageViewSet
+
+from .filters import AttendanceFilter
+from .models import Attendance, Geozone
+from .serializers import (
+    AttendanceCreateSerializer,
+    AttendanceListSerializer,
+    GeozoneSerializer,
+)
+
+
+@extend_schema(tags=["Geozonalar (Geozones)"])
+class GeozoneViewSet(BaseManageViewSet):
+    queryset = Geozone.objects.select_related("branch").filter(is_active=True)
+    serializer_class = GeozoneSerializer
+    filter_backends = [DjangoFilterBackend, filters.SearchFilter]
+    filterset_fields = ["branch", "is_active"]
+    search_fields = ["name"]
+    action_permissions = {
+        "create": "geozone_create",
+        "update": "geozone_edit",
+        "partial_update": "geozone_edit",
+        "destroy": "geozone_delete",
+    }
+
+
+@extend_schema(tags=["Davomat (Attendance)"])
+class AttendanceViewSet(BaseManageViewSet):
+    filter_backends = [
+        DjangoFilterBackend,
+        filters.SearchFilter,
+        filters.OrderingFilter,
+    ]
+    filterset_class = AttendanceFilter
+    search_fields = ["user__full_name", "user__jshshir", "user__phone"]
+    ordering_fields = ["created_at"]
+    ordering = ["-created_at"]
+
+    http_method_names = ["get", "post", "head", "options"]
+    action_permissions = {
+        "create": "attendance_check_in",
+    }
+
+    def get_queryset(self):
+        user = self.request.user
+
+        if user.is_superuser or user.has_permission("attendance_view_history_all"):
+            return Attendance.objects.select_related("user").all()
+
+        if user.has_permission("attendance_view_history_dept") and user.department:
+            return Attendance.objects.select_related("user").filter(
+                Q(user=user) | Q(user__department=user.department)
+            )
+
+        return Attendance.objects.select_related("user").filter(user=user)
+
+    def get_serializer_class(self):
+        if self.action == "create":
+            return AttendanceCreateSerializer
+        return AttendanceListSerializer
