@@ -39,7 +39,6 @@ class PositionAdmin(admin.ModelAdmin):
 @admin.register(User)
 class UserAdmin(BaseUserAdmin):
     list_display = [
-        "username",
         "full_name",
         "role",
         "branch",
@@ -48,17 +47,16 @@ class UserAdmin(BaseUserAdmin):
         "is_active",
         "is_fired",
     ]
-    search_fields = ["username", "full_name", "jshshir", "phone"]
+    search_fields = ["full_name", "jshshir", "phone"]
     list_filter = ["is_active", "is_fired", "role", "branch", "department", "position"]
     ordering = ["-created_at"]
     
     fieldsets = (
-        (None, {"fields": ("username", "password")}),
+        (None, {"fields": ("full_name", "password")}),
         (
             "Shaxsiy ma'lumotlar",
             {
                 "fields": (
-                    "full_name",
                     "jshshir",
                     "phone",
                     "face_image",

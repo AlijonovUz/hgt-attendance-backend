@@ -13,3 +13,5 @@ django-celery-beat==2.8.1
 psycopg2-binary==2.9.11
 pillow==12.1.1
 black==26.5.1
+deepface
+Pillow

@@ -4,6 +4,9 @@ from apps.users.views import (
     CustomTokenObtainPairView,
     CustomTokenRefreshView,
     UserViewSet,
+    ChangePasswordView,
+    ProfileView,
+    FaceVerificationView,
     PermissionViewSet,
     RoleViewSet,
     BranchViewSet,
@@ -22,5 +25,8 @@ router.register(r"positions", PositionViewSet, basename="positions")
 urlpatterns = [
     path("auth/login/", CustomTokenObtainPairView.as_view(), name="token_obtain_pair"),
     path("auth/refresh/", CustomTokenRefreshView.as_view(), name="token_refresh"),
+    path("auth/profile/", ProfileView.as_view(), name="profile"),
+    path("auth/verify-face/", FaceVerificationView.as_view(), name="verify_face"),
+    path("auth/change-password/", ChangePasswordView.as_view(), name="change_password"),
     path("", include(router.urls)),
 ]

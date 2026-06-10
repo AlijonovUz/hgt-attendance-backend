@@ -1,9 +1,11 @@
 from django_filters.rest_framework import DjangoFilterBackend
 from drf_spectacular.utils import extend_schema
-from rest_framework import filters, permissions, status, viewsets
+from rest_framework import filters, permissions, status, viewsets, generics
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
+from rest_framework.views import APIView
+from apps.utils.services import hash_compare
 
 from apps.users.models import Branch, Department, Permission, Position, Role, User
 from apps.users.serializers import (
@@ -14,6 +16,9 @@ from apps.users.serializers import (
     PositionSerializer,
     RoleSerializer,
     UserSerializer,
+    ChangePasswordSerializer,
+    ProfileSerializer,
+    FaceVerificationSerializer,
 )
 from apps.utils.views import BaseManageViewSet
 
@@ -41,7 +46,7 @@ class UserViewSet(BaseManageViewSet):
         "position",
         "role",
     ]
-    search_fields = ["full_name", "username", "jshshir", "phone"]
+    search_fields = ["full_name", "jshshir", "phone"]
 
     action_permissions = {
         "create": "employee_add",
@@ -58,6 +63,7 @@ class UserViewSet(BaseManageViewSet):
             status=status.HTTP_405_METHOD_NOT_ALLOWED,
         )
 
+    @extend_schema(request=None)
     @action(detail=True, methods=["post"])
     def block(self, request, pk=None):
         user = self.get_object()
@@ -65,6 +71,7 @@ class UserViewSet(BaseManageViewSet):
         user.save()
         return Response({"detail": "Xodim bloklandi."}, status=status.HTTP_200_OK)
 
+    @extend_schema(request=None)
     @action(detail=True, methods=["post"])
     def unblock(self, request, pk=None):
         user = self.get_object()
@@ -80,6 +87,7 @@ class UserViewSet(BaseManageViewSet):
             {"detail": "Xodim blokdan chiqarildi."}, status=status.HTTP_200_OK
         )
 
+    @extend_schema(request=None)
     @action(detail=True, methods=["post"])
     def fire(self, request, pk=None):
         user = self.get_object()
@@ -89,6 +97,65 @@ class UserViewSet(BaseManageViewSet):
         return Response(
             {"detail": "Xodim ishdan bo'shatildi."}, status=status.HTTP_200_OK
         )
+
+
+@extend_schema(tags=["Profile"])
+class ProfileView(generics.RetrieveUpdateAPIView):
+    serializer_class = ProfileSerializer
+    permission_classes = [permissions.IsAuthenticated]
+    http_method_names = ["get", "patch"]
+
+    def get_object(self):
+        return self.request.user
+
+
+@extend_schema(tags=["Profile"], request=FaceVerificationSerializer)
+class FaceVerificationView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request, *args, **kwargs):
+        serializer = FaceVerificationSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        uploaded_file = serializer.validated_data["image"]
+        user = request.user
+
+        if not user.face_image or not user.face_image.name:
+            return Response(
+                {"detail": "Foydalanuvchi profilida yuz rasmi mavjud emas. Avval yuz rasm yuklang!"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        is_verified, msg = hash_compare(user, uploaded_file)
+        
+        if is_verified:
+            return Response({"message": msg, "verified": True}, status=status.HTTP_200_OK)
+        else:
+            return Response({"detail": msg, "verified": False}, status=status.HTTP_400_BAD_REQUEST)
+
+
+@extend_schema(tags=["Profile"])
+class ChangePasswordView(generics.UpdateAPIView):
+    serializer_class = ChangePasswordSerializer
+    permission_classes = [permissions.IsAuthenticated]
+    http_method_names = ['put']
+
+    def get_object(self):
+        return self.request.user
+
+    def put(self, request, *args, **kwargs):
+        serializer = ChangePasswordSerializer(
+            data=request.data,
+            context={'request': request}
+        )
+
+        if serializer.is_valid():
+            serializer.save()
+            return Response({
+                "message": "Parol muvaffaqiyatli o'zgartirildi."
+            }, status=status.HTTP_200_OK)
+
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 @extend_schema(tags=["Ruxsatlar (Permissions)"])
@@ -102,25 +169,45 @@ class PermissionViewSet(viewsets.ReadOnlyModelViewSet):
 class RoleViewSet(BaseManageViewSet):
     queryset = Role.objects.active()
     serializer_class = RoleSerializer
-    permission_code = "role_manage"
+    action_permissions = {
+        "create": "role_create",
+        "update": "role_edit",
+        "partial_update": "role_edit",
+        "destroy": "role_delete",
+    }
 
 
 @extend_schema(tags=["Filiallar (Branches)"])
 class BranchViewSet(BaseManageViewSet):
     queryset = Branch.objects.active()
     serializer_class = BranchSerializer
-    permission_code = "branch_manage"
+    action_permissions = {
+        "create": "branch_create",
+        "update": "branch_edit",
+        "partial_update": "branch_edit",
+        "destroy": "branch_delete",
+    }
 
 
 @extend_schema(tags=["Bo'limlar (Departments)"])
 class DepartmentViewSet(BaseManageViewSet):
     queryset = Department.objects.active()
     serializer_class = DepartmentSerializer
-    permission_code = "department_manage"
+    action_permissions = {
+        "create": "department_create",
+        "update": "department_edit",
+        "partial_update": "department_edit",
+        "destroy": "department_delete",
+    }
 
 
 @extend_schema(tags=["Lavozimlar (Positions)"])
 class PositionViewSet(BaseManageViewSet):
     queryset = Position.objects.active()
     serializer_class = PositionSerializer
-    permission_code = "position_manage"
+    action_permissions = {
+        "create": "position_create",
+        "update": "position_edit",
+        "partial_update": "position_edit",
+        "destroy": "position_delete",
+    }
