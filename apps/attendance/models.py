@@ -25,7 +25,7 @@ class Geozone(BaseModel):
     longitude = models.DecimalField(
         max_digits=10, decimal_places=7, verbose_name="Uzunlik (Longitude)"
     )
-    radius = models.PositiveIntegerField(default=10, verbose_name="Radius (metr)")
+    radius = models.PositiveIntegerField(default=50, verbose_name="Radius (metr)")
     branch = models.ForeignKey(
         Branch,
         on_delete=models.CASCADE,
