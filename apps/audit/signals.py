@@ -58,8 +58,11 @@ def audit_log_save(sender, instance, created, **kwargs):
 
     if action == AuditLog.ActionType.UPDATE:
         dirty = getattr(instance, "_dirty_fields", {})
-        if not dirty and not getattr(instance, "is_active", True) == False:
+        if not dirty:
             return
+
+        if "is_active" in dirty and dirty["is_active"]["old"] == "True" and dirty["is_active"]["new"] == "False":
+            action = AuditLog.ActionType.DELETE
 
         old_values = {k: v["old"] for k, v in dirty.items()}
         new_values = {k: v["new"] for k, v in dirty.items()}
