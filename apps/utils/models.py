@@ -1,4 +1,5 @@
 import uuid
+
 from django.db import models
 
 
@@ -18,9 +19,13 @@ class BaseQuerySet(models.QuerySet):
 
 class BaseModel(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    is_active = models.BooleanField(default=True, db_index=True, verbose_name='Is Active')
-    created_at = models.DateTimeField(auto_now_add=True, db_index=True, verbose_name='Yaratilgan vaqti')
-    updated_at = models.DateTimeField(auto_now=True, verbose_name='Yangilangan vaqti')
+    is_active = models.BooleanField(
+        default=True, db_index=True, verbose_name="Is Active"
+    )
+    created_at = models.DateTimeField(
+        auto_now_add=True, db_index=True, verbose_name="Yaratilgan vaqti"
+    )
+    updated_at = models.DateTimeField(auto_now=True, verbose_name="Yangilangan vaqti")
 
     objects = BaseQuerySet.as_manager()
 

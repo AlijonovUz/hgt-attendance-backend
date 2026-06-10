@@ -1,19 +1,25 @@
-from django.http import JsonResponse
-from rest_framework.exceptions import ValidationError as DRFValidationError
 from django.core.exceptions import ValidationError as DjangoValidationError
-from rest_framework.views import exception_handler as base_exception_handler
-from rest_framework.response import Response
+from django.http import JsonResponse
 from rest_framework import status
+from rest_framework.exceptions import ValidationError as DRFValidationError
+from rest_framework.response import Response
+from rest_framework.views import exception_handler as base_exception_handler
 
 
 def exception_handler(exc, context):
     if isinstance(exc, DjangoValidationError):
-        if hasattr(exc, 'message_dict'):
+        if hasattr(exc, "message_dict"):
             exc = DRFValidationError(detail=exc.message_dict)
-        elif hasattr(exc, 'messages'):
-            exc = DRFValidationError(detail={'detail': exc.messages[0] if len(exc.messages) == 1 else exc.messages})
-        elif hasattr(exc, 'message'):
-            exc = DRFValidationError(detail={'detail': exc.message})
+        elif hasattr(exc, "messages"):
+            exc = DRFValidationError(
+                detail={
+                    "detail": (
+                        exc.messages[0] if len(exc.messages) == 1 else exc.messages
+                    )
+                }
+            )
+        elif hasattr(exc, "message"):
+            exc = DRFValidationError(detail={"detail": exc.message})
 
     response = base_exception_handler(exc, context)
 
@@ -37,8 +43,13 @@ def exception_handler(exc, context):
     details = None
     is_friendly = True
 
-    if isinstance(exc, DRFValidationError) or response.status_code == status.HTTP_400_BAD_REQUEST:
-        if isinstance(data, (dict, list)) and not (isinstance(data, dict) and "detail" in data):
+    if (
+        isinstance(exc, DRFValidationError)
+        or response.status_code == status.HTTP_400_BAD_REQUEST
+    ):
+        if isinstance(data, (dict, list)) and not (
+            isinstance(data, dict) and "detail" in data
+        ):
             error_msg = "Ma'lumotlarni tekshirishda xatolik yuzaga keldi."
             details = data
         else:
@@ -70,24 +81,30 @@ def exception_handler(exc, context):
 
 
 def handler404(request, exception, *args, **kwargs):
-    return JsonResponse({
-        "data": None,
-        "error": {
-            "errorId": status.HTTP_404_NOT_FOUND,
-            "isFriendly": True,
-            "errorMsg": "Sahifa topilmadi.",
+    return JsonResponse(
+        {
+            "data": None,
+            "error": {
+                "errorId": status.HTTP_404_NOT_FOUND,
+                "isFriendly": True,
+                "errorMsg": "Sahifa topilmadi.",
+            },
+            "success": False,
         },
-        "success": False
-    }, status=status.HTTP_404_NOT_FOUND)
+        status=status.HTTP_404_NOT_FOUND,
+    )
 
 
 def handler500(request, *args, **kwargs):
-    return JsonResponse({
-        "data": None,
-        "error": {
-            "errorId": status.HTTP_500_INTERNAL_SERVER_ERROR,
-            "isFriendly": False,
-            "errorMsg": "Serverdagi ichki xatolik.",
+    return JsonResponse(
+        {
+            "data": None,
+            "error": {
+                "errorId": status.HTTP_500_INTERNAL_SERVER_ERROR,
+                "isFriendly": False,
+                "errorMsg": "Serverdagi ichki xatolik.",
+            },
+            "success": False,
         },
-        "success": False
-    }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+    )

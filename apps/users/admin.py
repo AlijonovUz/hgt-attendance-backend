@@ -1,43 +1,44 @@
 from django.contrib import admin
-from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
-from apps.users.models import Permission, Role, Branch, Department, Position, User
+from unfold.admin import ModelAdmin
+
+from .models import Branch, Department, Permission, Position, Role, User
 
 
 @admin.register(Permission)
-class PermissionAdmin(admin.ModelAdmin):
+class PermissionAdmin(ModelAdmin):
     list_display = ["name", "code"]
     search_fields = ["name", "code"]
 
 
 @admin.register(Role)
-class RoleAdmin(admin.ModelAdmin):
+class RoleAdmin(ModelAdmin):
     list_display = ["name"]
     search_fields = ["name"]
     filter_horizontal = ["permissions"]
 
 
 @admin.register(Branch)
-class BranchAdmin(admin.ModelAdmin):
+class BranchAdmin(ModelAdmin):
     list_display = ["name"]
     search_fields = ["name"]
 
 
 @admin.register(Department)
-class DepartmentAdmin(admin.ModelAdmin):
+class DepartmentAdmin(ModelAdmin):
     list_display = ["name", "branch"]
     search_fields = ["name", "branch__name"]
     list_filter = ["branch"]
 
 
 @admin.register(Position)
-class PositionAdmin(admin.ModelAdmin):
+class PositionAdmin(ModelAdmin):
     list_display = ["name", "department"]
     search_fields = ["name", "department__name"]
     list_filter = ["department"]
 
 
 @admin.register(User)
-class UserAdmin(BaseUserAdmin):
+class UserAdmin(ModelAdmin):
     list_display = [
         "full_name",
         "role",
@@ -50,7 +51,7 @@ class UserAdmin(BaseUserAdmin):
     search_fields = ["full_name", "jshshir", "phone"]
     list_filter = ["is_active", "is_fired", "role", "branch", "department", "position"]
     ordering = ["-created_at"]
-    
+
     fieldsets = (
         (None, {"fields": ("full_name", "password")}),
         (
@@ -81,6 +82,8 @@ class UserAdmin(BaseUserAdmin):
     )
 
     def get_queryset(self, request):
-        return super().get_queryset(request).select_related(
-            "role", "branch", "department", "position"
+        return (
+            super()
+            .get_queryset(request)
+            .select_related("role", "branch", "department", "position")
         )
