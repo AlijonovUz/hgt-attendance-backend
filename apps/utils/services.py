@@ -82,12 +82,12 @@ def hash_compare(employee, uploaded_file):
 
         return True, "Muvaffaqiyatli"
 
-    except ValueError:
+    except ValueError as e:
         if os.path.exists(temp_path):
             os.remove(temp_path)
         if temp_base_path and os.path.exists(temp_base_path):
             os.remove(temp_base_path)
-        return False, "Rasmda yuz aniqlanmadi. Iltimos to'g'ri rasm yuboring."
+        return False, f"Rasmda yuz aniqlanmadi. Xato: {str(e)}"
     except Exception as e:
         if os.path.exists(temp_path):
             os.remove(temp_path)
@@ -103,6 +103,7 @@ def verify_face_image(uploaded_file):
 
     temp_path = ""
     try:
+        uploaded_file.seek(0)
         temp_dir = tempfile.gettempdir()
         temp_path = os.path.join(temp_dir, "temp_profile_upload.jpg")
 
@@ -129,10 +130,10 @@ def verify_face_image(uploaded_file):
 
         return True, "Yuz muvaffaqiyatli aniqlandi"
 
-    except ValueError:
+    except ValueError as e:
         if os.path.exists(temp_path):
             os.remove(temp_path)
-        return False, "Rasmda yuz topilmadi!"
+        return False, f"Rasmda yuz topilmadi! Xato: {str(e)}"
     except Exception as e:
         if os.path.exists(temp_path):
             os.remove(temp_path)
