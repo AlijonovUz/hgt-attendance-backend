@@ -26,7 +26,7 @@ from .serializers import (
 )
 
 
-@extend_schema(tags=["Auth"])
+@extend_schema(tags=["Avtorizatsiya"])
 class CustomTokenObtainPairView(TokenObtainPairView):
     serializer_class = CustomTokenObtainPairSerializer
     throttle_classes = [CustomScopedRateThrottle]
@@ -46,12 +46,12 @@ class CustomTokenObtainPairView(TokenObtainPairView):
         return response
 
 
-@extend_schema(tags=["Auth"])
+@extend_schema(tags=["Avtorizatsiya"])
 class CustomTokenRefreshView(TokenRefreshView):
     pass
 
 
-@extend_schema(tags=["Profile"])
+@extend_schema(tags=["Profil"])
 class ProfileView(generics.RetrieveUpdateAPIView):
     serializer_class = ProfileSerializer
     permission_classes = [permissions.IsAuthenticated]
@@ -61,7 +61,7 @@ class ProfileView(generics.RetrieveUpdateAPIView):
         return self.request.user
 
 
-@extend_schema(tags=["Profile"])
+@extend_schema(tags=["Profil"])
 class ChangePasswordView(generics.UpdateAPIView):
     serializer_class = ChangePasswordSerializer
     permission_classes = [permissions.IsAuthenticated]
@@ -85,7 +85,7 @@ class ChangePasswordView(generics.UpdateAPIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-@extend_schema(tags=["Profile"], request=FaceVerificationSerializer)
+@extend_schema(tags=["Profil"], request=FaceVerificationSerializer)
 class FaceVerificationView(APIView):
     permission_classes = [permissions.IsAuthenticated]
 
@@ -123,7 +123,7 @@ class FaceVerificationView(APIView):
             )
 
 
-@extend_schema(tags=["Filiallar (Branches)"])
+@extend_schema(tags=["Filiallar"])
 class BranchViewSet(BaseManageViewSet):
     queryset = Branch.objects.active()
     serializer_class = BranchSerializer
@@ -137,7 +137,7 @@ class BranchViewSet(BaseManageViewSet):
     }
 
 
-@extend_schema(tags=["Bo'limlar (Departments)"])
+@extend_schema(tags=["Bo'limlar"])
 class DepartmentViewSet(BaseManageViewSet):
     queryset = Department.objects.select_related("branch").active()
     serializer_class = DepartmentSerializer
@@ -152,7 +152,7 @@ class DepartmentViewSet(BaseManageViewSet):
     }
 
 
-@extend_schema(tags=["Lavozimlar (Positions)"])
+@extend_schema(tags=["Lavozimlar"])
 class PositionViewSet(BaseManageViewSet):
     queryset = Position.objects.select_related(
         "department", "department__branch"
@@ -169,7 +169,7 @@ class PositionViewSet(BaseManageViewSet):
     }
 
 
-@extend_schema(tags=["Ruxsatlar (Permissions)"])
+@extend_schema(tags=["Ruxsatlar"])
 class PermissionViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = Permission.objects.active()
     serializer_class = PermissionSerializer
@@ -178,7 +178,7 @@ class PermissionViewSet(viewsets.ReadOnlyModelViewSet):
     search_fields = ["name", "code"]
 
 
-@extend_schema(tags=["Rollar (Roles)"])
+@extend_schema(tags=["Rollar"])
 class RoleViewSet(BaseManageViewSet):
     queryset = Role.objects.prefetch_related("permissions").active()
     serializer_class = RoleSerializer
@@ -192,7 +192,7 @@ class RoleViewSet(BaseManageViewSet):
     }
 
 
-@extend_schema(tags=["Xodimlar (Employees)"])
+@extend_schema(tags=["Xodimlar"])
 class UserViewSet(BaseManageViewSet):
     queryset = User.objects.select_related(
         "branch", "department", "position", "role"

@@ -12,7 +12,7 @@ from .serializers import NotificationSerializer, UserDeviceSerializer
 from .models import Notification, UserDevice
 
 
-@extend_schema(tags=["Notifications"])
+@extend_schema(tags=["Bildirishnomalar"])
 class WebSocketTicketView(APIView):
     permission_classes = [permissions.IsAuthenticated]
 
@@ -26,7 +26,7 @@ class WebSocketTicketView(APIView):
         })
 
 
-@extend_schema(tags=["Notifications"])
+@extend_schema(tags=["Bildirishnomalar"])
 class NotificationListView(generics.ListAPIView):
     queryset = Notification.objects.active()
     serializer_class = NotificationSerializer
@@ -38,7 +38,7 @@ class NotificationListView(generics.ListAPIView):
         return super().get_queryset().filter(user=self.request.user)
 
 
-@extend_schema(tags=["Notifications"])
+@extend_schema(tags=["Bildirishnomalar"])
 class NotificationCountView(APIView):
     permission_classes = [permissions.IsAuthenticated]
 
@@ -59,7 +59,7 @@ class NotificationCountView(APIView):
         })
 
 
-@extend_schema(tags=["Notifications"])
+@extend_schema(tags=["Bildirishnomalar"])
 class MarkNotificationReadView(APIView):
     permission_classes = [permissions.IsAuthenticated]
 
@@ -79,7 +79,7 @@ class MarkNotificationReadView(APIView):
         )
 
 
-@extend_schema(tags=["Notifications"])
+@extend_schema(tags=["Bildirishnomalar"])
 class MarkAllNotificationsAsReadView(APIView):
     permission_classes = [permissions.IsAuthenticated]
 
@@ -94,7 +94,7 @@ class MarkAllNotificationsAsReadView(APIView):
         })
 
 
-@extend_schema(tags=['Register User Device'], request=UserDeviceSerializer)
+@extend_schema(tags=["Qurilmani ro'yxatdan o'tkazish"], request=UserDeviceSerializer)
 class UserDeviceRegisterView(APIView):
     permission_classes = [permissions.IsAuthenticated]
     serializer_class = UserDeviceSerializer
