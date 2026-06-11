@@ -1,6 +1,7 @@
 import math
 import os
 import tempfile
+import uuid
 
 from PIL import Image
 
@@ -41,13 +42,14 @@ def hash_compare(employee, uploaded_file):
             return False, "Profil rasmi mavjud emas"
 
         temp_dir = tempfile.gettempdir()
+        request_id = uuid.uuid4().hex
 
-        temp_base_path = os.path.join(temp_dir, f"base_face_{employee.id}.jpg")
+        temp_base_path = os.path.join(temp_dir, f"base_face_{employee.id}_{request_id}.jpg")
         with open(temp_base_path, "wb") as f:
             f.write(employee.face_image.read())
             employee.face_image.seek(0)
 
-        temp_path = os.path.join(temp_dir, "temp_face_attendance.jpg")
+        temp_path = os.path.join(temp_dir, f"temp_face_attendance_{employee.id}_{request_id}.jpg")
 
         image = Image.open(uploaded_file)
         if image.mode != "RGB":
@@ -103,9 +105,10 @@ def verify_face_image(uploaded_file):
 
     temp_path = ""
     try:
+        request_id = uuid.uuid4().hex
         uploaded_file.seek(0)
         temp_dir = tempfile.gettempdir()
-        temp_path = os.path.join(temp_dir, "temp_profile_upload.jpg")
+        temp_path = os.path.join(temp_dir, f"temp_profile_upload_{request_id}.jpg")
 
         image = Image.open(uploaded_file)
         if image.mode != "RGB":
