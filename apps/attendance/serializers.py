@@ -2,6 +2,9 @@ from django.utils import timezone
 from rest_framework import serializers
 
 from apps.utils.services import hash_compare, haversine
+from apps.users.serializers import UserShortInfoSerializer
+from apps.notifications.models import Notification
+from datetime import time
 
 from .models import Attendance, Geozone
 
@@ -14,19 +17,23 @@ class GeozoneSerializer(serializers.ModelSerializer):
 
 
 class AttendanceListSerializer(serializers.ModelSerializer):
-    user_full_name = serializers.CharField(source="user.full_name", read_only=True)
+    user_info = UserShortInfoSerializer(source="user", read_only=True)
 
     class Meta:
         model = Attendance
         fields = [
             "id",
-            "user_full_name",
+            "user",
+            "user_info",
             "event_type",
             "gps_latitude",
             "gps_longitude",
             "face_verify",
             "created_at",
         ]
+        extra_kwargs = {
+            "user": {"write_only": True}
+        }
 
 
 class AttendanceCreateSerializer(serializers.ModelSerializer):
@@ -116,6 +123,12 @@ class AttendanceCreateSerializer(serializers.ModelSerializer):
         )
 
         if not in_geozone:
+            Notification.objects.create(
+                user=user,
+                title="Geozonadan tashqarida urunish",
+                message="Siz ish joyi geozonasidan tashqarida qayd etilishga urindingiz.",
+                extra_data={"event": "OUT_OF_ZONE"}
+            )
             raise serializers.ValidationError({"detail": "Siz ish joyida emassiz."})
 
         if not user.face_image or not user.face_image.name:
@@ -141,4 +154,32 @@ class AttendanceCreateSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         validated_data.pop("image", None)
         validated_data["user"] = self.context["request"].user
-        return super().create(validated_data)
+        instance = super().create(validated_data)
+        
+        user = instance.user
+        event = instance.event_type
+        current_time = timezone.localtime(instance.created_at).time()
+
+        if event == Attendance.EventType.CHECK_IN and current_time > time(9, 0):
+            Notification.objects.create(
+                user=user,
+                title="Kechikish",
+                message="Siz bugun ishga kechikib keldingiz.",
+                extra_data={"event": "LATE_CHECK_IN"}
+            )
+        elif event == Attendance.EventType.LUNCH_END and current_time > time(14, 0):
+            Notification.objects.create(
+                user=user,
+                title="Tushlikdan kechikish",
+                message="Siz tushlikdan kech qaytdingiz.",
+                extra_data={"event": "LATE_LUNCH_RETURN"}
+            )
+        elif event == Attendance.EventType.CHECK_OUT and current_time < time(18, 0):
+            Notification.objects.create(
+                user=user,
+                title="Erta ketish",
+                message="Siz ish vaqti tugamasdan oldin ketdingiz.",
+                extra_data={"event": "EARLY_CHECK_OUT"}
+            )
+
+        return instance

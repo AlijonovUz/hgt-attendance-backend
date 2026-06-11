@@ -4,7 +4,6 @@ from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import ValidationError as DjangoValidationError
 
 from apps.utils.services import verify_face_image
-
 from .models import Branch, Department, Permission, Position, Role, User
 
 
@@ -14,10 +13,21 @@ class PermissionSerializer(serializers.ModelSerializer):
         fields = ["id", "name", "code", "created_at"]
 
 
-class RoleSerializer(serializers.ModelSerializer):
+class RoleShortSerializer(serializers.ModelSerializer):
     class Meta:
         model = Role
-        fields = ["id", "name", "permissions", "created_at"]
+        fields = ["id", "name"]
+
+
+class RoleSerializer(serializers.ModelSerializer):
+    permissions_info = PermissionSerializer(source="permissions", read_only=True, many=True)
+
+    class Meta:
+        model = Role
+        fields = ["id", "name", "permissions_info", "permissions", "created_at"]
+        extra_kwargs = {
+            "permissions": {"write_only": True}
+        }
 
 
 class BranchSerializer(serializers.ModelSerializer):
@@ -26,37 +36,52 @@ class BranchSerializer(serializers.ModelSerializer):
         fields = ["id", "name", "created_at"]
 
 
-class DepartmentSerializer(serializers.ModelSerializer):
+class DepartmentShortSerializer(serializers.ModelSerializer):
     class Meta:
         model = Department
-        fields = ["id", "name", "branch", "created_at"]
+        fields = ["id", "name"]
+
+
+class DepartmentSerializer(serializers.ModelSerializer):
+    branch_info = BranchSerializer(source="branch", read_only=True)
+
+    class Meta:
+        model = Department
+        fields = ["id", "name", "branch_info", "branch", "created_at"]
+        extra_kwargs = {
+            "branch": {"write_only": True}
+        }
+
+
+class PositionShortSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Position
+        fields = ["id", "name"]
 
 
 class PositionSerializer(serializers.ModelSerializer):
+    department_info = DepartmentSerializer(source="department", read_only=True)
+
     class Meta:
         model = Position
-        fields = ["id", "name", "department", "created_at"]
+        fields = ["id", "name", "department_info", "department", "created_at"]
+        extra_kwargs = {
+            "department": {"write_only": True}
+        }
 
 
-class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
-    @classmethod
-    def get_token(cls, user):
-        token = super().get_token(user)
-
-        token["full_name"] = user.full_name
-        token["role"] = user.role.name if user.role else None
-
-        if user.role:
-            token["permissions"] = list(
-                user.role.permissions.values_list("code", flat=True)
-            )
-        else:
-            token["permissions"] = []
-
-        return token
+class UserShortInfoSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ["id", "full_name", "face_image"]
 
 
 class UserSerializer(serializers.ModelSerializer):
+    role_info = RoleShortSerializer(source="role", read_only=True)
+    branch_info = BranchSerializer(source="branch", read_only=True)
+    department_info = DepartmentShortSerializer(source="department", read_only=True)
+    position_info = PositionShortSerializer(source="position", read_only=True)
+
     class Meta:
         model = User
         fields = [
@@ -67,9 +92,13 @@ class UserSerializer(serializers.ModelSerializer):
             "phone",
             "face_image",
             "branch",
+            "branch_info",
             "department",
+            "department_info",
             "position",
+            "position_info",
             "role",
+            "role_info",
             "is_active",
             "is_fired",
             "created_at",
@@ -81,6 +110,10 @@ class UserSerializer(serializers.ModelSerializer):
             "updated_at": {"read_only": True},
             "is_fired": {"read_only": True},
             "is_active": {"read_only": True},
+            "role": {"write_only": True},
+            "branch": {"write_only": True},
+            "department": {"write_only": True},
+            "position": {"write_only": True},
         }
 
     def validate_face_image(self, value):
@@ -100,23 +133,25 @@ class UserSerializer(serializers.ModelSerializer):
 
     def create(self, validated_data):
         password = validated_data.pop("password", None)
-        user = super().create(validated_data)
         if password:
-            user.set_password(password)
-            user.save()
-        return user
+            from django.contrib.auth.hashers import make_password
+            validated_data["password"] = make_password(password)
+        return super().create(validated_data)
 
     def update(self, instance, validated_data):
         password = validated_data.pop("password", None)
-        user = super().update(instance, validated_data)
         if password:
-            user.set_password(password)
-            user.save()
-        return user
+            from django.contrib.auth.hashers import make_password
+            validated_data["password"] = make_password(password)
+        return super().update(instance, validated_data)
 
 
 class ProfileSerializer(serializers.ModelSerializer):
     current_month_kpi = serializers.SerializerMethodField()
+    role_info = RoleShortSerializer(source="role", read_only=True)
+    branch_info = BranchSerializer(source="branch", read_only=True)
+    department_info = DepartmentShortSerializer(source="department", read_only=True)
+    position_info = PositionShortSerializer(source="position", read_only=True)
 
     class Meta:
         model = User
@@ -126,10 +161,10 @@ class ProfileSerializer(serializers.ModelSerializer):
             "jshshir",
             "phone",
             "face_image",
-            "branch",
-            "department",
-            "position",
-            "role",
+            "branch_info",
+            "department_info",
+            "position_info",
+            "role_info",
             "current_month_kpi",
             "created_at",
             "updated_at",
@@ -138,10 +173,6 @@ class ProfileSerializer(serializers.ModelSerializer):
             "id",
             "full_name",
             "jshshir",
-            "branch",
-            "department",
-            "position",
-            "role",
             "current_month_kpi",
             "created_at",
             "updated_at",
@@ -232,3 +263,21 @@ class ChangePasswordSerializer(serializers.Serializer):
 
 class FaceVerificationSerializer(serializers.Serializer):
     image = serializers.ImageField(required=True, label="Selfie rasm")
+
+
+class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
+    @classmethod
+    def get_token(cls, user):
+        token = super().get_token(user)
+
+        token["full_name"] = user.full_name
+        token["role"] = user.role.name if user.role else None
+
+        if user.role:
+            token["permissions"] = list(
+                user.role.permissions.values_list("code", flat=True)
+            )
+        else:
+            token["permissions"] = []
+
+        return token
