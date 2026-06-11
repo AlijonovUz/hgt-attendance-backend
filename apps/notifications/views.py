@@ -32,7 +32,7 @@ class NotificationListView(generics.ListAPIView):
     serializer_class = NotificationSerializer
     permission_classes = [permissions.IsAuthenticated]
     filter_backends = [DjangoFilterBackend]
-    filterset_fields = ['type', 'is_read']
+    filterset_fields = ['is_read']
 
     def get_queryset(self):
         return super().get_queryset().filter(user=self.request.user)
