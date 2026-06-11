@@ -141,6 +141,9 @@ AUTH_PASSWORD_VALIDATORS = [
     {
         'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
     },
+    {
+        'NAME': 'apps.utils.validators.ComplexPasswordValidator',
+    },
 ]
 
 # Internationalization
@@ -193,6 +196,7 @@ REST_FRAMEWORK = {
     'DEFAULT_THROTTLE_RATES': {
         'anon': '60/minute',
         'user': '60/minute',
+        'login': '5/15m',
     }
 }
 

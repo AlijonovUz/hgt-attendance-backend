@@ -1,5 +1,7 @@
 from rest_framework import serializers
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
+from django.contrib.auth.password_validation import validate_password
+from django.core.exceptions import ValidationError as DjangoValidationError
 
 from apps.utils.services import verify_face_image
 
@@ -87,6 +89,13 @@ class UserSerializer(serializers.ModelSerializer):
             if not is_valid:
                 raise serializers.ValidationError(msg)
             value.seek(0)
+        return value
+
+    def validate_password(self, value):
+        try:
+            validate_password(value)
+        except DjangoValidationError as e:
+            raise serializers.ValidationError(list(e.messages))
         return value
 
     def create(self, validated_data):
@@ -196,10 +205,10 @@ class ChangePasswordSerializer(serializers.Serializer):
         confirm_new_password = attrs.get("confirm_new_password")
         old_password = attrs.get("old_password")
 
-        if not new_password.isdigit():
-            raise serializers.ValidationError(
-                {"new_password": "Parol faqat raqamlardan iborat bo'lishi kerak."}
-            )
+        try:
+            validate_password(new_password, self.context["request"].user)
+        except DjangoValidationError as e:
+            raise serializers.ValidationError({"new_password": list(e.messages)})
 
         if new_password != confirm_new_password:
             raise serializers.ValidationError(
