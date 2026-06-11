@@ -9,7 +9,7 @@ from .models import AuditLog
 from .serializers import AuditLogSerializer
 
 
-@extend_schema(tags=["Audit Logs"])
+@extend_schema(tags=["Audit jurnallari"])
 class AuditLogViewSet(BaseManageViewSet):
     queryset = AuditLog.objects.select_related("user").all()
     serializer_class = AuditLogSerializer

@@ -14,7 +14,7 @@ from .serializers import (
 )
 
 
-@extend_schema(tags=["Geozonalar (Geozones)"])
+@extend_schema(tags=["Geozonalar"])
 class GeozoneViewSet(BaseManageViewSet):
     queryset = Geozone.objects.select_related("branch").filter(is_active=True)
     serializer_class = GeozoneSerializer
@@ -29,7 +29,7 @@ class GeozoneViewSet(BaseManageViewSet):
     }
 
 
-@extend_schema(tags=["Davomat (Attendance)"])
+@extend_schema(tags=["Davomat"])
 class AttendanceViewSet(BaseManageViewSet):
     queryset = Attendance.objects.none()
     filter_backends = [

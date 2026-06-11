@@ -5,7 +5,7 @@ from .views import (WebSocketTicketView, NotificationListView, NotificationCount
                     UserDeviceRegisterView)
 
 urlpatterns = [
-    path('notifications/tickets/', WebSocketTicketView.as_view(), name='websocket_tickets'),
+    path('tickets/', WebSocketTicketView.as_view(), name='websocket_tickets'),
 
     path('notifications/', NotificationListView.as_view(), name='notifications'),
     path('notifications/count/', NotificationCountView.as_view(), name='notifications-count'),
