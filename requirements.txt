@@ -18,3 +18,4 @@ black==26.5.1
 isort==8.0.1
 autoflake==2.3.3
 daphne==4.2.2
+tf-keras==2.21.0
