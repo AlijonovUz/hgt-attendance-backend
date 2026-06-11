@@ -12,9 +12,11 @@ https://docs.djangoproject.com/en/6.0/ref/settings/
 
 import os
 import environ
-from celery.schedules import crontab
 from datetime import timedelta
 from pathlib import Path
+
+import firebase_admin
+from firebase_admin import credentials
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -45,6 +47,7 @@ CORS_ALLOW_ALL_ORIGINS = env.bool('CORS_ALLOW_ALL_ORIGINS', default=False)
 # Application definition
 
 DJANGO_APPS = [
+    'daphne',
     'unfold',
     'django.contrib.admin',
     'django.contrib.auth',
@@ -55,6 +58,7 @@ DJANGO_APPS = [
 ]
 
 THIRD_PARTY_APPS = [
+    'channels',
     'storages',
 
     'rest_framework',
@@ -103,6 +107,17 @@ TEMPLATES = [
         },
     },
 ]
+
+ASGI_APPLICATION = 'config.asgi.application'
+
+CHANNEL_LAYERS = {
+    "default": {
+        "BACKEND": "channels_redis.core.RedisChannelLayer",
+        "CONFIG": {
+            "hosts": [env('CELERY_BROKER_URL', default='redis://127.0.0.1:6379/1')],
+        },
+    },
+}
 
 WSGI_APPLICATION = 'config.wsgi.application'
 
@@ -252,3 +267,11 @@ CELERY_TIMEZONE = TIME_ZONE
 CELERY_ACCEPT_CONTENT = ['application/json']
 CELERY_RESULT_SERIALIZER = 'json'
 CELERY_TASK_SERIALIZER = 'json'
+
+# Firebase Configuration
+FIREBASE_CREDENTIALS_PATH = env.str('FIREBASE_CREDENTIALS_PATH', default=str(BASE_DIR / 'firebase-credentials.json'))
+
+if FIREBASE_CREDENTIALS_PATH and os.path.exists(FIREBASE_CREDENTIALS_PATH):
+    if not firebase_admin._apps:
+        cred = credentials.Certificate(FIREBASE_CREDENTIALS_PATH)
+        firebase_admin.initialize_app(cred)
