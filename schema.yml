@@ -1,0 +1,2780 @@
+openapi: 3.0.3
+info:
+  title: HGT-Attendance API
+  version: 1.0.0
+paths:
+  /api/v1/attendance/attendance/:
+    get:
+      operationId: v1_attendance_attendance_list
+      parameters:
+      - in: query
+        name: date_from
+        schema:
+          type: string
+          format: date-time
+      - in: query
+        name: date_to
+        schema:
+          type: string
+          format: date-time
+      - in: query
+        name: event_type
+        schema:
+          type: string
+          title: Hodisa turi
+          enum:
+          - check_in
+          - check_out
+          - lunch_end
+          - lunch_start
+        description: |-
+          * `check_in` - Kelish
+          * `lunch_start` - Tushlikka chiqish
+          * `lunch_end` - Tushlikdan qaytish
+          * `check_out` - Ketish
+      - in: query
+        name: face_verify
+        schema:
+          type: boolean
+      - name: ordering
+        required: false
+        in: query
+        description: Which field to use when ordering the results.
+        schema:
+          type: string
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: search
+        required: false
+        in: query
+        description: A search term.
+        schema:
+          type: string
+      - in: query
+        name: user
+        schema:
+          type: string
+          format: uuid
+      - in: query
+        name: user__branch
+        schema:
+          type: string
+          format: uuid
+      - in: query
+        name: user__department
+        schema:
+          type: string
+          format: uuid
+      tags:
+      - Davomat (Attendance)
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedAttendanceListList'
+          description: ''
+    post:
+      operationId: v1_attendance_attendance_create
+      tags:
+      - Davomat (Attendance)
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AttendanceCreate'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/AttendanceCreate'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/AttendanceCreate'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AttendanceCreate'
+          description: ''
+  /api/v1/attendance/attendance/{id}/:
+    get:
+      operationId: v1_attendance_attendance_retrieve
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this Davomat hodisasi.
+        required: true
+      tags:
+      - Davomat (Attendance)
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AttendanceList'
+          description: ''
+  /api/v1/attendance/geozones/:
+    get:
+      operationId: v1_attendance_geozones_list
+      parameters:
+      - in: query
+        name: branch
+        schema:
+          type: string
+          format: uuid
+      - in: query
+        name: is_active
+        schema:
+          type: boolean
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: search
+        required: false
+        in: query
+        description: A search term.
+        schema:
+          type: string
+      tags:
+      - Geozonalar (Geozones)
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedGeozoneList'
+          description: ''
+    post:
+      operationId: v1_attendance_geozones_create
+      tags:
+      - Geozonalar (Geozones)
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Geozone'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Geozone'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Geozone'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Geozone'
+          description: ''
+  /api/v1/attendance/geozones/{id}/:
+    get:
+      operationId: v1_attendance_geozones_retrieve
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this Geozona.
+        required: true
+      tags:
+      - Geozonalar (Geozones)
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Geozone'
+          description: ''
+    put:
+      operationId: v1_attendance_geozones_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this Geozona.
+        required: true
+      tags:
+      - Geozonalar (Geozones)
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Geozone'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Geozone'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Geozone'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Geozone'
+          description: ''
+    patch:
+      operationId: v1_attendance_geozones_partial_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this Geozona.
+        required: true
+      tags:
+      - Geozonalar (Geozones)
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedGeozone'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedGeozone'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedGeozone'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Geozone'
+          description: ''
+    delete:
+      operationId: v1_attendance_geozones_destroy
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this Geozona.
+        required: true
+      tags:
+      - Geozonalar (Geozones)
+      security:
+      - jwtAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/v1/audit/logs/:
+    get:
+      operationId: v1_audit_logs_list
+      parameters:
+      - in: query
+        name: action
+        schema:
+          type: string
+          title: Harakat turi
+          enum:
+          - create
+          - delete
+          - update
+        description: |-
+          * `create` - Yaratildi
+          * `update` - Yangilandi
+          * `delete` - O'chirildi
+      - in: query
+        name: date_from
+        schema:
+          type: string
+          format: date-time
+      - in: query
+        name: date_to
+        schema:
+          type: string
+          format: date-time
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: search
+        required: false
+        in: query
+        description: A search term.
+        schema:
+          type: string
+      - in: query
+        name: table_name
+        schema:
+          type: string
+      - in: query
+        name: user
+        schema:
+          type: string
+          format: uuid
+      tags:
+      - Audit Logs
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedAuditLogList'
+          description: ''
+  /api/v1/audit/logs/{id}/:
+    get:
+      operationId: v1_audit_logs_retrieve
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this Audit log.
+        required: true
+      tags:
+      - Audit Logs
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuditLog'
+          description: ''
+  /api/v1/notifications/devices/register/:
+    post:
+      operationId: v1_notifications_devices_register_create
+      tags:
+      - Register User Device
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserDevice'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/UserDevice'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/UserDevice'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserDevice'
+          description: ''
+  /api/v1/notifications/notifications/:
+    get:
+      operationId: v1_notifications_notifications_list
+      parameters:
+      - in: query
+        name: is_read
+        schema:
+          type: boolean
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      tags:
+      - Notifications
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedNotificationList'
+          description: ''
+  /api/v1/notifications/notifications/{id}/read/:
+    patch:
+      operationId: v1_notifications_notifications_read_partial_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - Notifications
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/v1/notifications/notifications/count/:
+    get:
+      operationId: v1_notifications_notifications_count_retrieve
+      tags:
+      - Notifications
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/v1/notifications/notifications/read-all/:
+    post:
+      operationId: v1_notifications_notifications_read_all_create
+      tags:
+      - Notifications
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/v1/notifications/notifications/tickets/:
+    post:
+      operationId: v1_notifications_notifications_tickets_create
+      tags:
+      - Notifications
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/v1/users/auth/change-password/:
+    put:
+      operationId: v1_users_auth_change_password_update
+      tags:
+      - Profile
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ChangePassword'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ChangePassword'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/ChangePassword'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ChangePassword'
+          description: ''
+  /api/v1/users/auth/login/:
+    post:
+      operationId: v1_users_auth_login_create
+      description: |-
+        Takes a set of user credentials and returns an access and refresh JSON web
+        token pair to prove the authentication of those credentials.
+      tags:
+      - Auth
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CustomTokenObtainPair'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/CustomTokenObtainPair'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/CustomTokenObtainPair'
+        required: true
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CustomTokenObtainPair'
+          description: ''
+  /api/v1/users/auth/profile/:
+    get:
+      operationId: v1_users_auth_profile_retrieve
+      tags:
+      - Profile
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Profile'
+          description: ''
+    patch:
+      operationId: v1_users_auth_profile_partial_update
+      tags:
+      - Profile
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedProfile'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedProfile'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedProfile'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Profile'
+          description: ''
+  /api/v1/users/auth/refresh/:
+    post:
+      operationId: v1_users_auth_refresh_create
+      description: |-
+        Takes a refresh type JSON web token and returns an access type JSON web
+        token if the refresh token is valid.
+      tags:
+      - Auth
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TokenRefresh'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/TokenRefresh'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/TokenRefresh'
+        required: true
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TokenRefresh'
+          description: ''
+  /api/v1/users/auth/verify-face/:
+    post:
+      operationId: v1_users_auth_verify_face_create
+      tags:
+      - Profile
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FaceVerification'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/FaceVerification'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/FaceVerification'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/v1/users/branches/:
+    get:
+      operationId: v1_users_branches_list
+      parameters:
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: search
+        required: false
+        in: query
+        description: A search term.
+        schema:
+          type: string
+      tags:
+      - Filiallar (Branches)
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedBranchList'
+          description: ''
+    post:
+      operationId: v1_users_branches_create
+      tags:
+      - Filiallar (Branches)
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Branch'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Branch'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Branch'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Branch'
+          description: ''
+  /api/v1/users/branches/{id}/:
+    get:
+      operationId: v1_users_branches_retrieve
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this Filial.
+        required: true
+      tags:
+      - Filiallar (Branches)
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Branch'
+          description: ''
+    put:
+      operationId: v1_users_branches_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this Filial.
+        required: true
+      tags:
+      - Filiallar (Branches)
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Branch'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Branch'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Branch'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Branch'
+          description: ''
+    patch:
+      operationId: v1_users_branches_partial_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this Filial.
+        required: true
+      tags:
+      - Filiallar (Branches)
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedBranch'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedBranch'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedBranch'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Branch'
+          description: ''
+    delete:
+      operationId: v1_users_branches_destroy
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this Filial.
+        required: true
+      tags:
+      - Filiallar (Branches)
+      security:
+      - jwtAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/v1/users/departments/:
+    get:
+      operationId: v1_users_departments_list
+      parameters:
+      - in: query
+        name: branch
+        schema:
+          type: string
+          format: uuid
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: search
+        required: false
+        in: query
+        description: A search term.
+        schema:
+          type: string
+      tags:
+      - Bo'limlar (Departments)
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedDepartmentList'
+          description: ''
+    post:
+      operationId: v1_users_departments_create
+      tags:
+      - Bo'limlar (Departments)
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Department'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Department'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Department'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Department'
+          description: ''
+  /api/v1/users/departments/{id}/:
+    get:
+      operationId: v1_users_departments_retrieve
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this Bo'lim.
+        required: true
+      tags:
+      - Bo'limlar (Departments)
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Department'
+          description: ''
+    put:
+      operationId: v1_users_departments_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this Bo'lim.
+        required: true
+      tags:
+      - Bo'limlar (Departments)
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Department'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Department'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Department'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Department'
+          description: ''
+    patch:
+      operationId: v1_users_departments_partial_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this Bo'lim.
+        required: true
+      tags:
+      - Bo'limlar (Departments)
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedDepartment'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedDepartment'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedDepartment'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Department'
+          description: ''
+    delete:
+      operationId: v1_users_departments_destroy
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this Bo'lim.
+        required: true
+      tags:
+      - Bo'limlar (Departments)
+      security:
+      - jwtAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/v1/users/employees/:
+    get:
+      operationId: v1_users_employees_list
+      parameters:
+      - in: query
+        name: branch
+        schema:
+          type: string
+          format: uuid
+      - in: query
+        name: department
+        schema:
+          type: string
+          format: uuid
+      - in: query
+        name: is_active
+        schema:
+          type: boolean
+      - in: query
+        name: is_fired
+        schema:
+          type: boolean
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - in: query
+        name: position
+        schema:
+          type: string
+          format: uuid
+      - in: query
+        name: role
+        schema:
+          type: string
+          format: uuid
+      - name: search
+        required: false
+        in: query
+        description: A search term.
+        schema:
+          type: string
+      tags:
+      - Xodimlar (Employees)
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedUserList'
+          description: ''
+    post:
+      operationId: v1_users_employees_create
+      tags:
+      - Xodimlar (Employees)
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/User'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/User'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/User'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+          description: ''
+  /api/v1/users/employees/{id}/:
+    get:
+      operationId: v1_users_employees_retrieve
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this Foydalanuvchi.
+        required: true
+      tags:
+      - Xodimlar (Employees)
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+          description: ''
+    put:
+      operationId: v1_users_employees_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this Foydalanuvchi.
+        required: true
+      tags:
+      - Xodimlar (Employees)
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/User'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/User'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/User'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+          description: ''
+    patch:
+      operationId: v1_users_employees_partial_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this Foydalanuvchi.
+        required: true
+      tags:
+      - Xodimlar (Employees)
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedUser'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedUser'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedUser'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+          description: ''
+    delete:
+      operationId: v1_users_employees_destroy
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this Foydalanuvchi.
+        required: true
+      tags:
+      - Xodimlar (Employees)
+      security:
+      - jwtAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/v1/users/employees/{id}/block/:
+    post:
+      operationId: v1_users_employees_block_create
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this Foydalanuvchi.
+        required: true
+      tags:
+      - Xodimlar (Employees)
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+          description: ''
+  /api/v1/users/employees/{id}/fire/:
+    post:
+      operationId: v1_users_employees_fire_create
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this Foydalanuvchi.
+        required: true
+      tags:
+      - Xodimlar (Employees)
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+          description: ''
+  /api/v1/users/employees/{id}/unblock/:
+    post:
+      operationId: v1_users_employees_unblock_create
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this Foydalanuvchi.
+        required: true
+      tags:
+      - Xodimlar (Employees)
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+          description: ''
+  /api/v1/users/permissions/:
+    get:
+      operationId: v1_users_permissions_list
+      parameters:
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: search
+        required: false
+        in: query
+        description: A search term.
+        schema:
+          type: string
+      tags:
+      - Ruxsatlar (Permissions)
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedPermissionList'
+          description: ''
+  /api/v1/users/permissions/{id}/:
+    get:
+      operationId: v1_users_permissions_retrieve
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this Ruxsat (Permission).
+        required: true
+      tags:
+      - Ruxsatlar (Permissions)
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Permission'
+          description: ''
+  /api/v1/users/positions/:
+    get:
+      operationId: v1_users_positions_list
+      parameters:
+      - in: query
+        name: department
+        schema:
+          type: string
+          format: uuid
+      - in: query
+        name: department__branch
+        schema:
+          type: string
+          format: uuid
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: search
+        required: false
+        in: query
+        description: A search term.
+        schema:
+          type: string
+      tags:
+      - Lavozimlar (Positions)
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedPositionList'
+          description: ''
+    post:
+      operationId: v1_users_positions_create
+      tags:
+      - Lavozimlar (Positions)
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Position'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Position'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Position'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Position'
+          description: ''
+  /api/v1/users/positions/{id}/:
+    get:
+      operationId: v1_users_positions_retrieve
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this Lavozim.
+        required: true
+      tags:
+      - Lavozimlar (Positions)
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Position'
+          description: ''
+    put:
+      operationId: v1_users_positions_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this Lavozim.
+        required: true
+      tags:
+      - Lavozimlar (Positions)
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Position'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Position'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Position'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Position'
+          description: ''
+    patch:
+      operationId: v1_users_positions_partial_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this Lavozim.
+        required: true
+      tags:
+      - Lavozimlar (Positions)
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedPosition'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedPosition'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedPosition'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Position'
+          description: ''
+    delete:
+      operationId: v1_users_positions_destroy
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this Lavozim.
+        required: true
+      tags:
+      - Lavozimlar (Positions)
+      security:
+      - jwtAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/v1/users/roles/:
+    get:
+      operationId: v1_users_roles_list
+      parameters:
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: search
+        required: false
+        in: query
+        description: A search term.
+        schema:
+          type: string
+      tags:
+      - Rollar (Roles)
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedRoleList'
+          description: ''
+    post:
+      operationId: v1_users_roles_create
+      tags:
+      - Rollar (Roles)
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Role'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Role'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Role'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Role'
+          description: ''
+  /api/v1/users/roles/{id}/:
+    get:
+      operationId: v1_users_roles_retrieve
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this Rol.
+        required: true
+      tags:
+      - Rollar (Roles)
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Role'
+          description: ''
+    put:
+      operationId: v1_users_roles_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this Rol.
+        required: true
+      tags:
+      - Rollar (Roles)
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Role'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Role'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Role'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Role'
+          description: ''
+    patch:
+      operationId: v1_users_roles_partial_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this Rol.
+        required: true
+      tags:
+      - Rollar (Roles)
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedRole'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedRole'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedRole'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Role'
+          description: ''
+    delete:
+      operationId: v1_users_roles_destroy
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this Rol.
+        required: true
+      tags:
+      - Rollar (Roles)
+      security:
+      - jwtAuth: []
+      responses:
+        '204':
+          description: No response body
+components:
+  schemas:
+    ActionEnum:
+      enum:
+      - create
+      - update
+      - delete
+      type: string
+      description: |-
+        * `create` - Yaratildi
+        * `update` - Yangilandi
+        * `delete` - O'chirildi
+    AttendanceCreate:
+      type: object
+      properties:
+        event_type:
+          allOf:
+          - $ref: '#/components/schemas/EventTypeEnum'
+          title: Hodisa turi
+        gps_latitude:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,3}(?:\.\d{0,7})?$
+          nullable: true
+          title: Kenglik (Latitude)
+        gps_longitude:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,3}(?:\.\d{0,7})?$
+          nullable: true
+          title: Uzunlik (Longitude)
+        image:
+          type: string
+          format: uri
+          writeOnly: true
+          title: Yuzni tekshirish uchun rasm
+      required:
+      - event_type
+      - image
+    AttendanceList:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        user:
+          type: string
+          format: uuid
+          writeOnly: true
+          title: Xodim
+        user_info:
+          allOf:
+          - $ref: '#/components/schemas/UserShortInfo'
+          readOnly: true
+        event_type:
+          allOf:
+          - $ref: '#/components/schemas/EventTypeEnum'
+          title: Hodisa turi
+        gps_latitude:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,3}(?:\.\d{0,7})?$
+          nullable: true
+          title: Kenglik (Latitude)
+        gps_longitude:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,3}(?:\.\d{0,7})?$
+          nullable: true
+          title: Uzunlik (Longitude)
+        face_verify:
+          type: boolean
+          title: Face ID tasdiqlandi
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+          title: Yaratilgan vaqti
+      required:
+      - created_at
+      - event_type
+      - id
+      - user
+      - user_info
+    AuditLog:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        user:
+          type: string
+          format: uuid
+          nullable: true
+          title: Foydalanuvchi
+        user_full_name:
+          type: string
+          readOnly: true
+        action:
+          allOf:
+          - $ref: '#/components/schemas/ActionEnum'
+          title: Harakat turi
+        action_display:
+          type: string
+          readOnly: true
+        table_name:
+          type: string
+          title: Jadval (Model) nomi
+          maxLength: 100
+        record_id:
+          type: string
+          title: Yozuv ID
+          maxLength: 255
+        object_name:
+          type: string
+          nullable: true
+          title: Obyekt nomi
+          maxLength: 255
+        old_values:
+          nullable: true
+          title: Eski qiymatlar
+        new_values:
+          nullable: true
+          title: Yangi qiymatlar
+        ip_address:
+          type: string
+          nullable: true
+          title: IP Manzil
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - action
+      - action_display
+      - created_at
+      - id
+      - record_id
+      - table_name
+      - user_full_name
+    Branch:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        name:
+          type: string
+          title: Filial nomi
+          maxLength: 255
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+          title: Yaratilgan vaqti
+      required:
+      - created_at
+      - id
+      - name
+    ChangePassword:
+      type: object
+      properties:
+        old_password:
+          type: string
+          writeOnly: true
+        new_password:
+          type: string
+          writeOnly: true
+          minLength: 8
+        confirm_new_password:
+          type: string
+          writeOnly: true
+      required:
+      - confirm_new_password
+      - new_password
+      - old_password
+    CustomTokenObtainPair:
+      type: object
+      properties:
+        full_name:
+          type: string
+          writeOnly: true
+        password:
+          type: string
+          writeOnly: true
+      required:
+      - full_name
+      - password
+    Department:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        name:
+          type: string
+          title: Bo'lim nomi
+          maxLength: 255
+        branch_info:
+          allOf:
+          - $ref: '#/components/schemas/Branch'
+          readOnly: true
+        branch:
+          type: string
+          format: uuid
+          writeOnly: true
+          title: Filial
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+          title: Yaratilgan vaqti
+      required:
+      - branch
+      - branch_info
+      - created_at
+      - id
+      - name
+    DepartmentShort:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        name:
+          type: string
+          title: Bo'lim nomi
+          maxLength: 255
+      required:
+      - id
+      - name
+    DeviceTypeEnum:
+      enum:
+      - ios
+      - android
+      - web
+      type: string
+      description: |-
+        * `ios` - iOS
+        * `android` - Android
+        * `web` - Web
+    EventTypeEnum:
+      enum:
+      - check_in
+      - lunch_start
+      - lunch_end
+      - check_out
+      type: string
+      description: |-
+        * `check_in` - Kelish
+        * `lunch_start` - Tushlikka chiqish
+        * `lunch_end` - Tushlikdan qaytish
+        * `check_out` - Ketish
+    FaceVerification:
+      type: object
+      properties:
+        image:
+          type: string
+          format: uri
+          title: Selfie rasm
+      required:
+      - image
+    Geozone:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+          title: Yaratilgan vaqti
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+          title: Yangilangan vaqti
+        name:
+          type: string
+          title: Geozona nomi
+          maxLength: 255
+        zone_type:
+          allOf:
+          - $ref: '#/components/schemas/ZoneTypeEnum'
+          title: Geozona turi
+        latitude:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,3}(?:\.\d{0,7})?$
+          title: Kenglik (Latitude)
+        longitude:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,3}(?:\.\d{0,7})?$
+          title: Uzunlik (Longitude)
+        radius:
+          type: integer
+          maximum: 2147483647
+          minimum: 0
+          title: Radius (metr)
+        branch:
+          type: string
+          format: uuid
+          nullable: true
+          title: Filial
+      required:
+      - created_at
+      - id
+      - latitude
+      - longitude
+      - name
+      - updated_at
+    Notification:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        title:
+          type: string
+          title: Sarlavha
+          maxLength: 255
+        message:
+          type: string
+          title: Xabar matni
+        extra_data:
+          nullable: true
+          title: Qo'shimcha ma'lumot
+        is_read:
+          type: boolean
+          title: O'qilganmi?
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+          title: Yaratilgan vaqti
+      required:
+      - created_at
+      - id
+      - message
+      - title
+    PaginatedAttendanceListList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/AttendanceList'
+    PaginatedAuditLogList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/AuditLog'
+    PaginatedBranchList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/Branch'
+    PaginatedDepartmentList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/Department'
+    PaginatedGeozoneList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/Geozone'
+    PaginatedNotificationList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/Notification'
+    PaginatedPermissionList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/Permission'
+    PaginatedPositionList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/Position'
+    PaginatedRoleList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/Role'
+    PaginatedUserList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/User'
+    PatchedBranch:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        name:
+          type: string
+          title: Filial nomi
+          maxLength: 255
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+          title: Yaratilgan vaqti
+    PatchedDepartment:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        name:
+          type: string
+          title: Bo'lim nomi
+          maxLength: 255
+        branch_info:
+          allOf:
+          - $ref: '#/components/schemas/Branch'
+          readOnly: true
+        branch:
+          type: string
+          format: uuid
+          writeOnly: true
+          title: Filial
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+          title: Yaratilgan vaqti
+    PatchedGeozone:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+          title: Yaratilgan vaqti
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+          title: Yangilangan vaqti
+        name:
+          type: string
+          title: Geozona nomi
+          maxLength: 255
+        zone_type:
+          allOf:
+          - $ref: '#/components/schemas/ZoneTypeEnum'
+          title: Geozona turi
+        latitude:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,3}(?:\.\d{0,7})?$
+          title: Kenglik (Latitude)
+        longitude:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,3}(?:\.\d{0,7})?$
+          title: Uzunlik (Longitude)
+        radius:
+          type: integer
+          maximum: 2147483647
+          minimum: 0
+          title: Radius (metr)
+        branch:
+          type: string
+          format: uuid
+          nullable: true
+          title: Filial
+    PatchedPosition:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        name:
+          type: string
+          title: Lavozim nomi
+          maxLength: 255
+        department_info:
+          allOf:
+          - $ref: '#/components/schemas/Department'
+          readOnly: true
+        department:
+          type: string
+          format: uuid
+          writeOnly: true
+          title: Bo'lim
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+          title: Yaratilgan vaqti
+    PatchedProfile:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        full_name:
+          type: string
+          readOnly: true
+          title: F.I.Sh
+        jshshir:
+          type: string
+          readOnly: true
+          nullable: true
+        phone:
+          type: string
+          nullable: true
+          title: Telefon
+          pattern: ^\+998\d{9}$
+          maxLength: 13
+        face_image:
+          type: string
+          format: uri
+          nullable: true
+          title: Face ID rasm
+        branch_info:
+          allOf:
+          - $ref: '#/components/schemas/Branch'
+          readOnly: true
+        department_info:
+          allOf:
+          - $ref: '#/components/schemas/DepartmentShort'
+          readOnly: true
+        position_info:
+          allOf:
+          - $ref: '#/components/schemas/PositionShort'
+          readOnly: true
+        role_info:
+          allOf:
+          - $ref: '#/components/schemas/RoleShort'
+          readOnly: true
+        current_month_kpi:
+          type: string
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+          title: Yaratilgan vaqti
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+          title: Yangilangan vaqti
+    PatchedRole:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        name:
+          type: string
+          title: Rol nomi
+          maxLength: 255
+        permissions_info:
+          type: array
+          items:
+            $ref: '#/components/schemas/Permission'
+          readOnly: true
+        permissions:
+          type: array
+          items:
+            type: string
+            format: uuid
+            writeOnly: true
+            title: Ruxsatlar
+          writeOnly: true
+          title: Ruxsatlar
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+          title: Yaratilgan vaqti
+    PatchedUser:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        full_name:
+          type: string
+          title: F.I.Sh
+          maxLength: 255
+        password:
+          type: string
+          writeOnly: true
+          title: Parol
+          maxLength: 128
+        jshshir:
+          type: string
+          nullable: true
+          maxLength: 14
+        phone:
+          type: string
+          nullable: true
+          title: Telefon
+          pattern: ^\+998\d{9}$
+          maxLength: 13
+        face_image:
+          type: string
+          format: uri
+          nullable: true
+          title: Face ID rasm
+        branch:
+          type: string
+          format: uuid
+          writeOnly: true
+          nullable: true
+          title: Filial
+        branch_info:
+          allOf:
+          - $ref: '#/components/schemas/Branch'
+          readOnly: true
+        department:
+          type: string
+          format: uuid
+          writeOnly: true
+          nullable: true
+          title: Bo'lim
+        department_info:
+          allOf:
+          - $ref: '#/components/schemas/DepartmentShort'
+          readOnly: true
+        position:
+          type: string
+          format: uuid
+          writeOnly: true
+          nullable: true
+          title: Lavozim
+        position_info:
+          allOf:
+          - $ref: '#/components/schemas/PositionShort'
+          readOnly: true
+        role:
+          type: string
+          format: uuid
+          writeOnly: true
+          nullable: true
+          title: Rol
+        role_info:
+          allOf:
+          - $ref: '#/components/schemas/RoleShort'
+          readOnly: true
+        is_active:
+          type: boolean
+          readOnly: true
+          title: Active
+          description: Designates whether this user should be treated as active. Unselect
+            this instead of deleting accounts.
+        is_fired:
+          type: boolean
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+          title: Yaratilgan vaqti
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+          title: Yangilangan vaqti
+    Permission:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        name:
+          type: string
+          title: Ruxsat nomi
+          maxLength: 255
+        code:
+          type: string
+          title: Ruxsat kodi
+          maxLength: 100
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+          title: Yaratilgan vaqti
+      required:
+      - code
+      - created_at
+      - id
+      - name
+    Position:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        name:
+          type: string
+          title: Lavozim nomi
+          maxLength: 255
+        department_info:
+          allOf:
+          - $ref: '#/components/schemas/Department'
+          readOnly: true
+        department:
+          type: string
+          format: uuid
+          writeOnly: true
+          title: Bo'lim
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+          title: Yaratilgan vaqti
+      required:
+      - created_at
+      - department
+      - department_info
+      - id
+      - name
+    PositionShort:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        name:
+          type: string
+          title: Lavozim nomi
+          maxLength: 255
+      required:
+      - id
+      - name
+    Profile:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        full_name:
+          type: string
+          readOnly: true
+          title: F.I.Sh
+        jshshir:
+          type: string
+          readOnly: true
+          nullable: true
+        phone:
+          type: string
+          nullable: true
+          title: Telefon
+          pattern: ^\+998\d{9}$
+          maxLength: 13
+        face_image:
+          type: string
+          format: uri
+          nullable: true
+          title: Face ID rasm
+        branch_info:
+          allOf:
+          - $ref: '#/components/schemas/Branch'
+          readOnly: true
+        department_info:
+          allOf:
+          - $ref: '#/components/schemas/DepartmentShort'
+          readOnly: true
+        position_info:
+          allOf:
+          - $ref: '#/components/schemas/PositionShort'
+          readOnly: true
+        role_info:
+          allOf:
+          - $ref: '#/components/schemas/RoleShort'
+          readOnly: true
+        current_month_kpi:
+          type: string
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+          title: Yaratilgan vaqti
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+          title: Yangilangan vaqti
+      required:
+      - branch_info
+      - created_at
+      - current_month_kpi
+      - department_info
+      - full_name
+      - id
+      - jshshir
+      - position_info
+      - role_info
+      - updated_at
+    Role:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        name:
+          type: string
+          title: Rol nomi
+          maxLength: 255
+        permissions_info:
+          type: array
+          items:
+            $ref: '#/components/schemas/Permission'
+          readOnly: true
+        permissions:
+          type: array
+          items:
+            type: string
+            format: uuid
+            writeOnly: true
+            title: Ruxsatlar
+          writeOnly: true
+          title: Ruxsatlar
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+          title: Yaratilgan vaqti
+      required:
+      - created_at
+      - id
+      - name
+      - permissions_info
+    RoleShort:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        name:
+          type: string
+          title: Rol nomi
+          maxLength: 255
+      required:
+      - id
+      - name
+    TokenRefresh:
+      type: object
+      properties:
+        access:
+          type: string
+          readOnly: true
+        refresh:
+          type: string
+          writeOnly: true
+      required:
+      - access
+      - refresh
+    User:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        full_name:
+          type: string
+          title: F.I.Sh
+          maxLength: 255
+        password:
+          type: string
+          writeOnly: true
+          title: Parol
+          maxLength: 128
+        jshshir:
+          type: string
+          nullable: true
+          maxLength: 14
+        phone:
+          type: string
+          nullable: true
+          title: Telefon
+          pattern: ^\+998\d{9}$
+          maxLength: 13
+        face_image:
+          type: string
+          format: uri
+          nullable: true
+          title: Face ID rasm
+        branch:
+          type: string
+          format: uuid
+          writeOnly: true
+          nullable: true
+          title: Filial
+        branch_info:
+          allOf:
+          - $ref: '#/components/schemas/Branch'
+          readOnly: true
+        department:
+          type: string
+          format: uuid
+          writeOnly: true
+          nullable: true
+          title: Bo'lim
+        department_info:
+          allOf:
+          - $ref: '#/components/schemas/DepartmentShort'
+          readOnly: true
+        position:
+          type: string
+          format: uuid
+          writeOnly: true
+          nullable: true
+          title: Lavozim
+        position_info:
+          allOf:
+          - $ref: '#/components/schemas/PositionShort'
+          readOnly: true
+        role:
+          type: string
+          format: uuid
+          writeOnly: true
+          nullable: true
+          title: Rol
+        role_info:
+          allOf:
+          - $ref: '#/components/schemas/RoleShort'
+          readOnly: true
+        is_active:
+          type: boolean
+          readOnly: true
+          title: Active
+          description: Designates whether this user should be treated as active. Unselect
+            this instead of deleting accounts.
+        is_fired:
+          type: boolean
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+          title: Yaratilgan vaqti
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+          title: Yangilangan vaqti
+      required:
+      - branch_info
+      - created_at
+      - department_info
+      - full_name
+      - id
+      - is_active
+      - is_fired
+      - position_info
+      - role_info
+      - updated_at
+    UserDevice:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        user:
+          type: string
+          format: uuid
+        fcm_token:
+          type: string
+        device_type:
+          $ref: '#/components/schemas/DeviceTypeEnum'
+        device_id:
+          type: string
+          maxLength: 255
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+          title: Yaratilgan vaqti
+      required:
+      - created_at
+      - device_id
+      - device_type
+      - fcm_token
+      - id
+      - user
+    UserShortInfo:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        full_name:
+          type: string
+          title: F.I.Sh
+          maxLength: 255
+        face_image:
+          type: string
+          format: uri
+          nullable: true
+          title: Face ID rasm
+      required:
+      - full_name
+      - id
+    ZoneTypeEnum:
+      enum:
+      - main_office
+      - region_branch
+      - district_branch
+      - special_object
+      - temp_object
+      type: string
+      description: |-
+        * `main_office` - Markaziy apparat
+        * `region_branch` - Viloyat filiali
+        * `district_branch` - Tuman bo'limi
+        * `special_object` - Maxsus obyekt
+        * `temp_object` - Vaqtinchalik obyekt
+  securitySchemes:
+    jwtAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT

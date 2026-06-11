@@ -31,6 +31,7 @@ class GeozoneViewSet(BaseManageViewSet):
 
 @extend_schema(tags=["Davomat (Attendance)"])
 class AttendanceViewSet(BaseManageViewSet):
+    queryset = Attendance.objects.none()
     filter_backends = [
         DjangoFilterBackend,
         filters.SearchFilter,
