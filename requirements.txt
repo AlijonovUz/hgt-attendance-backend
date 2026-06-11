@@ -1,4 +1,4 @@
-Django==6.0.5
+Django==5.2.5
 djangorestframework==3.17.1
 djangorestframework-simplejwt==5.5.1
 django-cors-headers==4.9.0
@@ -17,3 +17,5 @@ django-unfold==0.88.0
 black==26.5.1
 isort==8.0.1
 autoflake==2.3.3
+daphne==4.2.2
+tf-keras==2.21.0
