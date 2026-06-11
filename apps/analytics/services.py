@@ -16,7 +16,7 @@ def get_work_days(year, month):
         d = date(year, month, day)
         if d > today:
             break
-        if d.weekday() != 6:
+        if d.weekday() < 5:
             work_days += 1
 
     return work_days
