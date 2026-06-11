@@ -20,3 +20,5 @@ autoflake==2.3.3
 daphne==4.2.2
 tf-keras==2.21.0
 firebase-admin==6.5.0
+channels==4.3.2
+channels-redis==4.2.0

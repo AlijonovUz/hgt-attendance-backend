@@ -47,6 +47,7 @@ CORS_ALLOW_ALL_ORIGINS = env.bool('CORS_ALLOW_ALL_ORIGINS', default=False)
 # Application definition
 
 DJANGO_APPS = [
+    'daphne',
     'unfold',
     'django.contrib.admin',
     'django.contrib.auth',
@@ -57,6 +58,7 @@ DJANGO_APPS = [
 ]
 
 THIRD_PARTY_APPS = [
+    'channels',
     'storages',
 
     'rest_framework',
@@ -107,6 +109,16 @@ TEMPLATES = [
 ]
 
 ASGI_APPLICATION = 'config.asgi.application'
+
+CHANNEL_LAYERS = {
+    "default": {
+        "BACKEND": "channels_redis.core.RedisChannelLayer",
+        "CONFIG": {
+            "hosts": [env('CELERY_BROKER_URL', default='redis://127.0.0.1:6379/1')],
+        },
+    },
+}
+
 WSGI_APPLICATION = 'config.wsgi.application'
 
 AUTH_USER_MODEL = 'users.User'
