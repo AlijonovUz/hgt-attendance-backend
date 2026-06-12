@@ -13,6 +13,9 @@ from .views import (
     ProfileView,
     RoleViewSet,
     UserViewSet,
+    WeekDayViewSet,
+    HolidayViewSet,
+    WorkScheduleViewSet,
 )
 
 router = DefaultRouter()
@@ -22,6 +25,9 @@ router.register(r"roles", RoleViewSet, basename="roles")
 router.register(r"branches", BranchViewSet, basename="branches")
 router.register(r"departments", DepartmentViewSet, basename="departments")
 router.register(r"positions", PositionViewSet, basename="positions")
+router.register(r"weekdays", WeekDayViewSet, basename="weekdays")
+router.register(r"holidays", HolidayViewSet, basename="holidays")
+router.register(r"schedules", WorkScheduleViewSet, basename="schedules")
 
 urlpatterns = [
     path("auth/login/", CustomTokenObtainPairView.as_view(), name="token_obtain_pair"),

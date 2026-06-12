@@ -1,13 +1,25 @@
 from django.db.models.signals import post_migrate
 from django.dispatch import receiver
 
-from .models import Permission, Role
+from .models import Permission, Role, WeekDay
 
 
 @receiver(post_migrate)
 def auto_create_permissions_and_roles(sender, **kwargs):
     if sender.name != "apps.users":
         return
+
+    WEEKDAYS = [
+        (0, "Dushanba"),
+        (1, "Seshanba"),
+        (2, "Chorshanba"),
+        (3, "Payshanba"),
+        (4, "Juma"),
+        (5, "Shanba"),
+        (6, "Yakshanba"),
+    ]
+    for day_num, day_name in WEEKDAYS:
+        WeekDay.objects.get_or_create(day_number=day_num, defaults={"name": day_name})
 
     PERMISSIONS_LIST = [
         ("employee_add", "Xodim qo'shish"),
@@ -47,6 +59,14 @@ def auto_create_permissions_and_roles(sender, **kwargs):
         ("position_create", "Lavozim qo'shish"),
         ("position_edit", "Lavozim tahrirlash"),
         ("position_delete", "Lavozim o'chirish"),
+        ("schedule_create", "Ish grafigini qo'shish"),
+        ("schedule_edit", "Ish grafigini tahrirlash"),
+        ("schedule_delete", "Ish grafigini o'chirish"),
+        ("schedule_view", "Ish grafiklarini ko'rish"),
+        ("holiday_create", "Bayram qo'shish"),
+        ("holiday_edit", "Bayram tahrirlash"),
+        ("holiday_delete", "Bayram o'chirish"),
+        ("holiday_view", "Bayramlarni ko'rish"),
         ("role_create", "Rol qo'shish"),
         ("role_edit", "Rol tahrirlash"),
         ("role_delete", "Rol o'chirish"),
@@ -145,6 +165,14 @@ def auto_create_permissions_and_roles(sender, **kwargs):
             "position_create",
             "position_edit",
             "position_delete",
+            "schedule_create",
+            "schedule_edit",
+            "schedule_delete",
+            "schedule_view",
+            "holiday_create",
+            "holiday_edit",
+            "holiday_delete",
+            "holiday_view",
             "role_create",
             "role_edit",
             "role_delete",
