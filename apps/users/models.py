@@ -191,6 +191,9 @@ class User(AbstractUser):
         auto_now_add=True, db_index=True, verbose_name="Yaratilgan vaqti"
     )
     updated_at = models.DateTimeField(auto_now=True, verbose_name="Yangilangan vaqti")
+    is_password_changed = models.BooleanField(
+        default=False, verbose_name="Parol o'zgartirilganmi?"
+    )
 
     username = None
     USERNAME_FIELD = "full_name"
