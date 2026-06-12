@@ -89,7 +89,7 @@ class KPIResultViewSet(viewsets.ReadOnlyModelViewSet):
         parameters=[
             OpenApiParameter(
                 name="period",
-                description="Filtr (1_day, 1_month, 3_months, 6_months)",
+                description="Filtr oylarda (1, 3, 6). Kiritilmasa faqat bugun.",
                 required=False,
                 type=str,
             ),
@@ -123,11 +123,11 @@ class KPIResultViewSet(viewsets.ReadOnlyModelViewSet):
             except ValueError:
                 pass
         elif period:
-            if period == "1_month":
+            if period == "1":
                 start_date = end_date - timedelta(days=30)
-            elif period == "3_months":
+            elif period == "3":
                 start_date = end_date - timedelta(days=90)
-            elif period == "6_months":
+            elif period == "6":
                 start_date = end_date - timedelta(days=180)
 
         stats = DashboardService.get_dashboard_stats(
