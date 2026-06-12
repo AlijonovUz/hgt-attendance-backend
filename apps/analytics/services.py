@@ -1,3 +1,4 @@
+import logging
 import calendar
 from datetime import date, datetime, time
 from django.utils import timezone
@@ -5,6 +6,8 @@ from django.utils import timezone
 from apps.attendance.models import Attendance
 from apps.analytics.models import KPIResult
 from apps.users.models import User
+
+logger = logging.getLogger(__name__)
 
 
 class KPIService:
@@ -114,7 +117,7 @@ class KPIService:
         else:
             rating_category = KPIResult.RatingCategory.UNSATISFACTORY
 
-        kpi_result, _ = KPIResult.objects.update_or_create(
+        kpi_result, created = KPIResult.objects.update_or_create(
             user=user,
             month=date(year, month, 1),
             defaults={
@@ -132,6 +135,8 @@ class KPIService:
                 "rating_category": rating_category,
             },
         )
+        
+        logger.info("KPI hisoblandi: UserID=%s | Ball=%s | Kategoriya=%s", user.id, total_score, rating_category)
 
         return kpi_result
 
@@ -149,6 +154,7 @@ class DashboardService:
                 base_users = base_users.filter(department=user.department)
                 base_attendances = base_attendances.filter(user__department=user.department)
             else:
+                logger.warning("Dashboard: Ruxsat yo'q. UserID=%s", user.id)
                 return None
                 
         total_employees = base_users.count()
@@ -164,6 +170,8 @@ class DashboardService:
             event_type=Attendance.EventType.CHECK_OUT,
             created_at__time__lt=time(18, 0, 0)
         ).count()
+        
+        logger.debug("Dashboard stats: UserID=%s | Barchasi=%s | Keldi=%s", user.id, total_employees, today_check_ins)
         
         return {
             "total_employees": total_employees,
