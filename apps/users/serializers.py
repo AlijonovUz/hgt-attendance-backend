@@ -1,9 +1,15 @@
+from datetime import date
+from django.utils import timezone
+
 from rest_framework import serializers
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import ValidationError as DjangoValidationError
 
+from apps.analytics.models import KPIResult
+from apps.analytics.services import KPIService
 from apps.utils.services import verify_face_image
+
 from .models import Branch, Department, Permission, Position, Role, User
 
 
@@ -179,11 +185,6 @@ class ProfileSerializer(serializers.ModelSerializer):
         ]
 
     def get_current_month_kpi(self, obj):
-        from datetime import date
-        from django.utils import timezone
-        from apps.analytics.models import KPIResult
-        from apps.analytics.services import KPIService
-
         now = timezone.localtime()
         current_month = date(now.year, now.month, 1)
 
