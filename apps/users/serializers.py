@@ -182,7 +182,7 @@ class ProfileSerializer(serializers.ModelSerializer):
         from datetime import date
         from django.utils import timezone
         from apps.analytics.models import KPIResult
-        from apps.analytics.services import calculate_user_kpi
+        from apps.analytics.services import KPIService
 
         now = timezone.localtime()
         current_month = date(now.year, now.month, 1)
@@ -190,7 +190,7 @@ class ProfileSerializer(serializers.ModelSerializer):
         kpi_result = KPIResult.objects.filter(user=obj, month=current_month).first()
 
         if not kpi_result or kpi_result.updated_at.astimezone().date() < now.date():
-            kpi_result = calculate_user_kpi(obj, now.year, now.month)
+            kpi_result = KPIService.calculate_user_kpi(obj, now.year, now.month)
 
         if not kpi_result:
             return None
@@ -271,13 +271,18 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
         token = super().get_token(user)
 
         token["full_name"] = user.full_name
-        token["role"] = user.role.name if user.role else None
-
-        if user.role:
-            token["permissions"] = list(
-                user.role.permissions.values_list("code", flat=True)
-            )
-        else:
-            token["permissions"] = []
+        token["face_image"] = user.face_image.url if user.face_image else None
 
         return token
+
+    def validate(self, attrs):
+        data: dict = super().validate(attrs)
+        user = self.user
+
+        data["user"] = {
+            "id": user.id,
+            "full_name": user.full_name,
+            "face_image": user.face_image.url if user.face_image else None,
+        }
+
+        return data
