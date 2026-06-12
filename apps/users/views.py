@@ -12,7 +12,17 @@ from apps.utils.views import BaseManageViewSet
 from apps.utils.throttles import CustomScopedRateThrottle, ThrottleExceptionHandlerMixin
 
 from .filters import DepartmentFilter, PositionFilter, UserFilter
-from .models import Branch, Department, Permission, Position, Role, User
+from .models import (
+    Branch,
+    Department,
+    Permission,
+    Position,
+    Role,
+    User,
+    WeekDay,
+    Holiday,
+    WorkSchedule,
+)
 from apps.attendance.models import FaceLog
 from .serializers import (
     BranchSerializer,
@@ -25,6 +35,9 @@ from .serializers import (
     ProfileSerializer,
     RoleSerializer,
     UserSerializer,
+    WeekDaySerializer,
+    HolidaySerializer,
+    WorkScheduleSerializer,
 )
 
 logger = logging.getLogger(__name__)
@@ -34,22 +47,25 @@ logger = logging.getLogger(__name__)
 class CustomTokenObtainPairView(ThrottleExceptionHandlerMixin, TokenObtainPairView):
     serializer_class = CustomTokenObtainPairSerializer
     throttle_classes = [CustomScopedRateThrottle]
-    throttle_scope = 'login'
+    throttle_scope = "login"
 
     def post(self, request, *args, **kwargs):
         response = super().post(request, *args, **kwargs)
-        
+
         if response.status_code == 200:
-            logger.info("Foydalanuvchi tizimga kirdi: %s", request.data.get("username", "Noma'lum"))
+            logger.info(
+                "Foydalanuvchi tizimga kirdi: %s",
+                request.data.get("username", "Noma'lum"),
+            )
 
         for throttle in self.get_throttles():
-            if hasattr(throttle, 'get_cache_key') and hasattr(throttle, 'cache'):
-                if hasattr(throttle, 'scope_attr'):
+            if hasattr(throttle, "get_cache_key") and hasattr(throttle, "cache"):
+                if hasattr(throttle, "scope_attr"):
                     throttle.scope = getattr(self, throttle.scope_attr, None)
                 cache_key = throttle.get_cache_key(request, view=self)
                 if cache_key:
                     throttle.cache.delete(cache_key)
-                    
+
         return response
 
 
@@ -105,7 +121,9 @@ class FaceVerificationView(APIView):
         user = request.user
 
         if not user.face_image or not user.face_image.name:
-            logger.warning("Yuz tekshiruvi xatosi: Profil rasm yo'q. UserID=%s", user.id)
+            logger.warning(
+                "Yuz tekshiruvi xatosi: Profil rasm yo'q. UserID=%s", user.id
+            )
             return Response(
                 {
                     "detail": "Foydalanuvchi profilida yuz rasmi mavjud emas. Avval yuz rasm yuklang!"
@@ -115,11 +133,7 @@ class FaceVerificationView(APIView):
 
         is_verified, msg = hash_compare(user, uploaded_file)
 
-        FaceLog.objects.create(
-            user=user,
-            is_success=is_verified,
-            message=msg
-        )
+        FaceLog.objects.create(user=user, is_success=is_verified, message=msg)
 
         if is_verified:
             logger.info("Yuz tekshiruvi MUVAFFAQIYATLI: UserID=%s", user.id)
@@ -127,7 +141,11 @@ class FaceVerificationView(APIView):
                 {"message": msg, "verified": True}, status=status.HTTP_200_OK
             )
         else:
-            logger.warning("Yuz tekshiruvi DIQQAT (Muvaffaqiyatsiz): UserID=%s | Sabab=%s", user.id, msg)
+            logger.warning(
+                "Yuz tekshiruvi DIQQAT (Muvaffaqiyatsiz): UserID=%s | Sabab=%s",
+                user.id,
+                msg,
+            )
             return Response(
                 {"detail": msg, "verified": False}, status=status.HTTP_400_BAD_REQUEST
             )
@@ -244,7 +262,9 @@ class UserViewSet(BaseManageViewSet):
     def unblock(self, request, pk=None):
         user = self.get_object()
         if user.is_fired:
-            logger.warning("Bo'shatilgan xodimni blokdan chiqarishga urinish: ID=%s", user.id)
+            logger.warning(
+                "Bo'shatilgan xodimni blokdan chiqarishga urinish: ID=%s", user.id
+            )
             return Response(
                 {
                     "detail": "Ishdan bo'shatilgan xodimni blokdan chiqarish mumkin emas!"
@@ -268,7 +288,53 @@ class UserViewSet(BaseManageViewSet):
         user.is_active = False
         user.save()
 
-        logger.warning("Xodim ishdan bo'shatildi: ID=%s, Ism=%s", user.id, user.full_name)
+        logger.warning(
+            "Xodim ishdan bo'shatildi: ID=%s, Ism=%s", user.id, user.full_name
+        )
         return Response(
             {"detail": "Xodim ishdan bo'shatildi."}, status=status.HTTP_200_OK
         )
+
+
+@extend_schema(tags=["Hafta Kunlari"])
+class WeekDayViewSet(viewsets.ReadOnlyModelViewSet):
+    queryset = WeekDay.objects.all().order_by("day_number")
+    serializer_class = WeekDaySerializer
+    permission_classes = [permissions.IsAuthenticated]
+    pagination_class = None
+
+
+@extend_schema(tags=["Bayramlar"])
+class HolidayViewSet(BaseManageViewSet):
+    queryset = Holiday.objects.all().order_by("-start_date")
+    serializer_class = HolidaySerializer
+    filter_backends = [filters.SearchFilter]
+    search_fields = ["title"]
+
+    action_permissions = {
+        "create": "holiday_create",
+        "update": "holiday_edit",
+        "partial_update": "holiday_edit",
+        "destroy": "holiday_delete",
+        "list": "holiday_view",
+        "retrieve": "holiday_view",
+    }
+
+
+@extend_schema(tags=["Ish Grafiklari"])
+class WorkScheduleViewSet(BaseManageViewSet):
+    queryset = WorkSchedule.objects.prefetch_related(
+        "mandatory_days", "optional_days"
+    ).all()
+    serializer_class = WorkScheduleSerializer
+    filter_backends = [filters.SearchFilter]
+    search_fields = ["name"]
+
+    action_permissions = {
+        "create": "schedule_create",
+        "update": "schedule_edit",
+        "partial_update": "schedule_edit",
+        "destroy": "schedule_delete",
+        "list": "schedule_view",
+        "retrieve": "schedule_view",
+    }

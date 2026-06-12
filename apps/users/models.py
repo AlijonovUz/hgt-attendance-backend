@@ -1,4 +1,5 @@
 import uuid
+from datetime import time
 
 from django.contrib.auth.models import AbstractUser
 from django.db import models
@@ -80,6 +81,51 @@ class Position(BaseModel):
         return self.name
 
 
+class WeekDay(BaseModel):
+    name = models.CharField(max_length=50, verbose_name="Hafta kuni")
+    day_number = models.IntegerField(unique=True, verbose_name="Raqami (0-6)")
+
+    class Meta(BaseModel.Meta):
+        verbose_name = "Hafta kuni"
+        verbose_name_plural = "Hafta kunlari"
+        ordering = ["day_number"]
+
+    def __str__(self):
+        return self.name
+
+
+class Holiday(BaseModel):
+    title = models.CharField(max_length=255, verbose_name="Bayram nomi")
+    start_date = models.DateField(verbose_name="Boshlanish sanasi")
+    end_date = models.DateField(verbose_name="Tugash sanasi")
+
+    class Meta(BaseModel.Meta):
+        verbose_name = "Bayram / Qizil sana"
+        verbose_name_plural = "Bayramlar"
+        ordering = ["start_date"]
+
+    def __str__(self):
+        return self.title
+
+
+class WorkSchedule(BaseModel):
+    name = models.CharField(max_length=255, verbose_name="Jadval nomi")
+    work_start_time = models.TimeField(default=time(9, 0), verbose_name="Ish boshlanishi")
+    work_end_time = models.TimeField(default=time(18, 0), verbose_name="Ish tugashi")
+    lunch_start_time = models.TimeField(default=time(13, 0), verbose_name="Tushlik boshlanishi")
+    lunch_end_time = models.TimeField(default=time(14, 0), verbose_name="Tushlik tugashi")
+    
+    mandatory_days = models.ManyToManyField(WeekDay, related_name="mandatory_schedules", verbose_name="Majburiy kunlar")
+    optional_days = models.ManyToManyField(WeekDay, related_name="optional_schedules", blank=True, verbose_name="Ixtiyoriy kunlar")
+
+    class Meta(BaseModel.Meta):
+        verbose_name = "Ish grafigi"
+        verbose_name_plural = "Ish grafiklari"
+
+    def __str__(self):
+        return self.name
+
+
 class User(AbstractUser):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     full_name = models.CharField(max_length=255, unique=True, verbose_name="F.I.Sh")
@@ -131,6 +177,14 @@ class User(AbstractUser):
         blank=True,
         related_name="users",
         verbose_name="Rol",
+    )
+    schedule = models.ForeignKey(
+        WorkSchedule,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="users",
+        verbose_name="Ish grafigi",
     )
 
     created_at = models.DateTimeField(
