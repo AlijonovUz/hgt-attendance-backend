@@ -12,6 +12,7 @@ from apps.utils.throttles import CustomScopedRateThrottle
 
 from .filters import DepartmentFilter, PositionFilter, UserFilter
 from .models import Branch, Department, Permission, Position, Role, User
+from apps.attendance.models import FaceLog
 from .serializers import (
     BranchSerializer,
     ChangePasswordSerializer,
@@ -106,7 +107,6 @@ class FaceVerificationView(APIView):
 
         is_verified, msg = hash_compare(user, uploaded_file)
 
-        from apps.attendance.models import FaceLog
         FaceLog.objects.create(
             user=user,
             is_success=is_verified,
