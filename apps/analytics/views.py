@@ -35,6 +35,7 @@ class KPIResultViewSet(viewsets.ReadOnlyModelViewSet):
             OpenApiParameter(name="year", description="Yil", required=True, type=int),
             OpenApiParameter(name="month", description="Oy (1-12)", required=True, type=int),
         ],
+        request=None
     )
     @action(detail=False, methods=["post"], url_path="calculate-kpi")
     def calculate_kpi(self, request):
