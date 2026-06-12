@@ -11,7 +11,17 @@ from apps.analytics.models import KPIResult
 from apps.analytics.services import KPIService
 from apps.utils.face import verify_face_image
 
-from .models import Branch, Department, Permission, Position, Role, User
+from .models import (
+    Branch,
+    Department,
+    Permission,
+    Position,
+    Role,
+    User,
+    WeekDay,
+    Holiday,
+    WorkSchedule,
+)
 
 
 class PermissionSerializer(serializers.ModelSerializer):
@@ -27,14 +37,14 @@ class RoleShortSerializer(serializers.ModelSerializer):
 
 
 class RoleSerializer(serializers.ModelSerializer):
-    permissions_info = PermissionSerializer(source="permissions", read_only=True, many=True)
+    permissions_info = PermissionSerializer(
+        source="permissions", read_only=True, many=True
+    )
 
     class Meta:
         model = Role
         fields = ["id", "name", "permissions_info", "permissions", "created_at"]
-        extra_kwargs = {
-            "permissions": {"write_only": True}
-        }
+        extra_kwargs = {"permissions": {"write_only": True}}
 
 
 class BranchSerializer(serializers.ModelSerializer):
@@ -55,9 +65,7 @@ class DepartmentSerializer(serializers.ModelSerializer):
     class Meta:
         model = Department
         fields = ["id", "name", "branch_info", "branch", "created_at"]
-        extra_kwargs = {
-            "branch": {"write_only": True}
-        }
+        extra_kwargs = {"branch": {"write_only": True}}
 
 
 class PositionShortSerializer(serializers.ModelSerializer):
@@ -72,9 +80,7 @@ class PositionSerializer(serializers.ModelSerializer):
     class Meta:
         model = Position
         fields = ["id", "name", "department_info", "department", "created_at"]
-        extra_kwargs = {
-            "department": {"write_only": True}
-        }
+        extra_kwargs = {"department": {"write_only": True}}
 
 
 class UserShortInfoSerializer(serializers.ModelSerializer):
@@ -83,11 +89,58 @@ class UserShortInfoSerializer(serializers.ModelSerializer):
         fields = ["id", "full_name", "face_image"]
 
 
+class WeekDaySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = WeekDay
+        fields = ["id", "name", "day_number"]
+
+
+class HolidaySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Holiday
+        fields = ["id", "title", "start_date", "end_date"]
+
+
+class WorkScheduleSerializer(serializers.ModelSerializer):
+    mandatory_days_info = WeekDaySerializer(
+        source="mandatory_days", many=True, read_only=True
+    )
+    optional_days_info = WeekDaySerializer(
+        source="optional_days", many=True, read_only=True
+    )
+
+    class Meta:
+        model = WorkSchedule
+        fields = [
+            "id",
+            "name",
+            "work_start_time",
+            "work_end_time",
+            "lunch_start_time",
+            "lunch_end_time",
+            "mandatory_days",
+            "optional_days",
+            "mandatory_days_info",
+            "optional_days_info",
+        ]
+        extra_kwargs = {
+            "mandatory_days": {"write_only": True},
+            "optional_days": {"write_only": True},
+        }
+
+
+class WorkScheduleShortSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = WorkSchedule
+        fields = ["id", "name"]
+
+
 class UserSerializer(serializers.ModelSerializer):
     role_info = RoleShortSerializer(source="role", read_only=True)
     branch_info = BranchSerializer(source="branch", read_only=True)
     department_info = DepartmentShortSerializer(source="department", read_only=True)
     position_info = PositionShortSerializer(source="position", read_only=True)
+    schedule_info = WorkScheduleShortSerializer(source="schedule", read_only=True)
 
     class Meta:
         model = User
@@ -104,6 +157,8 @@ class UserSerializer(serializers.ModelSerializer):
             "department_info",
             "position",
             "position_info",
+            "schedule",
+            "schedule_info",
             "role",
             "role_info",
             "is_active",
@@ -121,6 +176,7 @@ class UserSerializer(serializers.ModelSerializer):
             "branch": {"write_only": True},
             "department": {"write_only": True},
             "position": {"write_only": True},
+            "schedule": {"write_only": True},
         }
 
     def validate_face_image(self, value):

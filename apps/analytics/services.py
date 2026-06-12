@@ -5,45 +5,101 @@ from django.utils import timezone
 
 from apps.attendance.models import Attendance
 from apps.analytics.models import KPIResult
-from apps.users.models import User, Branch
+from apps.users.models import User, Branch, Holiday
 
 logger = logging.getLogger(__name__)
 
 
-class KPIService:
+class ScheduleHelper:
     @staticmethod
-    def get_work_days(year, month):
-        today = timezone.localtime().date()
-        _, num_days = calendar.monthrange(year, month)
+    def get_period_schedule(schedule, start_date, end_date):
+        holidays = Holiday.objects.filter(
+            start_date__lte=end_date, end_date__gte=start_date
+        )
+        holiday_dates = set()
+        for h in holidays:
+            curr = h.start_date
+            while curr <= h.end_date:
+                holiday_dates.add(curr)
+                curr += timedelta(days=1)
 
-        work_days = 0
-        for day in range(1, num_days + 1):
-            d = date(year, month, day)
-            if d > today:
-                break
-            if d.weekday() < 5:
-                work_days += 1
+        mandatory_weekdays = {0, 1, 2, 3, 4}
+        optional_weekdays = set()
+        st = time(9, 0, 0)
+        et = time(18, 0, 0)
+        lst = time(13, 0, 0)
+        let = time(14, 0, 0)
 
-        return work_days
+        if schedule:
+            st = schedule.work_start_time
+            et = schedule.work_end_time
+            lst = schedule.lunch_start_time
+            let = schedule.lunch_end_time
+            mandatory_weekdays = set(
+                schedule.mandatory_days.values_list("day_number", flat=True)
+            )
+            optional_weekdays = set(
+                schedule.optional_days.values_list("day_number", flat=True)
+            )
 
+        schedule_map = {}
+        curr = start_date
+        while curr <= end_date:
+            is_holiday = curr in holiday_dates
+            is_mand = (curr.weekday() in mandatory_weekdays) and not is_holiday
+            is_opt = (curr.weekday() in optional_weekdays) or is_holiday
+
+            schedule_map[curr] = {
+                "is_mandatory": is_mand,
+                "is_optional": is_opt,
+                "start_time": st,
+                "end_time": et,
+                "lunch_start": lst,
+                "lunch_end": let,
+            }
+            curr += timedelta(days=1)
+
+        return schedule_map
+
+
+class KPIService:
     @classmethod
     def calculate_user_kpi(cls, user, year, month):
-        work_days = cls.get_work_days(year, month)
+        start_date = date(year, month, 1)
+        _, num_days = calendar.monthrange(year, month)
+        end_date = date(year, month, num_days)
+        today = timezone.localtime().date()
+
+        if start_date > today:
+            return None
+
+        if end_date > today:
+            end_date = today
+
+        schedule_map = ScheduleHelper.get_period_schedule(
+            user.schedule, start_date, end_date
+        )
+
+        work_days = sum(1 for d, info in schedule_map.items() if info["is_mandatory"])
         if work_days == 0:
             return None
 
-        start_date = timezone.make_aware(datetime(year, month, 1))
-        _, num_days = calendar.monthrange(year, month)
-        end_date = timezone.make_aware(datetime(year, month, num_days, 23, 59, 59))
+        start_dt = timezone.make_aware(
+            datetime(start_date.year, start_date.month, start_date.day)
+        )
+        end_dt = timezone.make_aware(
+            datetime(end_date.year, end_date.month, end_date.day, 23, 59, 59)
+        )
 
         attendances = Attendance.objects.filter(
-            user=user, created_at__range=(start_date, end_date)
+            user=user, created_at__range=(start_dt, end_dt)
         )
 
         days_arrived_on_time = 0
         days_left_on_time = 0
         lates_count = 0
         compliant_actions = 0
+        bonus_actions = 0
 
         grouped = {}
         for att in attendances:
@@ -53,6 +109,12 @@ class KPIService:
             grouped[d].append(att)
 
         for d, atts in grouped.items():
+            if d not in schedule_map:
+                continue
+            info = schedule_map[d]
+            is_mand = info["is_mandatory"]
+            is_opt = info["is_optional"]
+
             check_ins = [
                 a for a in atts if a.event_type == Attendance.EventType.CHECK_IN
             ]
@@ -60,11 +122,15 @@ class KPIService:
                 first_in = min(
                     [timezone.localtime(a.created_at).time() for a in check_ins]
                 )
-                if first_in <= time(9, 0, 0):
-                    days_arrived_on_time += 1
-                    compliant_actions += 1
+                if first_in <= info["start_time"]:
+                    if is_mand:
+                        days_arrived_on_time += 1
+                        compliant_actions += 1
+                    elif is_opt:
+                        bonus_actions += 1
                 else:
-                    lates_count += 1
+                    if is_mand:
+                        lates_count += 1
 
             lunch_starts = [
                 a for a in atts if a.event_type == Attendance.EventType.LUNCH_START
@@ -73,8 +139,11 @@ class KPIService:
                 first_lunch_start = min(
                     [timezone.localtime(a.created_at).time() for a in lunch_starts]
                 )
-                if first_lunch_start >= time(13, 0, 0):
-                    compliant_actions += 1
+                if first_lunch_start >= info["lunch_start"]:
+                    if is_mand:
+                        compliant_actions += 1
+                    elif is_opt:
+                        bonus_actions += 1
 
             lunch_ends = [
                 a for a in atts if a.event_type == Attendance.EventType.LUNCH_END
@@ -83,8 +152,11 @@ class KPIService:
                 first_lunch_end = min(
                     [timezone.localtime(a.created_at).time() for a in lunch_ends]
                 )
-                if first_lunch_end <= time(14, 0, 0):
-                    compliant_actions += 1
+                if first_lunch_end <= info["lunch_end"]:
+                    if is_mand:
+                        compliant_actions += 1
+                    elif is_opt:
+                        bonus_actions += 1
 
             check_outs = [
                 a for a in atts if a.event_type == Attendance.EventType.CHECK_OUT
@@ -93,31 +165,47 @@ class KPIService:
                 last_out = max(
                     [timezone.localtime(a.created_at).time() for a in check_outs]
                 )
-                if last_out >= time(18, 0, 0):
-                    days_left_on_time += 1
-                    compliant_actions += 1
+                if last_out >= info["end_time"]:
+                    if is_mand:
+                        days_left_on_time += 1
+                        compliant_actions += 1
+                    elif is_opt:
+                        bonus_actions += 1
 
         total_expected_actions = work_days * 4
 
         attendance_kpi = (
             (days_arrived_on_time / work_days * 100) if work_days > 0 else 0
         )
-
         monthly_kpi = (
-            ((days_arrived_on_time + days_left_on_time) / (work_days * 2)) * 100
+            ((days_arrived_on_time + days_left_on_time) / (work_days * 2) * 100)
             if work_days > 0
             else 0
         )
-
         late_coefficient = lates_count / work_days if work_days > 0 else 0
 
+        total_compliant_with_bonus = compliant_actions + bonus_actions
         discipline_coefficient = (
-            (compliant_actions / total_expected_actions)
+            (total_compliant_with_bonus / total_expected_actions)
             if total_expected_actions > 0
             else 0
         )
 
-        attendance_percentage = (len(grouped) / work_days * 100) if work_days > 0 else 0
+        attendance_percentage = (
+            (
+                len(
+                    [
+                        d
+                        for d in grouped.keys()
+                        if schedule_map.get(d, {}).get("is_mandatory")
+                    ]
+                )
+                / work_days
+                * 100
+            )
+            if work_days > 0
+            else 0
+        )
 
         total_score = (
             monthly_kpi + attendance_percentage + (discipline_coefficient * 100)
@@ -141,8 +229,6 @@ class KPIService:
                 "days_arrived_on_time": days_arrived_on_time,
                 "days_left_on_time": days_left_on_time,
                 "lates_count": lates_count,
-                "total_actions_expected": total_expected_actions,
-                "compliant_actions": compliant_actions,
                 "attendance_kpi": round(attendance_kpi, 2),
                 "monthly_kpi": round(monthly_kpi, 2),
                 "late_coefficient": round(late_coefficient, 2),
@@ -151,14 +237,6 @@ class KPIService:
                 "rating_category": rating_category,
             },
         )
-
-        logger.info(
-            "KPI hisoblandi: UserID=%s | Ball=%s | Kategoriya=%s",
-            user.id,
-            total_score,
-            rating_category,
-        )
-
         return kpi_result
 
 
@@ -166,25 +244,25 @@ class DashboardService:
     @staticmethod
     def get_dashboard_stats(user, start_date=None, end_date=None):
         today_date = timezone.localtime().date()
-
         if start_date is None or end_date is None:
             start_date = today_date
             end_date = today_date
 
         period_days = (end_date - start_date).days + 1
-
         prev_start_date = start_date - timedelta(days=period_days)
         prev_end_date = start_date - timedelta(days=1)
-
         first_day_of_month = end_date.replace(day=1)
 
-        base_users = User.objects.filter(is_active=True, is_fired=False)
+        base_users = (
+            User.objects.filter(is_active=True, is_fired=False)
+            .select_related("schedule")
+            .prefetch_related("schedule__mandatory_days", "schedule__optional_days")
+        )
 
         if not (user.is_superuser or user.has_permission("analytics_view_all")):
             if user.has_permission("analytics_view_dept") and user.department:
                 base_users = base_users.filter(department=user.department)
             else:
-                logger.warning("Dashboard: Ruxsat yo'q. UserID=%s", user.id)
                 return None
 
         total_employees = base_users.count()
@@ -211,42 +289,94 @@ class DashboardService:
                 else f"{emp_trend:.1f}% bu oy"
             )
 
-        def get_work_days(s_date, e_date):
-            wd = 0
-            days = (e_date - s_date).days + 1
-            for i in range(days):
-                if (s_date + timedelta(days=i)).weekday() < 6:
-                    wd += 1
-            return wd
+        unique_schedules = set([u.schedule for u in base_users])
+        start_of_week = end_date - timedelta(days=end_date.weekday())
+        week_days_dates = [start_of_week + timedelta(days=i) for i in range(6)]
 
-        current_work_days = get_work_days(start_date, end_date)
-        prev_work_days = get_work_days(prev_start_date, prev_end_date)
+        min_date = min(start_date, prev_start_date, start_of_week)
+        max_date = max(end_date, prev_end_date, week_days_dates[-1])
 
-        def get_stats_for_period(s_date, e_date, work_days):
+        global_schedule_map = {}
+        for sch in unique_schedules:
+            global_schedule_map[sch] = ScheduleHelper.get_period_schedule(
+                sch, min_date, max_date
+            )
+
+        def get_stats_for_period(s_date, e_date, users):
             atts = Attendance.objects.filter(
-                user__in=base_users,
+                user__in=users,
                 created_at__date__gte=s_date,
                 created_at__date__lte=e_date,
             )
-            check_ins = atts.filter(event_type=Attendance.EventType.CHECK_IN)
-            arrived = check_ins.count()
-            lates = check_ins.filter(created_at__time__gt=time(9, 0, 0)).count()
-            early_leaves = atts.filter(
-                event_type=Attendance.EventType.CHECK_OUT,
-                created_at__time__lt=time(18, 0, 0),
-            ).count()
+            user_date_atts = {}
+            for a in atts:
+                if a.user_id not in user_date_atts:
+                    user_date_atts[a.user_id] = {}
+                d = timezone.localtime(a.created_at).date()
+                if d not in user_date_atts[a.user_id]:
+                    user_date_atts[a.user_id][d] = []
+                user_date_atts[a.user_id][d].append(a)
 
-            expected = total_employees * work_days
+            arrived = 0
+            lates = 0
+            early_leaves = 0
+            expected = 0
+
+            for u in users:
+                sch_map = global_schedule_map[u.schedule]
+                curr = s_date
+                while curr <= e_date:
+                    info = sch_map[curr]
+                    is_mand = info["is_mandatory"]
+                    if is_mand:
+                        expected += 1
+
+                    u_atts = user_date_atts.get(u.id, {}).get(curr, [])
+                    if u_atts:
+                        check_ins = [
+                            a
+                            for a in u_atts
+                            if a.event_type == Attendance.EventType.CHECK_IN
+                        ]
+                        if check_ins:
+                            if info["is_optional"]:
+                                expected += 1
+                            arrived += 1
+                            first_in = min(
+                                [
+                                    timezone.localtime(a.created_at).time()
+                                    for a in check_ins
+                                ]
+                            )
+                            if first_in > info["start_time"]:
+                                lates += 1
+
+                        check_outs = [
+                            a
+                            for a in u_atts
+                            if a.event_type == Attendance.EventType.CHECK_OUT
+                        ]
+                        if check_outs:
+                            last_out = max(
+                                [
+                                    timezone.localtime(a.created_at).time()
+                                    for a in check_outs
+                                ]
+                            )
+                            if last_out < info["end_time"]:
+                                early_leaves += 1
+                    curr += timedelta(days=1)
+
             absent = expected - arrived if expected > arrived else 0
             pct = (arrived / expected * 100) if expected > 0 else 0
 
             return arrived, lates, early_leaves, absent, pct
 
         cur_arrived, cur_lates, cur_early, cur_absent, cur_pct = get_stats_for_period(
-            start_date, end_date, current_work_days
+            start_date, end_date, base_users
         )
         prv_arrived, prv_lates, prv_early, prv_absent, prv_pct = get_stats_for_period(
-            prev_start_date, prev_end_date, prev_work_days
+            prev_start_date, prev_end_date, base_users
         )
 
         def calc_trend(cur, prv):
@@ -259,19 +389,10 @@ class DashboardService:
                 else f"{diff:.1f}% oldingiga nisbatan"
             )
 
-        start_of_week = end_date - timedelta(days=end_date.weekday())
-        week_days = [start_of_week + timedelta(days=i) for i in range(6)]
         day_names = ["Du", "Se", "Ch", "Pa", "Ju", "Sh"]
-
         weekly_dynamics = []
-        for i, day in enumerate(week_days):
-            day_check_ins = Attendance.objects.filter(
-                user__in=base_users,
-                created_at__date=day,
-                event_type=Attendance.EventType.CHECK_IN,
-            )
-            d_arrived = day_check_ins.count()
-            d_lates = day_check_ins.filter(created_at__time__gt=time(9, 0, 0)).count()
+        for i, day in enumerate(week_days_dates):
+            d_arrived, d_lates, _, _, _ = get_stats_for_period(day, day, base_users)
             d_on_time = d_arrived - d_lates
             weekly_dynamics.append(
                 {
@@ -294,24 +415,15 @@ class DashboardService:
         if user.is_superuser or user.has_permission("analytics_view_all"):
             branches = Branch.objects.all()
             for branch in branches:
-                branch_users = User.objects.filter(
-                    branch=branch, is_active=True, is_fired=False
-                )
-                b_total = branch_users.count()
+                branch_users = [u for u in base_users if u.branch_id == branch.id]
+                b_total = len(branch_users)
                 if b_total == 0:
                     continue
-                b_expected = b_total * current_work_days
-                b_arrived = Attendance.objects.filter(
-                    user__in=branch_users,
-                    created_at__date__gte=start_date,
-                    created_at__date__lte=end_date,
-                    event_type=Attendance.EventType.CHECK_IN,
-                ).count()
-                b_percent = (b_arrived / b_expected * 100) if b_expected > 0 else 0
-                branch_ratings.append({"name": branch.name, "rating": round(b_percent)})
+                b_arrived, _, _, _, b_pct = get_stats_for_period(
+                    start_date, end_date, branch_users
+                )
+                branch_ratings.append({"name": branch.name, "rating": round(b_pct)})
             branch_ratings.sort(key=lambda x: x["rating"], reverse=True)
-
-        logger.debug("Dashboard stats tayyorlandi: UserID=%s", user.id)
 
         return {
             "summary": {

@@ -1,7 +1,17 @@
 from django.contrib import admin
 from unfold.admin import ModelAdmin
 
-from .models import Branch, Department, Permission, Position, Role, User
+from .models import (
+    Branch,
+    Department,
+    Permission,
+    Position,
+    Role,
+    User,
+    WeekDay,
+    Holiday,
+    WorkSchedule,
+)
 
 
 @admin.register(Permission)
@@ -37,6 +47,32 @@ class PositionAdmin(ModelAdmin):
     list_filter = ["department"]
 
 
+@admin.register(WeekDay)
+class WeekDayAdmin(ModelAdmin):
+    list_display = ["name", "day_number"]
+    ordering = ["day_number"]
+
+
+@admin.register(Holiday)
+class HolidayAdmin(ModelAdmin):
+    list_display = ["title", "start_date", "end_date"]
+    search_fields = ["title"]
+    ordering = ["-start_date"]
+
+
+@admin.register(WorkSchedule)
+class WorkScheduleAdmin(ModelAdmin):
+    list_display = [
+        "name",
+        "work_start_time",
+        "work_end_time",
+        "lunch_start_time",
+        "lunch_end_time",
+    ]
+    search_fields = ["name"]
+    filter_horizontal = ["mandatory_days", "optional_days"]
+
+
 @admin.register(User)
 class UserAdmin(ModelAdmin):
     list_display = [
@@ -45,11 +81,20 @@ class UserAdmin(ModelAdmin):
         "branch",
         "department",
         "position",
+        "schedule",
         "is_active",
         "is_fired",
     ]
     search_fields = ["full_name", "jshshir", "phone"]
-    list_filter = ["is_active", "is_fired", "role", "branch", "department", "position"]
+    list_filter = [
+        "is_active",
+        "is_fired",
+        "role",
+        "branch",
+        "department",
+        "position",
+        "schedule",
+    ]
     ordering = ["-created_at"]
 
     fieldsets = (
@@ -72,6 +117,7 @@ class UserAdmin(ModelAdmin):
                     "branch",
                     "department",
                     "position",
+                    "schedule",
                     "is_active",
                     "is_fired",
                     "is_staff",
@@ -85,10 +131,10 @@ class UserAdmin(ModelAdmin):
         return (
             super()
             .get_queryset(request)
-            .select_related("role", "branch", "department", "position")
+            .select_related("role", "branch", "department", "position", "schedule")
         )
 
     def save_model(self, request, obj, form, change):
-        if obj.password and not obj.password.startswith('pbkdf2_'):
+        if obj.password and not obj.password.startswith("pbkdf2_"):
             obj.set_password(obj.password)
         super().save_model(request, obj, form, change)

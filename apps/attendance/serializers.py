@@ -32,9 +32,7 @@ class AttendanceListSerializer(serializers.ModelSerializer):
             "face_verify",
             "created_at",
         ]
-        extra_kwargs = {
-            "user": {"write_only": True}
-        }
+        extra_kwargs = {"user": {"write_only": True}}
 
 
 class AttendanceCreateSerializer(serializers.ModelSerializer):
@@ -102,7 +100,7 @@ class AttendanceCreateSerializer(serializers.ModelSerializer):
             )
 
         in_geozone = False
-        min_distance = float('inf')
+        min_distance = float("inf")
         for gz in user_geozones:
             distance = haversine(
                 float(lat), float(lon), float(gz.latitude), float(gz.longitude)
@@ -112,14 +110,14 @@ class AttendanceCreateSerializer(serializers.ModelSerializer):
             if distance <= float(gz.radius):
                 in_geozone = True
                 break
-        
+
         GpsLog.objects.create(
             user=user,
             is_success=in_geozone,
             latitude=lat,
             longitude=lon,
-            distance_meters=min_distance if min_distance != float('inf') else None,
-            message="Ichida" if in_geozone else "Tashqarida"
+            distance_meters=min_distance if min_distance != float("inf") else None,
+            message="Ichida" if in_geozone else "Tashqarida",
         )
 
         if not in_geozone:
@@ -127,7 +125,7 @@ class AttendanceCreateSerializer(serializers.ModelSerializer):
                 user=user,
                 title="Geozonadan tashqarida urunish",
                 message="Siz ish joyi geozonasidan tashqarida qayd etilishga urindingiz.",
-                extra_data={"event": "OUT_OF_ZONE"}
+                extra_data={"event": "OUT_OF_ZONE"},
             )
             raise serializers.ValidationError({"detail": "Siz ish joyida emassiz."})
 
@@ -137,13 +135,9 @@ class AttendanceCreateSerializer(serializers.ModelSerializer):
             )
 
         is_verified, msg = hash_compare(user, image)
-        
-        FaceLog.objects.create(
-            user=user,
-            is_success=is_verified,
-            message=msg
-        )
-        
+
+        FaceLog.objects.create(user=user, is_success=is_verified, message=msg)
+
         if not is_verified:
             raise serializers.ValidationError({"detail": msg})
 
@@ -154,31 +148,40 @@ class AttendanceCreateSerializer(serializers.ModelSerializer):
         validated_data.pop("image", None)
         validated_data["user"] = self.context["request"].user
         instance = super().create(validated_data)
-        
+
         user = instance.user
         event = instance.event_type
         current_time = timezone.localtime(instance.created_at).time()
 
-        if event == Attendance.EventType.CHECK_IN and current_time > time(9, 0):
+        st = time(9, 0)
+        let = time(14, 0)
+        et = time(18, 0)
+
+        if hasattr(user, "schedule") and user.schedule:
+            st = user.schedule.work_start_time
+            let = user.schedule.lunch_end_time
+            et = user.schedule.work_end_time
+
+        if event == Attendance.EventType.CHECK_IN and current_time > st:
             Notification.objects.create(
                 user=user,
                 title="Kechikish",
-                message="Siz bugun ishga kechikib keldingiz.",
-                extra_data={"event": "LATE_CHECK_IN"}
+                message=f"Siz bugun ishga kechikib keldingiz. (Belgilangan vaqt: {st.strftime('%H:%M')})",
+                extra_data={"event": "LATE_CHECK_IN"},
             )
-        elif event == Attendance.EventType.LUNCH_END and current_time > time(14, 0):
+        elif event == Attendance.EventType.LUNCH_END and current_time > let:
             Notification.objects.create(
                 user=user,
                 title="Tushlikdan kechikish",
-                message="Siz tushlikdan kech qaytdingiz.",
-                extra_data={"event": "LATE_LUNCH_RETURN"}
+                message=f"Siz tushlikdan kech qaytdingiz. (Belgilangan vaqt: {let.strftime('%H:%M')})",
+                extra_data={"event": "LATE_LUNCH_RETURN"},
             )
-        elif event == Attendance.EventType.CHECK_OUT and current_time < time(18, 0):
+        elif event == Attendance.EventType.CHECK_OUT and current_time < et:
             Notification.objects.create(
                 user=user,
                 title="Erta ketish",
-                message="Siz ish vaqti tugamasdan oldin ketdingiz.",
-                extra_data={"event": "EARLY_CHECK_OUT"}
+                message=f"Siz ish vaqti tugamasdan oldin ketdingiz. (Belgilangan vaqt: {et.strftime('%H:%M')})",
+                extra_data={"event": "EARLY_CHECK_OUT"},
             )
 
         return instance
