@@ -394,12 +394,15 @@ class DashboardService:
                 }
             )
 
+        t_arrived, t_lates, t_early, t_absent, t_pct = get_stats_for_period(
+            end_date, end_date, base_users
+        )
         today_status = {
-            "on_time": cur_arrived - cur_lates,
-            "late": cur_lates,
-            "early_left": cur_early,
-            "absent": cur_absent,
-            "total_percent": round(cur_pct, 1),
+            "on_time": t_arrived - t_lates,
+            "late": t_lates,
+            "early_left": t_early,
+            "absent": t_absent,
+            "total_percent": round(t_pct, 1),
         }
 
         branch_ratings = []
