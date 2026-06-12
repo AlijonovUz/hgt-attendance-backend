@@ -280,14 +280,9 @@ class DashboardService:
         users_before_this_month = total_employees - joined_this_month
 
         if users_before_this_month == 0:
-            emp_trend_str = f"+100.0% bu oy" if joined_this_month > 0 else "+0.0% bu oy"
+            emp_trend_val = 100.0 if joined_this_month > 0 else 0.0
         else:
-            emp_trend = (joined_this_month / users_before_this_month) * 100
-            emp_trend_str = (
-                f"+{emp_trend:.1f}% bu oy"
-                if emp_trend > 0
-                else f"{emp_trend:.1f}% bu oy"
-            )
+            emp_trend_val = round((joined_this_month / users_before_this_month) * 100, 1)
 
         unique_schedules = set([u.schedule for u in base_users])
         start_of_week = end_date - timedelta(days=end_date.weekday())
@@ -381,13 +376,9 @@ class DashboardService:
 
         def calc_trend(cur, prv):
             if prv == 0:
-                return "+0.0%" if cur == 0 else "+100.0%"
+                return 0.0 if cur == 0 else 100.0
             diff = ((cur - prv) / prv) * 100
-            return (
-                f"+{diff:.1f}% oldingiga nisbatan"
-                if diff > 0
-                else f"{diff:.1f}% oldingiga nisbatan"
-            )
+            return round(diff, 1)
 
         day_names = ["Du", "Se", "Ch", "Pa", "Ju", "Sh"]
         weekly_dynamics = []
@@ -428,7 +419,7 @@ class DashboardService:
         return {
             "summary": {
                 "total_employees": total_employees,
-                "total_employees_trend": emp_trend_str,
+                "total_employees_trend": emp_trend_val,
                 "period_arrived": cur_arrived,
                 "attendance_percent": round(cur_pct, 1),
                 "lates": cur_lates,

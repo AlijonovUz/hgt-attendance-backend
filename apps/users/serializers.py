@@ -36,17 +36,6 @@ class RoleShortSerializer(serializers.ModelSerializer):
         fields = ["id", "name"]
 
 
-class RoleSerializer(serializers.ModelSerializer):
-    permissions_info = PermissionSerializer(
-        source="permissions", read_only=True, many=True
-    )
-
-    class Meta:
-        model = Role
-        fields = ["id", "name", "permissions_info", "permissions", "created_at"]
-        extra_kwargs = {"permissions": {"write_only": True}}
-
-
 class BranchSerializer(serializers.ModelSerializer):
     class Meta:
         model = Branch
@@ -59,28 +48,10 @@ class DepartmentShortSerializer(serializers.ModelSerializer):
         fields = ["id", "name"]
 
 
-class DepartmentSerializer(serializers.ModelSerializer):
-    branch_info = BranchSerializer(source="branch", read_only=True)
-
-    class Meta:
-        model = Department
-        fields = ["id", "name", "branch_info", "branch", "created_at"]
-        extra_kwargs = {"branch": {"write_only": True}}
-
-
 class PositionShortSerializer(serializers.ModelSerializer):
     class Meta:
         model = Position
         fields = ["id", "name"]
-
-
-class PositionSerializer(serializers.ModelSerializer):
-    department_info = DepartmentSerializer(source="department", read_only=True)
-
-    class Meta:
-        model = Position
-        fields = ["id", "name", "department_info", "department", "created_at"]
-        extra_kwargs = {"department": {"write_only": True}}
 
 
 class UserShortInfoSerializer(serializers.ModelSerializer):
@@ -99,6 +70,57 @@ class HolidaySerializer(serializers.ModelSerializer):
     class Meta:
         model = Holiday
         fields = ["id", "title", "start_date", "end_date"]
+
+
+class WorkScheduleShortSerializer(serializers.ModelSerializer):
+    mandatory_days_info = WeekDaySerializer(
+        source="mandatory_days", read_only=True, many=True
+    )
+    optional_days_info = WeekDaySerializer(
+        source="optional_days", read_only=True, many=True
+    )
+
+    class Meta:
+        model = WorkSchedule
+        fields = [
+            "id",
+            "name",
+            "work_start_time",
+            "work_end_time",
+            "lunch_start_time",
+            "lunch_end_time",
+            "mandatory_days_info",
+            "optional_days_info",
+        ]
+
+
+class RoleSerializer(serializers.ModelSerializer):
+    permissions_info = PermissionSerializer(
+        source="permissions", read_only=True, many=True
+    )
+
+    class Meta:
+        model = Role
+        fields = ["id", "name", "permissions_info", "permissions", "created_at"]
+        extra_kwargs = {"permissions": {"write_only": True}}
+
+
+class DepartmentSerializer(serializers.ModelSerializer):
+    branch_info = BranchSerializer(source="branch", read_only=True)
+
+    class Meta:
+        model = Department
+        fields = ["id", "name", "branch_info", "branch", "created_at"]
+        extra_kwargs = {"branch": {"write_only": True}}
+
+
+class PositionSerializer(serializers.ModelSerializer):
+    department_info = DepartmentSerializer(source="department", read_only=True)
+
+    class Meta:
+        model = Position
+        fields = ["id", "name", "department_info", "department", "created_at"]
+        extra_kwargs = {"department": {"write_only": True}}
 
 
 class WorkScheduleSerializer(serializers.ModelSerializer):
@@ -129,12 +151,6 @@ class WorkScheduleSerializer(serializers.ModelSerializer):
         }
 
 
-class WorkScheduleShortSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = WorkSchedule
-        fields = ["id", "name"]
-
-
 class UserSerializer(serializers.ModelSerializer):
     role_info = RoleShortSerializer(source="role", read_only=True)
     branch_info = BranchSerializer(source="branch", read_only=True)
@@ -163,6 +179,7 @@ class UserSerializer(serializers.ModelSerializer):
             "role_info",
             "is_active",
             "is_fired",
+            "is_password_changed",
             "created_at",
             "updated_at",
         ]
@@ -172,6 +189,7 @@ class UserSerializer(serializers.ModelSerializer):
             "updated_at": {"read_only": True},
             "is_fired": {"read_only": True},
             "is_active": {"read_only": True},
+            "is_password_changed": {"read_only": True},
             "role": {"write_only": True},
             "branch": {"write_only": True},
             "department": {"write_only": True},
@@ -213,6 +231,7 @@ class ProfileSerializer(serializers.ModelSerializer):
     branch_info = BranchSerializer(source="branch", read_only=True)
     department_info = DepartmentShortSerializer(source="department", read_only=True)
     position_info = PositionShortSerializer(source="position", read_only=True)
+    schedule_info = WorkScheduleShortSerializer(source="schedule", read_only=True)
 
     class Meta:
         model = User
@@ -226,7 +245,9 @@ class ProfileSerializer(serializers.ModelSerializer):
             "department_info",
             "position_info",
             "role_info",
+            "schedule_info",
             "current_month_kpi",
+            "is_password_changed",
             "created_at",
             "updated_at",
         ]
@@ -235,6 +256,7 @@ class ProfileSerializer(serializers.ModelSerializer):
             "full_name",
             "jshshir",
             "current_month_kpi",
+            "is_password_changed",
             "created_at",
             "updated_at",
         ]
@@ -312,7 +334,7 @@ class ChangePasswordSerializer(serializers.Serializer):
     def save(self, **kwargs):
         user = self.context["request"].user
         user.set_password(self.validated_data["new_password"])
-        user.change_password = False
+        user.is_password_changed = True
         user.save()
         return user
 
@@ -339,6 +361,16 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
             "id": user.id,
             "full_name": user.full_name,
             "face_image": user.face_image.url if user.face_image else None,
+            "is_password_changed": user.is_password_changed,
         }
+
+        if not user.is_password_changed:
+            from apps.notifications.models import Notification
+            if not Notification.objects.filter(user=user, title="Parolni o'zgartirish").exists():
+                Notification.objects.create(
+                    user=user,
+                    title="Parolni o'zgartirish",
+                    message="Tizim xavfsizligi uchun, iltimos parolingizni yangilang!"
+                )
 
         return data
