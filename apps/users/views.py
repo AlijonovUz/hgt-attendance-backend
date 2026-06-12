@@ -1,3 +1,4 @@
+import logging
 from django_filters.rest_framework import DjangoFilterBackend
 from drf_spectacular.utils import extend_schema
 from rest_framework import filters, generics, permissions, status, viewsets
@@ -8,7 +9,7 @@ from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 
 from apps.utils.services import hash_compare
 from apps.utils.views import BaseManageViewSet
-from apps.utils.throttles import CustomScopedRateThrottle
+from apps.utils.throttles import CustomScopedRateThrottle, ThrottleExceptionHandlerMixin
 
 from .filters import DepartmentFilter, PositionFilter, UserFilter
 from .models import Branch, Department, Permission, Position, Role, User
@@ -26,15 +27,20 @@ from .serializers import (
     UserSerializer,
 )
 
+logger = logging.getLogger(__name__)
+
 
 @extend_schema(tags=["Avtorizatsiya"])
-class CustomTokenObtainPairView(TokenObtainPairView):
+class CustomTokenObtainPairView(ThrottleExceptionHandlerMixin, TokenObtainPairView):
     serializer_class = CustomTokenObtainPairSerializer
     throttle_classes = [CustomScopedRateThrottle]
     throttle_scope = 'login'
 
     def post(self, request, *args, **kwargs):
         response = super().post(request, *args, **kwargs)
+        
+        if response.status_code == 200:
+            logger.info("Foydalanuvchi tizimga kirdi: %s", request.data.get("username", "Noma'lum"))
 
         for throttle in self.get_throttles():
             if hasattr(throttle, 'get_cache_key') and hasattr(throttle, 'cache'):
@@ -78,6 +84,7 @@ class ChangePasswordView(generics.UpdateAPIView):
 
         if serializer.is_valid():
             serializer.save()
+            logger.info("Foydalanuvchi parolini o'zgartirdi: ID=%s", request.user.id)
             return Response(
                 {"message": "Parol muvaffaqiyatli o'zgartirildi."},
                 status=status.HTTP_200_OK,
@@ -98,6 +105,7 @@ class FaceVerificationView(APIView):
         user = request.user
 
         if not user.face_image or not user.face_image.name:
+            logger.warning("Yuz tekshiruvi xatosi: Profil rasm yo'q. UserID=%s", user.id)
             return Response(
                 {
                     "detail": "Foydalanuvchi profilida yuz rasmi mavjud emas. Avval yuz rasm yuklang!"
@@ -114,10 +122,12 @@ class FaceVerificationView(APIView):
         )
 
         if is_verified:
+            logger.info("Yuz tekshiruvi MUVAFFAQIYATLI: UserID=%s", user.id)
             return Response(
                 {"message": msg, "verified": True}, status=status.HTTP_200_OK
             )
         else:
+            logger.warning("Yuz tekshiruvi DIQQAT (Muvaffaqiyatsiz): UserID=%s | Sabab=%s", user.id, msg)
             return Response(
                 {"detail": msg, "verified": False}, status=status.HTTP_400_BAD_REQUEST
             )
@@ -225,6 +235,8 @@ class UserViewSet(BaseManageViewSet):
         user = self.get_object()
         user.is_active = False
         user.save()
+
+        logger.warning("Xodim bloklandi: ID=%s, Ism=%s", user.id, user.full_name)
         return Response({"detail": "Xodim bloklandi."}, status=status.HTTP_200_OK)
 
     @extend_schema(request=None)
@@ -232,6 +244,7 @@ class UserViewSet(BaseManageViewSet):
     def unblock(self, request, pk=None):
         user = self.get_object()
         if user.is_fired:
+            logger.warning("Bo'shatilgan xodimni blokdan chiqarishga urinish: ID=%s", user.id)
             return Response(
                 {
                     "detail": "Ishdan bo'shatilgan xodimni blokdan chiqarish mumkin emas!"
@@ -241,6 +254,8 @@ class UserViewSet(BaseManageViewSet):
 
         user.is_active = True
         user.save()
+
+        logger.info("Xodim blokdan chiqarildi: ID=%s, Ism=%s", user.id, user.full_name)
         return Response(
             {"detail": "Xodim blokdan chiqarildi."}, status=status.HTTP_200_OK
         )
@@ -252,6 +267,8 @@ class UserViewSet(BaseManageViewSet):
         user.is_fired = True
         user.is_active = False
         user.save()
+
+        logger.warning("Xodim ishdan bo'shatildi: ID=%s, Ism=%s", user.id, user.full_name)
         return Response(
             {"detail": "Xodim ishdan bo'shatildi."}, status=status.HTTP_200_OK
         )
