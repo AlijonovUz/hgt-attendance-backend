@@ -2,14 +2,14 @@ from celery import shared_task
 from django.utils import timezone
 
 from apps.users.models import User
-from apps.analytics.services import calculate_user_kpi
+from apps.analytics.services import KPIService
 
 
 @shared_task
 def update_kpi_for_user_task(user_id, year, month):
     try:
         user = User.objects.get(id=user_id)
-        calculate_user_kpi(user, year, month)
+        KPIService.calculate_user_kpi(user, year, month)
     except User.DoesNotExist:
         pass
 
