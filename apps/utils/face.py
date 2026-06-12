@@ -20,7 +20,6 @@ DETECTOR_BACKEND = "retinaface"
 MAX_DISTANCE = 0.58
 REQUIRE_ANTISPOOFING = True
 
-
 @contextmanager
 def _temp_jpeg_files(*labels):
     request_id = uuid.uuid4().hex
@@ -39,7 +38,6 @@ def _temp_jpeg_files(*labels):
             except OSError:
                 logger.warning("Vaqtinchalik faylni o'chirib bo'lmadi: %s", p)
 
-
 def _save_as_rgb_jpeg(source, dest_path):
     with Image.open(source) as image:
         image.load()
@@ -47,6 +45,29 @@ def _save_as_rgb_jpeg(source, dest_path):
             image = image.convert("RGB")
         image.save(dest_path, format="JPEG", quality=95)
 
+def _check_liveness(image_path):
+    try:
+        faces = DeepFace.extract_faces(
+            img_path=image_path,
+            detector_backend=DETECTOR_BACKEND,
+            enforce_detection=True,
+            anti_spoofing=True,
+        )
+    except ValueError as e:
+        logger.warning("_check_liveness: yuz topilmadi: %s", e)
+        return False, "no_face"
+
+    if not faces:
+        return False, "no_face"
+
+    face = faces[0]
+    is_real = face.get("is_real", False)
+    score = face.get("antispoof_score")
+    logger.debug("_check_liveness: is_real=%s score=%s", is_real, score)
+
+    if not is_real:
+        return False, f"spoof (score={score})"
+    return True, "real"
 
 def verify_face_image(uploaded_file):
     if not DEEPFACE_AVAILABLE:
@@ -80,13 +101,11 @@ def verify_face_image(uploaded_file):
 
             return True, "Yuz muvaffaqiyatli aniqlandi."
 
-        except ValueError as e:
-            logger.warning("verify_face_image yuz topolmadi: %s", e)
+        except ValueError:
             return False, "Rasmda yuz topilmadi. Iltimos, aniq rasm yuboring."
         except Exception as e:
             logger.exception("verify_face_image kutilmagan xatolik")
             return False, "Rasmni tekshirishda xatolik yuz berdi. Qayta urinib ko'ring."
-
 
 def hash_compare(employee, uploaded_file):
     if not DEEPFACE_AVAILABLE:
@@ -109,6 +128,15 @@ def hash_compare(employee, uploaded_file):
                 pass
             _save_as_rgb_jpeg(uploaded_file, probe_path)
 
+            if REQUIRE_ANTISPOOFING:
+                is_real, spoof_msg = _check_liveness(probe_path)
+                if not is_real:
+                    logger.info(
+                        "Davomat rad etildi (spoofing): employee=%s sabab=%s",
+                        employee.id, spoof_msg,
+                    )
+                    return False, "Qalloblik aniqlandi! Rasm tirik odam emas (ekran yoki qog'oz)."
+
             result = DeepFace.verify(
                 img1_path=base_path,
                 img2_path=probe_path,
@@ -116,12 +144,8 @@ def hash_compare(employee, uploaded_file):
                 detector_backend=DETECTOR_BACKEND,
                 distance_metric="cosine",
                 enforce_detection=True,
-                anti_spoofing=REQUIRE_ANTISPOOFING,
+                anti_spoofing=False,
             )
-
-            if REQUIRE_ANTISPOOFING and not result.get("is_real", False):
-                logger.info("Davomat rad etildi (spoofing): employee=%s", employee.id)
-                return False, "Qalloblik aniqlandi! Rasm tirik odam emas (ekran yoki qog'oz)."
 
             distance = result.get("distance")
             if distance is None:
@@ -142,7 +166,15 @@ def hash_compare(employee, uploaded_file):
             return True, "Muvaffaqiyatli."
 
         except ValueError as e:
-            logger.warning("hash_compare yuz topolmadi (employee=%s): %s", employee.id, e)
+            msg = str(e).lower()
+            logger.warning(
+                "hash_compare ValueError (employee=%s): %s", employee.id, e
+            )
+            if "spoof" in msg or "processing img" in msg:
+                return False, (
+                    "Rasmni tekshirib bo'lmadi. Yuzingiz to'liq, yorug' va "
+                    "kameraga yaqin bo'lgan holda qayta urinib ko'ring."
+                )
             return False, "Rasmda yuz aniqlanmadi. Iltimos, aniq rasm yuboring."
         except Exception as e:
             logger.exception("hash_compare kutilmagan xatolik: employee=%s", employee.id)
