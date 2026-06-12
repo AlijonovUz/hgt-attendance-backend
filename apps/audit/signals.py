@@ -6,6 +6,7 @@ from apps.utils.models import BaseModel
 
 from .middleware import get_current_ip, get_current_user
 from .models import AuditLog
+from apps.users.models import User
 
 
 def get_dirty_fields(instance):
@@ -31,8 +32,6 @@ def get_dirty_fields(instance):
 
 @receiver(pre_save)
 def capture_old_values(sender, instance, **kwargs):
-    from apps.users.models import User
-
     if not (issubclass(sender, BaseModel) or sender == User):
         return
     instance._dirty_fields = get_dirty_fields(instance)
@@ -40,8 +39,6 @@ def capture_old_values(sender, instance, **kwargs):
 
 @receiver(post_save)
 def audit_log_save(sender, instance, created, **kwargs):
-    from apps.users.models import User
-
     if not (issubclass(sender, BaseModel) or sender == User):
         return
 
@@ -84,8 +81,6 @@ def audit_log_save(sender, instance, created, **kwargs):
 
 @receiver(post_delete)
 def audit_log_delete(sender, instance, **kwargs):
-    from apps.users.models import User
-
     if not (issubclass(sender, BaseModel) or sender == User):
         return
 

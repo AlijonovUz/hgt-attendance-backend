@@ -6,7 +6,7 @@ from apps.users.serializers import UserShortInfoSerializer
 from apps.notifications.models import Notification
 from datetime import time
 
-from .models import Attendance, Geozone
+from .models import Attendance, Geozone, FaceLog, GpsLog
 
 
 class GeozoneSerializer(serializers.ModelSerializer):
@@ -112,7 +112,6 @@ class AttendanceCreateSerializer(serializers.ModelSerializer):
                 in_geozone = True
                 break
         
-        from .models import GpsLog
         GpsLog.objects.create(
             user=user,
             is_success=in_geozone,
@@ -138,7 +137,6 @@ class AttendanceCreateSerializer(serializers.ModelSerializer):
 
         is_verified, msg = hash_compare(user, image)
         
-        from .models import FaceLog
         FaceLog.objects.create(
             user=user,
             is_success=is_verified,
