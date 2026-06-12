@@ -1,3 +1,4 @@
+import logging
 from django.db.models.signals import post_delete, post_save, pre_save
 from django.dispatch import receiver
 from django.forms.models import model_to_dict
@@ -7,6 +8,8 @@ from apps.utils.models import BaseModel
 from .middleware import get_current_ip, get_current_user
 from .models import AuditLog
 from apps.users.models import User
+
+logger = logging.getLogger(__name__)
 
 
 def get_dirty_fields(instance):
@@ -77,6 +80,8 @@ def audit_log_save(sender, instance, created, **kwargs):
         new_values=new_values,
         ip_address=ip,
     )
+    
+    logger.debug("AuditLog saqlandi: Harakat=%s, Model=%s, ID=%s, User=%s", action, sender._meta.verbose_name, instance.pk, getattr(user, "full_name", "Anonim"))
 
 
 @receiver(post_delete)
@@ -103,3 +108,5 @@ def audit_log_delete(sender, instance, **kwargs):
         new_values=None,
         ip_address=ip,
     )
+
+    logger.warning("Ma'lumot O'CHIRILDI: Model=%s, ID=%s, User=%s", sender._meta.verbose_name, instance.pk, getattr(user, "full_name", "Anonim"))
