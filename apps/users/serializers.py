@@ -312,7 +312,7 @@ class ChangePasswordSerializer(serializers.Serializer):
     def save(self, **kwargs):
         user = self.context["request"].user
         user.set_password(self.validated_data["new_password"])
-        user.change_password = False
+        user.is_password_changed = True
         user.save()
         return user
 
@@ -340,5 +340,14 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
             "full_name": user.full_name,
             "face_image": user.face_image.url if user.face_image else None,
         }
+
+        if not user.is_password_changed:
+            from apps.notifications.models import Notification
+            if not Notification.objects.filter(user=user, title="Parolni o'zgartirish").exists():
+                Notification.objects.create(
+                    user=user,
+                    title="Parolni o'zgartirish",
+                    message="Tizim xavfsizligi uchun, iltimos parolingizni yangilang!"
+                )
 
         return data
