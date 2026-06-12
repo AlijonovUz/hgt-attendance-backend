@@ -1,7 +1,8 @@
 from django.utils import timezone
 from rest_framework import serializers
 
-from apps.utils.services import hash_compare, haversine
+from apps.utils.face import hash_compare
+from apps.utils.geo import haversine
 from apps.users.serializers import UserShortInfoSerializer
 from apps.notifications.models import Notification
 from datetime import time

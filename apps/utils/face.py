@@ -80,7 +80,8 @@ def verify_face_image(uploaded_file):
 
             return True, "Yuz muvaffaqiyatli aniqlandi."
 
-        except ValueError:
+        except ValueError as e:
+            logger.warning("verify_face_image yuz topolmadi: %s", e)
             return False, "Rasmda yuz topilmadi. Iltimos, aniq rasm yuboring."
         except Exception as e:
             logger.exception("verify_face_image kutilmagan xatolik")
@@ -140,10 +141,9 @@ def hash_compare(employee, uploaded_file):
             )
             return True, "Muvaffaqiyatli."
 
-        except ValueError:
-            # Yuz topilmadi (profilda yoki yuklangan rasmda)
+        except ValueError as e:
+            logger.warning("hash_compare yuz topolmadi (employee=%s): %s", employee.id, e)
             return False, "Rasmda yuz aniqlanmadi. Iltimos, aniq rasm yuboring."
         except Exception as e:
             logger.exception("hash_compare kutilmagan xatolik: employee=%s", employee.id)
-            # FAIL-CLOSED
             return False, "Tekshiruvda xatolik yuz berdi. Qayta urinib ko'ring."
