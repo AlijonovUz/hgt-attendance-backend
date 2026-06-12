@@ -9,7 +9,7 @@ from django.contrib.auth.hashers import make_password
 
 from apps.analytics.models import KPIResult
 from apps.analytics.services import KPIService
-from apps.utils.services import verify_face_image
+from apps.utils.face import verify_face_image
 
 from .models import Branch, Department, Permission, Position, Role, User
 
