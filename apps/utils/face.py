@@ -102,7 +102,7 @@ def verify_face_image(uploaded_file):
                 )
 
             if REQUIRE_ANTISPOOFING and not faces[0].get("is_real", False):
-                return False, "Rasm haqiqiy emas (ekran yoki qog'ozdan olingan)."
+                return False, "Tiriklikni tasdiqlab bo'lmadi. Iltimos, yorug' joyda kameraga to'g'ri qarab qaytadan urinib ko'ring."
 
             return True, "Yuz muvaffaqiyatli aniqlandi."
 
@@ -147,7 +147,7 @@ def hash_compare(employee, uploaded_file):
                     )
                     return (
                         False,
-                        "Qalloblik aniqlandi! Rasm tirik odam emas (ekran yoki qog'oz).",
+                        "Tiriklikni tasdiqlab bo'lmadi. Iltimos, yorug' joyda kameraga to'g'ri qarab qaytadan urinib ko'ring.",
                     )
 
             result = DeepFace.verify(
