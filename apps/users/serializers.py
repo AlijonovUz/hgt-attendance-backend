@@ -281,7 +281,10 @@ class ProfileSerializer(serializers.ModelSerializer):
             "late_coefficient": kpi_result.late_coefficient,
             "discipline_coefficient": kpi_result.discipline_coefficient,
             "total_score": kpi_result.total_score,
-            "rating_category": kpi_result.get_rating_category_display(),
+            "rating_category": kpi_result.get_rating_category_display()
+            if kpi_result.rating_category
+            else "Aniqlanmagan",
+            "monthly_attendance": f"{kpi_result.attended_days}/{kpi_result.total_work_days}",
         }
 
     def validate_face_image(self, value):

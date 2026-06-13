@@ -201,6 +201,8 @@ class KPIService:
             monthly_kpi + attendance_kpi + (discipline_coefficient * 100)
         ) / 3
         total_score = round(total_score, 2)
+        
+        attended_days = len(grouped.keys())
 
         if total_score >= 90:
             rating_category = KPIResult.RatingCategory.EXCELLENT
@@ -216,6 +218,7 @@ class KPIService:
             month=date(year, month, 1),
             defaults={
                 "total_work_days": work_days,
+                "attended_days": attended_days,
                 "days_arrived_on_time": days_arrived_on_time,
                 "days_left_on_time": days_left_on_time,
                 "lates_count": lates_count,
