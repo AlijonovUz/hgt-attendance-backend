@@ -1,4 +1,5 @@
 import logging
+from django.utils import timezone
 from django_filters.rest_framework import DjangoFilterBackend
 from drf_spectacular.utils import extend_schema
 from rest_framework import filters, generics, permissions, status, viewsets
@@ -222,6 +223,7 @@ class UserViewSet(BaseManageViewSet):
         user = self.get_object()
         user.is_fired = True
         user.is_active = False
+        user.fired_at = timezone.now()
         user.save()
 
         logger.warning(

@@ -144,7 +144,8 @@ class User(AbstractUser):
         upload_to="faces/", null=True, blank=True, verbose_name="Face ID rasm"
     )
 
-    is_fired = models.BooleanField(default=False)
+    is_fired = models.BooleanField(default=False, verbose_name="Bo'shatilgan")
+    fired_at = models.DateTimeField(null=True, blank=True, verbose_name="Bo'shatilgan sana")
 
     branch = models.ForeignKey(
         Branch,
