@@ -69,15 +69,17 @@ class KPIService:
         _, num_days = calendar.monthrange(year, month)
         end_date = date(year, month, num_days)
         today = timezone.localtime().date()
+        user_start_date = timezone.localtime(user.created_at).date()
+        user_end_date = timezone.localtime(user.fired_at).date() if user.is_fired and user.fired_at else today
 
-        if start_date > today:
+        actual_start_date = max(start_date, user_start_date)
+        actual_end_date = min(end_date, today, user_end_date)
+
+        if actual_start_date > actual_end_date:
             return None
 
-        if end_date > today:
-            end_date = today
-
         schedule_map = ScheduleHelper.get_period_schedule(
-            user.schedule, start_date, end_date
+            user.schedule, actual_start_date, actual_end_date
         )
 
         work_days = sum(1 for d, info in schedule_map.items() if info["is_mandatory"])
@@ -115,6 +117,9 @@ class KPIService:
             is_mand = info["is_mandatory"]
             is_opt = info["is_optional"]
 
+            if not is_mand and not is_opt:
+                is_opt = True
+
             check_ins = [
                 a for a in atts if a.event_type == Attendance.EventType.CHECK_IN
             ]
@@ -135,7 +140,7 @@ class KPIService:
             lunch_starts = [
                 a for a in atts if a.event_type == Attendance.EventType.LUNCH_START
             ]
-            if lunch_starts:
+            if lunch_starts and info.get("lunch_start") is not None:
                 first_lunch_start = min(
                     [timezone.localtime(a.created_at).time() for a in lunch_starts]
                 )
@@ -148,7 +153,7 @@ class KPIService:
             lunch_ends = [
                 a for a in atts if a.event_type == Attendance.EventType.LUNCH_END
             ]
-            if lunch_ends:
+            if lunch_ends and info.get("lunch_end") is not None:
                 first_lunch_end = min(
                     [timezone.localtime(a.created_at).time() for a in lunch_ends]
                 )
@@ -172,7 +177,9 @@ class KPIService:
                     elif is_opt:
                         bonus_actions += 1
 
-        total_expected_actions = work_days * 4
+        has_lunch = user.schedule and user.schedule.lunch_start_time and user.schedule.lunch_end_time
+        actions_per_day = 4 if has_lunch else 2
+        total_expected_actions = work_days * actions_per_day
 
         attendance_kpi = (
             (days_arrived_on_time / work_days * 100) if work_days > 0 else 0
@@ -184,31 +191,14 @@ class KPIService:
         )
         late_coefficient = lates_count / work_days if work_days > 0 else 0
 
-        total_compliant_with_bonus = compliant_actions + bonus_actions
         discipline_coefficient = (
-            (total_compliant_with_bonus / total_expected_actions)
+            (compliant_actions / total_expected_actions)
             if total_expected_actions > 0
             else 0
         )
 
-        attendance_percentage = (
-            (
-                len(
-                    [
-                        d
-                        for d in grouped.keys()
-                        if schedule_map.get(d, {}).get("is_mandatory")
-                    ]
-                )
-                / work_days
-                * 100
-            )
-            if work_days > 0
-            else 0
-        )
-
         total_score = (
-            monthly_kpi + attendance_percentage + (discipline_coefficient * 100)
+            monthly_kpi + attendance_kpi + (discipline_coefficient * 100)
         ) / 3
         total_score = round(total_score, 2)
 
