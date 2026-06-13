@@ -169,7 +169,7 @@ class AttendanceCreateSerializer(serializers.ModelSerializer):
                 message=f"Siz bugun ishga kechikib keldingiz. (Belgilangan vaqt: {st.strftime('%H:%M')})",
                 extra_data={"event": "LATE_CHECK_IN"},
             )
-        elif event == Attendance.EventType.LUNCH_END and current_time > let:
+        elif event == Attendance.EventType.LUNCH_END and let is not None and current_time > let:
             Notification.objects.create(
                 user=user,
                 title="Tushlikdan kechikish",
