@@ -254,7 +254,7 @@ class DashboardService:
         first_day_of_month = end_date.replace(day=1)
 
         base_users = (
-            User.objects.filter(is_active=True, is_fired=False)
+            User.objects.all()
             .select_related("schedule")
             .prefetch_related("schedule__mandatory_days", "schedule__optional_days")
         )
@@ -265,8 +265,9 @@ class DashboardService:
             else:
                 return None
 
-        total_employees = base_users.count()
-        if total_employees == 0:
+        active_users = base_users.filter(is_active=True, is_fired=False)
+        total_employees = active_users.count()
+        if total_employees == 0 and base_users.count() == 0:
             return {
                 "summary": {},
                 "weekly_dynamics": [],
@@ -274,12 +275,12 @@ class DashboardService:
                 "branch_ratings": [],
             }
 
-        joined_this_month = base_users.filter(
+        joined_this_month = active_users.filter(
             date_joined__date__gte=first_day_of_month
         ).count()
         users_before_this_month = total_employees - joined_this_month
 
-        if users_before_this_month == 0:
+        if users_before_this_month <= 0:
             emp_trend_val = 100.0 if joined_this_month > 0 else 0.0
         else:
             emp_trend_val = round((joined_this_month / users_before_this_month) * 100, 1)
@@ -323,9 +324,12 @@ class DashboardService:
                     continue
                 
                 user_start_date = timezone.localtime(u.created_at).date()
+                user_end_date = timezone.localtime(u.fired_at).date() if u.is_fired and u.fired_at else e_date
+                
                 curr = max(s_date, user_start_date)
+                actual_e_date = min(e_date, user_end_date)
 
-                while curr <= e_date:
+                while curr <= actual_e_date:
                     u_atts = user_date_atts.get(u.id, {}).get(curr, [])
                     info = sch_map.get(curr)
                     
@@ -413,9 +417,11 @@ class DashboardService:
                 b_total = len(branch_users)
                 if b_total == 0:
                     continue
-                b_arrived, _, _, _, b_pct = get_stats_for_period(
+                b_arrived, _, _, b_absent, b_pct = get_stats_for_period(
                     start_date, end_date, branch_users
                 )
+                if (b_arrived + b_absent) == 0:
+                    continue
                 branch_ratings.append({"name": branch.name, "rating": round(b_pct)})
             branch_ratings.sort(key=lambda x: x["rating"], reverse=True)
 
