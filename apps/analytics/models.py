@@ -21,6 +21,9 @@ class KPIResult(BaseModel):
     total_work_days = models.PositiveIntegerField(
         default=0, verbose_name="Umumiy ish kunlari"
     )
+    attended_days = models.PositiveIntegerField(
+        default=0, verbose_name="Ishga kelgan kunlari"
+    )
     days_arrived_on_time = models.PositiveIntegerField(
         default=0, verbose_name="Vaqtida kelgan kunlar"
     )
