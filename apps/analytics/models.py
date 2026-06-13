@@ -12,7 +12,7 @@ class KPIResult(BaseModel):
         UNSATISFACTORY = "unsatisfactory", "Qoniqarsiz"
 
     user = models.ForeignKey(
-        User, on_delete=models.CASCADE, related_name="kpi_results", verbose_name="Xodim"
+        User, on_delete=models.PROTECT, related_name="kpi_results", verbose_name="Xodim"
     )
     month = models.DateField(
         verbose_name="Hisobot oyi"
