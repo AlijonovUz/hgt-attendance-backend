@@ -120,6 +120,7 @@ class UserAdmin(ModelAdmin):
                     "schedule",
                     "is_active",
                     "is_fired",
+                    "fired_at",
                     "is_staff",
                     "is_superuser",
                 )
