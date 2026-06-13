@@ -37,10 +37,11 @@ jobs:
             python manage.py collectstatic --noinput
             
             echo "4. Servislarni qayta yoqish"
-            sudo systemctl restart hgt-attendance-backend_web
-            sudo systemctl restart hgt-attendance-backend_worker
-            sudo systemctl restart hgt-attendance-backend_beat
+            systemctl restart hgt-attendance-backend_web
+            systemctl restart hgt-attendance-backend_daphne
+            systemctl restart hgt-attendance-backend_worker
+            systemctl restart hgt-attendance-backend_beat
             
-            sudo systemctl reload nginx
+            systemctl reload nginx
             
             echo "Muvaffaqiyatli yakunlandi!"
