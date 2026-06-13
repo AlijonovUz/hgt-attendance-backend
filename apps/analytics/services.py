@@ -286,7 +286,7 @@ class DashboardService:
 
         unique_schedules = set([u.schedule for u in base_users])
         start_of_week = end_date - timedelta(days=end_date.weekday())
-        week_days_dates = [start_of_week + timedelta(days=i) for i in range(6)]
+        week_days_dates = [start_of_week + timedelta(days=i) for i in range(7)]
 
         min_date = min(start_date, prev_start_date, start_of_week)
         max_date = max(end_date, prev_end_date, week_days_dates[-1])
@@ -380,7 +380,7 @@ class DashboardService:
             diff = ((cur - prv) / prv) * 100
             return round(diff, 1)
 
-        day_names = ["Du", "Se", "Ch", "Pa", "Ju", "Sh"]
+        day_names = ["Du", "Se", "Ch", "Pa", "Ju", "Sh", "Ya"]
         weekly_dynamics = []
         for i, day in enumerate(week_days_dates):
             d_arrived, d_lates, _, _, _ = get_stats_for_period(day, day, base_users)
