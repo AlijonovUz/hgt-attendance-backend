@@ -318,10 +318,19 @@ class DashboardService:
             expected = 0
 
             for u in users:
-                sch_map = global_schedule_map[u.schedule]
-                curr = s_date
+                sch_map = global_schedule_map.get(u.schedule)
+                if not sch_map:
+                    continue
+                
+                user_start_date = timezone.localtime(u.created_at).date()
+                curr = max(s_date, user_start_date)
+
                 while curr <= e_date:
-                    info = sch_map[curr]
+                    info = sch_map.get(curr)
+                    if not info:
+                        curr += timedelta(days=1)
+                        continue
+                        
                     is_mand = info["is_mandatory"]
                     if is_mand:
                         expected += 1
