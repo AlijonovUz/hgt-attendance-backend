@@ -1,163 +1,126 @@
-# HGT Attendance System - Frontend API Documentation
+# HGT Attendance - Bildirishnomalar va WebSocket (Qo'llanma)
 
-Ushbu hujjat Frontend va Mobile dasturchilar uchun tizim API larini to'g'ri integratsiya qilish maqsadida tayyorlandi. Tizim to'liq REST API standartida va JWT autentifikatsiyasi orqali ishlaydi.
+Ushbu loyihada foydalanuvchilarga bildirishnomalarni (Push Notifications) yetkazib berish uchun ham **Real-time WebSocket**, ham qurilmalarga to'g'ridan-to'g'ri yuboriladigan **Firebase Cloud Messaging (FCM)** tizimi qo'llanilgan.
 
-## 📌 Asosiy Ma'lumotlar
-- **Base URL:** `/api/v1/`
-- **Authentication:** `Bearer <Access-Token>` (Authorization header orqali yuboriladi)
-- **Content-Type:** Odatda `application/json`, rasm yuklanadigan (Face ID, Davomat) so'rovlarda esa `multipart/form-data`.
+Quyida ushbu tizimlarni Frontend / Mobile ilovaga qanday ulash bo'yicha to'liq qo'llanma keltirilgan.
 
 ---
 
-## 🔐 1. Avtorizatsiya va Profil (Auth & Profile)
+## 1. WebSocket orqali Real-time Bildirishnomalar
 
-### 1.1 Tizimga kirish (Login)
-- **Endpoint:** `POST /api/v1/users/auth/login/`
-- **Content-Type:** `application/json`
-- **Request Body:**
+WebSocket orqali foydalanuvchi tizimda (saytda) onlayn bo'lib turgan vaqtda jonli xabarlarni olishi mumkin. Xavfsizlikni ta'minlash maqsadida WebSocket ulanishi uchun maxsus **Ticket (Chipta)** tizimi qilingan.
+
+### 1.1. Ticket olish (REST API)
+WebSocketga to'g'ridan-to'g'ri JWT token bilan ulanish xavfsiz emas. Shuning uchun avval 1 daqiqalik yaroqlilik muddatiga ega bo'lgan ticket olinadi.
+
+- **Endpoint:** `POST /api/v1/notifications/tickets/` (Loyiha URL sozlanganiga qarab prefiks o'zgarishi mumkin)
+- **Header:** `Authorization: Bearer <Sizning_JWT_Tokeningiz>`
+- **Javob (Response):**
 ```json
 {
-  "full_name": "Aliyev Vali",
-  "password": "mypassword123"
-}
-```
-- **Response (200 OK):**
-```json
-{
-  "refresh": "eyJhbGciOi...",
-  "access": "eyJhbGciOi..."
+    "ticket": "a1b2c3d4-e5f6-7a8b-9c0d-1e2f3a4b5c6d",
+    "expires_in": 60
 }
 ```
 
-### 1.2 Tokenni yangilash (Refresh Token)
-- **Endpoint:** `POST /api/v1/users/auth/refresh/`
-- **Request Body:**
+### 1.2. WebSocket tarmog'iga ulanish
+Olingan ticket orqali darhol WebSockets serveriga ulanish amalga oshiriladi.
+
+- **WebSocket URL:** `ws://<domain_yoki_ip>/ws/notifications/?ticket=<SIZ_OLGAN_TICKET>`
+- **Mantiq:**
+  1. Frontend / Mobile yuqoridagi manzilga ulanadi.
+  2. Backend siz uzatgan `ticket` ni tekshiradi va u tegishli bo'lgan foydalanuvchini aniqlab, maxsus guruhga (`user_<ID>_notifications`) qo'shib qo'yadi.
+  3. Ulanish o'rnatilgach, backenddan yangi xabar kelsa, u avtomatik tarzda JSON ko'rinishida yuboriladi.
+
+**Kutiladigan xabar formati (Frontendga keladigan JSON):**
 ```json
 {
-  "refresh": "eyJhbGciOi..."
-}
-```
-
-### 1.3 Mening profilimni ko'rish / Tahrirlash
-- **Endpoint:** `GET, PUT, PATCH /api/v1/users/auth/profile/`
-- **Eslatma:** Frontend foydalanuvchining ma'lumotlarini ushbu API orqali oladi. Agar foydalanuvchi profiliga ilk marta rasm (Face ID) joylashtirmoqchi bo'lsa, xuddi shu API ga `PATCH` orqali `face_image` yuboradi.
-
-### 1.4 Yuz ma'lumotini tekshirish (Face Verification)
-- **Endpoint:** `POST /api/v1/users/auth/verify-face/`
-- **Content-Type:** `multipart/form-data`
-- **Request Body:**
-  - `image`: [Fayl (rasm)]
-- **Eslatma:** Faqat haqiqiy odamning yuzi bo'lishi tekshiriladi (Anti-spoofing).
-
-### 1.5 Parolni almashtirish
-- **Endpoint:** `PUT /api/v1/users/auth/change-password/`
-- **Request Body:**
-```json
-{
-  "old_password": "currentPassword",
-  "new_password": "newSecurePassword123"
+    "id": "e3b0c442-989b-4643-9b0e-1a2b3c4d5e6f",
+    "title": "Davomat Muvaffaqiyatli",
+    "message": "Siz ishga o'z vaqtida keldingiz!",
+    "extra_data": {"type": "attendance"},
+    "created_at": "2026-06-13T09:00:00Z",
+    "is_read": false
 }
 ```
 
 ---
 
-## 📍 2. Davomat va Geofencing (Attendance)
+## 2. Push Notifications (FCM / APNS)
 
-### 2.1 Davomat belgilash (Check-in / Check-out)
-- **Endpoint:** `POST /api/v1/attendance/attendance/`
-- **Content-Type:** `multipart/form-data` (Juda muhim!)
-- **Request Body:**
-  - `event_type`: (Matn) `check_in` | `lunch_start` | `lunch_end` | `check_out`
-  - `gps_latitude`: `41.311081`
-  - `gps_longitude`: `69.240562`
-  - `image`: [Jonli olingan selfi rasm fayli]
-- **Eslatma:** Rasm bazada saqlanmaydi, faqat Face ID aniqligi uchun tekshiriladi. Agar foydalanuvchi Geozonadan tashqarida bo'lsa yoki ketma-ketlikni buzsa (masalan ikki marta check-in) API `400 Bad Request` qaytaradi.
+Foydalanuvchi ilovadan chiqib ketgan, saytni yopgan yoki telefoni qulflangan holatda ham bildirishnoma olishi uchun Push Notifications ishlatiladi.
 
-### 2.2 Davomat tarixini olish
-- **Endpoint:** `GET /api/v1/attendance/attendance/`
-- **Filter Parametrlari (URL Query):**
-  - `?event_type=check_in`
-  - `?date_from=2024-01-01T00:00:00&date_to=2024-01-31T23:59:59`
-  - `?user__branch=id` (Faqat adminlar uchun)
+Buning uchun Mobile/Frontend dasturchi Firebase'dan (yoki Apple APNS) maxsus `fcm_token` olib, uni Backendga ro'yxatdan o'tkazib qo'yishi shart.
+
+### 2.1. Qurilmani ro'yxatdan o'tkazish (Device Register)
+
+Foydalanuvchi tizimga login qilganidan so'ng yoki ilovani birinchi marta ochganida uning qurilma ma'lumotlari jo'natilishi kerak.
+
+- **Endpoint:** `POST /api/v1/notifications/devices/register/`
+- **Header:** `Authorization: Bearer <Sizning_JWT_Tokeningiz>`
+- **Request Body (JSON):**
+```json
+{
+    "device_id": "ab12-cd34-ef56-gh78",   // Qurilmaning unikal ID si (Mac address, UUID va h.k.)
+    "fcm_token": "fcm_token_string_here_which_is_very_long", // Firebase taqdim etgan Push Token
+    "device_type": "android"              // 'android', 'ios' yoki 'web'
+}
+```
+- **Javob (Response):**
+```json
+{
+    "message": "Qurilma muvaffaqiyatli ro'yxatdan o'tdi",
+    "status": "created" // Yoki "updated" (agar oldin bo'lsa yangilanadi)
+}
+```
+
+**Asosiy qoidalar:**
+1. Agar bir xil `fcm_token` boshqa birovga tegishli bo'lsa (kimdir boshqaning telefonidan kirsa), avvalgi foydalanuvchidan token tortib olinib, yangi foydalanuvchiga biriktiriladi (Adashib boshqaga xabar borib qolishining oldi olingan).
+2. Tizimdan chiqish (Log out) qilinganda Front-end ushbu qurilmani o'chirib yuborishi maqsadga muvofiq (agar o'chirish API yozilgan bo'lsa, aks holda FCM tokenni tozalash kerak).
 
 ---
 
-## 🏢 3. Tashkiliy Tuzilma (HR & Organization)
-*Barcha GET, POST, PUT, DELETE metodlari mavjud.*
+## 3. Bildirishnomalarni boshqarish (REST API)
 
-### 3.1 Filiallar (Branches)
-- **Endpoint:** `/api/v1/users/branches/`
-- **Request Body (POST/PUT):** `{"name": "Toshkent filial"}`
+Bildirishnomalar ro'yxatini ko'rish va ularni o'qilgan qilib belgilash. Barcha API'lar uchun JWT token talab qilinadi.
 
-### 3.2 Bo'limlar (Departments)
-- **Endpoint:** `/api/v1/users/departments/`
-- **Filter:** `?branch={branch_id}`
-- **Request Body:** `{"name": "IT bo'limi", "branch": "{branch_id}"}`
+### 3.1. Bildirishnomalar ro'yxatini olish
+- **Endpoint:** `GET /api/v1/notifications/`
+- **Filterlash:** `?is_read=false` (Faqat o'qilmaganlarini olish)
+- **Pagination:** Odatiy sahifalash ishlaydi (limit/offset yoki page).
 
-### 3.3 Lavozimlar (Positions)
-- **Endpoint:** `/api/v1/users/positions/`
-- **Filter:** `?department={department_id}`
-
-### 3.4 Rollar va Ruxsatlar (Roles & Permissions)
-- **Rollar:** `/api/v1/users/roles/`
-- **Ruxsatlar (Permissions):** `/api/v1/users/permissions/`
-
-### 3.5 Geozonalar (Ish joylashuvi radiuslari)
-- **Endpoint:** `/api/v1/attendance/geozones/`
-- **Filter:** `?branch={branch_id}&zone_type={polygon|circle}`
-- **Request Body (Dizayn formasi bo'yicha):**
+### 3.2. O'qilmagan xabarlar sonini olish
+- **Endpoint:** `GET /api/v1/notifications/count/`
+- **Javob:**
 ```json
 {
-  "name": "Bosh ofis qamrovi",
-  "zone_type": "circle",
-  "latitude": "41.311081",
-  "longitude": "69.240562",
-  "radius": "50.00",
-  "branch": "{branch_id}"
+    "unread": 3,
+    "read": 15,
+    "total": 18
+}
+```
+
+### 3.3. Bitta xabarni o'qilgan qilib belgilash
+Foydalanuvchi xabarni ochib ko'rganda, shu API chaqiriladi.
+- **Endpoint:** `PATCH /api/v1/notifications/<UUID>/read/`
+- **Javob:** `200 OK` ("Xabar o'qildi deb belgilandi.")
+
+### 3.4. Barcha xabarlarni o'qilgan qilish
+- **Endpoint:** `POST /api/v1/notifications/read-all/`
+- **Javob:**
+```json
+{
+    "message": "3 ta xabar muvaffaqiyatli o'qildi."
 }
 ```
 
 ---
 
-## 👥 4. Xodimlarni Boshqarish (Users & Employees)
+## Qisqacha Xulosa (Ishlash Ketma-ketligi)
 
-### 4.1 Xodimlar ro'yxati va Yaratish
-- **Endpoint:** `/api/v1/users/employees/`
-- **Filter:** `?branch={id}&department={id}&position={id}&role={id}&is_active=true`
-- **Qidiruv:** `?search=Aliyev` (FIO, Telefon, JSHSHIR orqali)
-- **Eslatma:** GET methodi orqali tashkiliy tuzilma ma'lumotlari (`branch`, `department` va h.k) to'liq ob'yekt ko'rinishida qaytadi (Frontend ishini osonlashtirish uchun).
-
-### 4.2 Xodim holatini o'zgartirish (Soft Delete)
-Odamlarni tizimdan butunlay o'chirib yuborish taqiqlanadi. Ular faqat o'chirib qo'yiladi (Deactivate).
-
-- **Bloklash:** `POST /api/v1/users/employees/{id}/block/`
-- **Blokdan chiqarish:** `POST /api/v1/users/employees/{id}/unblock/`
-- **Ishdan bo'shatish:** `POST /api/v1/users/employees/{id}/fire/` (Tizimga kira olmaydi, davomat ham qila olmaydi).
-
----
-
-## 🕵️‍♂️ 5. Tizim Auditi (Audit Logs)
-
-- **Endpoint:** `GET /api/v1/audit/logs/` (Faqat Read-Only, `audit_view` ruxsati borlar uchun)
-- **Filterlar:** 
-  - `?action=create|update|delete`
-  - `?table_name=Xodimlar`
-  - `?date_from=...&date_to=...`
-- **Qidiruv:** `?search=John Doe` (IP manzil, jadval nomi, xodim nomi orqali qidiradi)
-- **Response formati:**
-```json
-{
-  "id": 1,
-  "user_full_name": "Aliyev Vali",
-  "action_display": "Yangilandi",
-  "table_name": "Foydalanuvchi",
-  "object_name": "Karimov Anvar",
-  "old_values": {"phone": "+998901234567"},
-  "new_values": {"phone": "+998901112233"},
-  "ip_address": "192.168.1.5",
-  "created_at": "2024-05-12T10:00:00Z"
-}
-```
-
----
-*Ushbu hujjat backend tomonidan doimiy yangilab boriladi. Agar qandaydir muammo yoki xatolik kodi (`400`, `403`) qaytsa, `detail` keyi orqali o'zbek tilida aniq xatolik sababi jo'natiladi.*
+1. Xodim tizimga **Login** qiladi va Token oladi.
+2. Frontend darhol Firebase'dan FCM Token so'raydi.
+3. Frontend olingan qurilma ma'lumotlarini **`/devices/register/`** ga jo'natadi.
+4. Tizim ishlayotgan paytda "Jonli" xabarlar kelishi uchun Frontend **`/tickets/`** dan bitta chipta oladi.
+5. Chipta bilan **`ws://.../ws/notifications/?ticket=...`** tarmog'iga ulanib, quloq solib o'tiradi.
+6. Biror muhim jarayon bo'lsa (Masalan, Admin foydalanuvchini tasdiqlasa yoki Davomat qayd etilsa) server bir vaqtning o'zida ham WebSocketga, ham Firebase yordamida Push Notification'ga xabar uchiradi.

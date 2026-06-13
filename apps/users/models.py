@@ -112,8 +112,8 @@ class WorkSchedule(BaseModel):
     name = models.CharField(max_length=255, verbose_name="Jadval nomi")
     work_start_time = models.TimeField(default=time(9, 0), verbose_name="Ish boshlanishi")
     work_end_time = models.TimeField(default=time(18, 0), verbose_name="Ish tugashi")
-    lunch_start_time = models.TimeField(default=time(13, 0), verbose_name="Tushlik boshlanishi")
-    lunch_end_time = models.TimeField(default=time(14, 0), verbose_name="Tushlik tugashi")
+    lunch_start_time = models.TimeField(null=True, blank=True, verbose_name="Tushlik boshlanishi")
+    lunch_end_time = models.TimeField(null=True, blank=True, verbose_name="Tushlik tugashi")
     
     mandatory_days = models.ManyToManyField(WeekDay, related_name="mandatory_schedules", verbose_name="Majburiy kunlar")
     optional_days = models.ManyToManyField(WeekDay, related_name="optional_schedules", blank=True, verbose_name="Ixtiyoriy kunlar")
@@ -144,7 +144,8 @@ class User(AbstractUser):
         upload_to="faces/", null=True, blank=True, verbose_name="Face ID rasm"
     )
 
-    is_fired = models.BooleanField(default=False)
+    is_fired = models.BooleanField(default=False, verbose_name="Bo'shatilgan")
+    fired_at = models.DateTimeField(null=True, blank=True, verbose_name="Bo'shatilgan sana")
 
     branch = models.ForeignKey(
         Branch,
