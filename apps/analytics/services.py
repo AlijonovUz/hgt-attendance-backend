@@ -326,8 +326,15 @@ class DashboardService:
                 curr = max(s_date, user_start_date)
 
                 while curr <= e_date:
+                    u_atts = user_date_atts.get(u.id, {}).get(curr, [])
                     info = sch_map.get(curr)
+                    
                     if not info:
+                        if u_atts:
+                            has_record = any(a.event_type in (Attendance.EventType.CHECK_IN, Attendance.EventType.CHECK_OUT) for a in u_atts)
+                            if has_record:
+                                expected += 1
+                                arrived += 1
                         curr += timedelta(days=1)
                         continue
                         
@@ -335,38 +342,22 @@ class DashboardService:
                     if is_mand:
                         expected += 1
 
-                    u_atts = user_date_atts.get(u.id, {}).get(curr, [])
                     if u_atts:
-                        check_ins = [
-                            a
-                            for a in u_atts
-                            if a.event_type == Attendance.EventType.CHECK_IN
-                        ]
-                        if check_ins:
+                        check_ins = [a for a in u_atts if a.event_type == Attendance.EventType.CHECK_IN]
+                        check_outs = [a for a in u_atts if a.event_type == Attendance.EventType.CHECK_OUT]
+                        
+                        if check_ins or check_outs:
                             if info["is_optional"]:
                                 expected += 1
                             arrived += 1
-                            first_in = min(
-                                [
-                                    timezone.localtime(a.created_at).time()
-                                    for a in check_ins
-                                ]
-                            )
+
+                        if check_ins:
+                            first_in = min([timezone.localtime(a.created_at).time() for a in check_ins])
                             if first_in > info["start_time"]:
                                 lates += 1
 
-                        check_outs = [
-                            a
-                            for a in u_atts
-                            if a.event_type == Attendance.EventType.CHECK_OUT
-                        ]
                         if check_outs:
-                            last_out = max(
-                                [
-                                    timezone.localtime(a.created_at).time()
-                                    for a in check_outs
-                                ]
-                            )
+                            last_out = max([timezone.localtime(a.created_at).time() for a in check_outs])
                             if last_out < info["end_time"]:
                                 early_leaves += 1
                     curr += timedelta(days=1)
