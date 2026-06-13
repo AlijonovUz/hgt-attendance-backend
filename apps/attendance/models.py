@@ -28,7 +28,7 @@ class Geozone(BaseModel):
     radius = models.PositiveIntegerField(default=50, verbose_name="Radius (metr)")
     branch = models.ForeignKey(
         Branch,
-        on_delete=models.CASCADE,
+        on_delete=models.PROTECT,
         related_name="geozones",
         verbose_name="Filial",
         null=True,
@@ -51,7 +51,7 @@ class Attendance(BaseModel):
         CHECK_OUT = "check_out", "Ketish"
 
     user = models.ForeignKey(
-        User, on_delete=models.CASCADE, related_name="attendances", verbose_name="Xodim"
+        User, on_delete=models.PROTECT, related_name="attendances", verbose_name="Xodim"
     )
     event_type = models.CharField(
         max_length=50, choices=EventType.choices, verbose_name="Hodisa turi"
@@ -82,7 +82,7 @@ class Attendance(BaseModel):
 
 class FaceLog(BaseModel):
     user = models.ForeignKey(
-        User, on_delete=models.CASCADE, related_name="face_logs", verbose_name="Xodim"
+        User, on_delete=models.PROTECT, related_name="face_logs", verbose_name="Xodim"
     )
     is_success = models.BooleanField(default=False, verbose_name="Muvaffaqiyatli")
     distance = models.FloatField(
@@ -102,7 +102,7 @@ class FaceLog(BaseModel):
 
 class GpsLog(BaseModel):
     user = models.ForeignKey(
-        User, on_delete=models.CASCADE, related_name="gps_logs", verbose_name="Xodim"
+        User, on_delete=models.PROTECT, related_name="gps_logs", verbose_name="Xodim"
     )
     is_success = models.BooleanField(default=False, verbose_name="Muvaffaqiyatli")
     latitude = models.DecimalField(

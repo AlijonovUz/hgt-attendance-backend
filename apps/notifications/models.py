@@ -5,7 +5,7 @@ from apps.users.models import User
 class Notification(BaseModel):
     user = models.ForeignKey(
         User,
-        on_delete=models.CASCADE,
+        on_delete=models.PROTECT,
         related_name="notifications",
         verbose_name="Foydalanuvchi"
     )
@@ -24,7 +24,7 @@ class Notification(BaseModel):
 
 
 class UserDevice(BaseModel):
-    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='devices')
+    user = models.ForeignKey(User, on_delete=models.PROTECT, related_name='devices')
     fcm_token = models.TextField(unique=True)
     device_type = models.CharField(max_length=50, choices=[('ios', 'iOS'), ('android', 'Android'), ('web', 'Web')])
     device_id = models.CharField(max_length=255, unique=True)

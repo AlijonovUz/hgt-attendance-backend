@@ -51,7 +51,7 @@ class Department(BaseModel):
     name = models.CharField(max_length=255, verbose_name="Bo'lim nomi")
     branch = models.ForeignKey(
         Branch,
-        on_delete=models.CASCADE,
+        on_delete=models.PROTECT,
         related_name="departments",
         verbose_name="Filial",
     )
@@ -68,7 +68,7 @@ class Position(BaseModel):
     name = models.CharField(max_length=255, verbose_name="Lavozim nomi")
     department = models.ForeignKey(
         Department,
-        on_delete=models.CASCADE,
+        on_delete=models.PROTECT,
         related_name="positions",
         verbose_name="Bo'lim",
     )
