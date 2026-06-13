@@ -347,7 +347,7 @@ class DashboardService:
                         check_outs = [a for a in u_atts if a.event_type == Attendance.EventType.CHECK_OUT]
                         
                         if check_ins or check_outs:
-                            if info["is_optional"]:
+                            if info["is_optional"] or not (info["is_mandatory"] or info["is_optional"]):
                                 expected += 1
                             arrived += 1
 
