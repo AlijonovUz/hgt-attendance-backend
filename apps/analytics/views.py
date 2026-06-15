@@ -9,6 +9,7 @@ from apps.users.models import User
 from .models import KPIResult
 from .serializers import KPIResultSerializer
 from .services import KPIService, DashboardService
+from .reports import ReportService
 
 
 @extend_schema(tags=["Analitika va KPI"])
@@ -139,3 +140,79 @@ class KPIResultViewSet(viewsets.ReadOnlyModelViewSet):
             )
 
         return Response(stats)
+
+
+@extend_schema(tags=["Hisobotlar"])
+class ReportViewSet(viewsets.ViewSet):
+    @extend_schema(
+        summary="Xodimlar bo'yicha hisobot",
+        parameters=[
+            OpenApiParameter(name="period", description="Davr (daily, weekly, monthly, quarterly, yearly, custom)", required=False, type=str),
+            OpenApiParameter(name="start_date", description="Boshlanish sanasi (YYYY-MM-DD), faqat custom bo'lsa", required=False, type=str),
+            OpenApiParameter(name="end_date", description="Tugash sanasi (YYYY-MM-DD), faqat custom bo'lsa", required=False, type=str)
+        ]
+    )
+    @action(detail=False, methods=["get"], url_path="by-employee")
+    def by_employee(self, request):
+        return self._get_report(request, "employee")
+
+    @extend_schema(
+        summary="Filiallar bo'yicha hisobot",
+        parameters=[
+            OpenApiParameter(name="period", description="Davr (daily, weekly, monthly, quarterly, yearly, custom)", required=False, type=str),
+            OpenApiParameter(name="start_date", description="Boshlanish sanasi (YYYY-MM-DD), faqat custom bo'lsa", required=False, type=str),
+            OpenApiParameter(name="end_date", description="Tugash sanasi (YYYY-MM-DD), faqat custom bo'lsa", required=False, type=str)
+        ]
+    )
+    @action(detail=False, methods=["get"], url_path="by-branch")
+    def by_branch(self, request):
+        return self._get_report(request, "branch")
+
+    def _get_report(self, request, report_type):
+        has_access = (
+            request.user.is_superuser or 
+            request.user.has_permission("report_view_daily") or 
+            request.user.has_permission("report_view_weekly") or 
+            request.user.has_permission("report_view_monthly")
+        )
+        if not has_access:
+            return Response({"detail": "Ruxsat etilmagan."}, status=status.HTTP_403_FORBIDDEN)
+            
+        period = request.query_params.get("period", "custom")
+        today = timezone.localtime().date()
+        
+        if period == "daily":
+            start_date = today
+            end_date = today
+        elif period == "weekly":
+            start_date = today - timedelta(days=today.weekday())
+            end_date = today
+        elif period == "monthly":
+            start_date = today.replace(day=1)
+            end_date = today
+        elif period == "quarterly":
+            start_month = 3 * ((today.month - 1) // 3) + 1
+            start_date = today.replace(month=start_month, day=1)
+            end_date = today
+        elif period == "yearly":
+            start_date = today.replace(month=1, day=1)
+            end_date = today
+        else:
+            start_str = request.query_params.get("start_date")
+            end_str = request.query_params.get("end_date")
+            
+            if not start_str or not end_str:
+                return Response({"detail": "Custom davr uchun start_date va end_date majburiy."}, status=status.HTTP_400_BAD_REQUEST)
+                
+            try:
+                start_date = datetime.strptime(start_str, "%Y-%m-%d").date()
+                end_date = datetime.strptime(end_str, "%Y-%m-%d").date()
+            except ValueError:
+                return Response({"detail": "Noto'g'ri sana formati."}, status=status.HTTP_400_BAD_REQUEST)
+            
+        if report_type == "employee":
+            data = ReportService.get_report_by_employee(request.user, start_date, end_date)
+        else:
+            data = ReportService.get_report_by_branch(request.user, start_date, end_date)
+            
+        return Response(data)
