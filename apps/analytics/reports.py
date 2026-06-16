@@ -44,8 +44,23 @@ class ReportService:
             absent = 0
             left_early = 0
 
-            curr = start_date
-            while curr <= min(end_date, today):
+            user_join_date = timezone.localtime(user.created_at).date()
+            actual_start_date = max(start_date, user_join_date)
+
+            actual_end_date = min(end_date, today)
+            if user.is_fired and user.fired_at:
+                user_fire_date = timezone.localtime(user.fired_at).date()
+                actual_end_date = min(actual_end_date, user_fire_date)
+
+            on_time_in = 0
+            on_time_out = 0
+            compliant_actions = 0
+
+            has_lunch = user.schedule and user.schedule.lunch_start_time and user.schedule.lunch_end_time
+            actions_per_day = 4 if has_lunch else 2
+
+            curr = actual_start_date
+            while curr <= actual_end_date:
                 day_info = schedule_map.get(curr)
                 if day_info and day_info["is_mandatory"]:
                     total_expected += 1
@@ -53,22 +68,48 @@ class ReportService:
                     
                     check_in = next((a for a in day_atts if a.event_type == Attendance.EventType.CHECK_IN), None)
                     check_out = next((a for a in day_atts if a.event_type == Attendance.EventType.CHECK_OUT), None)
+                    lunch_start = next((a for a in day_atts if a.event_type == Attendance.EventType.LUNCH_START), None)
+                    lunch_end = next((a for a in day_atts if a.event_type == Attendance.EventType.LUNCH_END), None)
 
                     if check_in:
                         present += 1
                         check_in_time = timezone.localtime(check_in.created_at).time()
-                        if check_in_time > day_info["start_time"]:
+                        if check_in_time <= day_info["start_time"]:
+                            on_time_in += 1
+                            compliant_actions += 1
+                        else:
                             late += 1
-                        if check_out:
-                            check_out_time = timezone.localtime(check_out.created_at).time()
-                            if check_out_time < day_info["end_time"]:
-                                left_early += 1
-                    else:
+                            
+                    if check_out:
+                        check_out_time = timezone.localtime(check_out.created_at).time()
+                        if check_out_time >= day_info["end_time"]:
+                            on_time_out += 1
+                            compliant_actions += 1
+                        else:
+                            left_early += 1
+                            
+                    if not check_in:
                         absent += 1
+                        
+                    if has_lunch and day_info.get("lunch_start") and day_info.get("lunch_end"):
+                        if lunch_start and timezone.localtime(lunch_start.created_at).time() >= day_info["lunch_start"]:
+                            compliant_actions += 1
+                        if lunch_end and timezone.localtime(lunch_end.created_at).time() <= day_info["lunch_end"]:
+                            compliant_actions += 1
+
                 curr += timedelta(days=1)
                 
-            penalty = (late + left_early) * 5
-            discipline_kpi = max(0, 100 - penalty)
+            if total_expected > 0:
+                attendance_kpi = (on_time_in / total_expected) * 100
+                monthly_kpi = ((on_time_in + on_time_out) / (total_expected * 2)) * 100
+                
+                total_expected_actions = total_expected * actions_per_day
+                discipline_coefficient = (compliant_actions / total_expected_actions) if total_expected_actions > 0 else 0
+                
+                total_score = (monthly_kpi + attendance_kpi + (discipline_coefficient * 100)) / 3
+                discipline_kpi = round(total_score)
+            else:
+                discipline_kpi = 100
             
             user_stats[user.id] = {
                 "user": user,
