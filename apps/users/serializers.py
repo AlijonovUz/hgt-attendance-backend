@@ -369,13 +369,4 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
             "is_password_changed": user.is_password_changed,
         }
 
-        if not user.is_password_changed:
-            from apps.notifications.models import Notification
-            if not Notification.objects.filter(user=user, title="Parolni o'zgartirish").exists():
-                Notification.objects.create(
-                    user=user,
-                    title="Parolni o'zgartirish",
-                    message="Tizim xavfsizligi uchun, iltimos parolingizni yangilang!"
-                )
-
         return data
