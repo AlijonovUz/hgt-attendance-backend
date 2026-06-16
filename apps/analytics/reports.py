@@ -75,8 +75,12 @@ class ReportService:
                         absent += 1
                 curr += timedelta(days=1)
                 
-            penalty = (late + left_early) * 5
-            discipline_kpi = max(0, 100 - penalty)
+            if total_expected > 0:
+                base_score = (present / total_expected) * 100
+                penalty = (late + left_early) * 5
+                discipline_kpi = max(0, round(base_score - penalty))
+            else:
+                discipline_kpi = 100
             
             user_stats[user.id] = {
                 "user": user,
