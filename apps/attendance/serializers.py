@@ -183,5 +183,21 @@ class AttendanceCreateSerializer(serializers.ModelSerializer):
                 message=f"Siz ish vaqti tugamasdan oldin ketdingiz. (Belgilangan vaqt: {et.strftime('%H:%M')})",
                 extra_data={"event": "EARLY_CHECK_OUT"},
             )
-
         return instance
+
+
+class FaceLogSerializer(serializers.ModelSerializer):
+    user_info = UserShortInfoSerializer(source="user", read_only=True)
+
+    class Meta:
+        model = FaceLog
+        fields = ["id", "user", "user_info", "is_success", "message", "created_at"]
+
+
+class GpsLogSerializer(serializers.ModelSerializer):
+    user_info = UserShortInfoSerializer(source="user", read_only=True)
+
+    class Meta:
+        model = GpsLog
+        fields = ["id", "user", "user_info", "is_success", "latitude", "longitude", "distance_meters", "message", "created_at"]
+

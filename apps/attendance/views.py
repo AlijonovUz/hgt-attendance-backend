@@ -6,11 +6,13 @@ from rest_framework import filters
 from apps.utils.views import BaseManageViewSet
 
 from .filters import AttendanceFilter
-from .models import Attendance, Geozone
+from .models import Attendance, Geozone, FaceLog, GpsLog
 from .serializers import (
     AttendanceCreateSerializer,
     AttendanceListSerializer,
     GeozoneSerializer,
+    FaceLogSerializer,
+    GpsLogSerializer,
 )
 
 
@@ -63,3 +65,35 @@ class AttendanceViewSet(BaseManageViewSet):
         if self.action == "create":
             return AttendanceCreateSerializer
         return AttendanceListSerializer
+
+
+@extend_schema(tags=["Face Logs"])
+class FaceLogViewSet(BaseManageViewSet):
+    queryset = FaceLog.objects.select_related("user").active()
+    serializer_class = FaceLogSerializer
+    filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
+    filterset_fields = ["is_success", "user"]
+    search_fields = ["user__full_name", "message"]
+    ordering_fields = ["created_at"]
+    ordering = ["-created_at"]
+    http_method_names = ["get", "head", "options"]
+    action_permissions = {
+        "list": "attendance_view_history_all",
+        "retrieve": "attendance_view_history_all",
+    }
+
+
+@extend_schema(tags=["GPS Logs"])
+class GpsLogViewSet(BaseManageViewSet):
+    queryset = GpsLog.objects.select_related("user").active()
+    serializer_class = GpsLogSerializer
+    filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
+    filterset_fields = ["is_success", "user"]
+    search_fields = ["user__full_name", "message"]
+    ordering_fields = ["created_at"]
+    ordering = ["-created_at"]
+    http_method_names = ["get", "head", "options"]
+    action_permissions = {
+        "list": "attendance_view_history_all",
+        "retrieve": "attendance_view_history_all",
+    }
