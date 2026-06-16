@@ -52,7 +52,7 @@ class AttendanceCreateSerializer(serializers.ModelSerializer):
         event_type = attrs.get("event_type")
 
         today = timezone.now().date()
-        todays_events = Attendance.objects.filter(
+        todays_events = Attendance.objects.active().filter(
             user=user, created_at__date=today
         ).values_list("event_type", flat=True)
 
