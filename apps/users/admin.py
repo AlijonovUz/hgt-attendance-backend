@@ -16,46 +16,46 @@ from .models import (
 
 @admin.register(Permission)
 class PermissionAdmin(ModelAdmin):
-    list_display = ["name", "code"]
+    list_display = ["name", "code", "is_active"]
     search_fields = ["name", "code"]
 
 
 @admin.register(Role)
 class RoleAdmin(ModelAdmin):
-    list_display = ["name"]
+    list_display = ["name", "is_active"]
     search_fields = ["name"]
     filter_horizontal = ["permissions"]
 
 
 @admin.register(Branch)
 class BranchAdmin(ModelAdmin):
-    list_display = ["name"]
+    list_display = ["name", "is_active"]
     search_fields = ["name"]
 
 
 @admin.register(Department)
 class DepartmentAdmin(ModelAdmin):
-    list_display = ["name", "branch"]
+    list_display = ["name", "branch", "is_active"]
     search_fields = ["name", "branch__name"]
     list_filter = ["branch"]
 
 
 @admin.register(Position)
 class PositionAdmin(ModelAdmin):
-    list_display = ["name", "department"]
+    list_display = ["name", "department", "is_active"]
     search_fields = ["name", "department__name"]
     list_filter = ["department"]
 
 
 @admin.register(WeekDay)
 class WeekDayAdmin(ModelAdmin):
-    list_display = ["name", "day_number"]
+    list_display = ["name", "day_number", "is_active"]
     ordering = ["day_number"]
 
 
 @admin.register(Holiday)
 class HolidayAdmin(ModelAdmin):
-    list_display = ["title", "start_date", "end_date"]
+    list_display = ["title", "start_date", "end_date", "is_active"]
     search_fields = ["title"]
     ordering = ["-start_date"]
 
@@ -68,6 +68,7 @@ class WorkScheduleAdmin(ModelAdmin):
         "work_end_time",
         "lunch_start_time",
         "lunch_end_time",
+        "is_active",
     ]
     search_fields = ["name"]
     filter_horizontal = ["mandatory_days", "optional_days"]
