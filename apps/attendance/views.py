@@ -16,7 +16,7 @@ from .serializers import (
 
 @extend_schema(tags=["Geozonalar"])
 class GeozoneViewSet(BaseManageViewSet):
-    queryset = Geozone.objects.select_related("branch").filter(is_active=True)
+    queryset = Geozone.objects.select_related("branch").active()
     serializer_class = GeozoneSerializer
     filter_backends = [DjangoFilterBackend, filters.SearchFilter]
     filterset_fields = ["branch", "is_active"]
@@ -31,7 +31,7 @@ class GeozoneViewSet(BaseManageViewSet):
 
 @extend_schema(tags=["Davomat"])
 class AttendanceViewSet(BaseManageViewSet):
-    queryset = Attendance.objects.none()
+    queryset = Attendance.objects.select_related("user").active()
     filter_backends = [
         DjangoFilterBackend,
         filters.SearchFilter,
@@ -48,17 +48,16 @@ class AttendanceViewSet(BaseManageViewSet):
     }
 
     def get_queryset(self):
+        qs = self.queryset
         user = self.request.user
 
         if user.is_superuser or user.has_permission("attendance_view_history_all"):
-            return Attendance.objects.select_related("user").all()
+            return qs
 
         if user.has_permission("attendance_view_history_dept") and user.department:
-            return Attendance.objects.select_related("user").filter(
-                Q(user=user) | Q(user__department=user.department)
-            )
+            return qs.filter(Q(user=user) | Q(user__department=user.department))
 
-        return Attendance.objects.select_related("user").filter(user=user)
+        return qs.filter(user=user)
 
     def get_serializer_class(self):
         if self.action == "create":
