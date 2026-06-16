@@ -44,8 +44,16 @@ class ReportService:
             absent = 0
             left_early = 0
 
-            curr = start_date
-            while curr <= min(end_date, today):
+            user_join_date = timezone.localtime(user.created_at).date()
+            actual_start_date = max(start_date, user_join_date)
+
+            actual_end_date = min(end_date, today)
+            if user.is_fired and user.fired_at:
+                user_fire_date = timezone.localtime(user.fired_at).date()
+                actual_end_date = min(actual_end_date, user_fire_date)
+
+            curr = actual_start_date
+            while curr <= actual_end_date:
                 day_info = schedule_map.get(curr)
                 if day_info and day_info["is_mandatory"]:
                     total_expected += 1
