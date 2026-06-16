@@ -13,6 +13,7 @@ class KPIResultAdmin(ModelAdmin):
         "monthly_kpi",
         "rating_category",
         "total_score",
+        "is_active",
     ]
     search_fields = ["user__full_name", "user__jshshir"]
     list_filter = ["month", "rating_category"]
