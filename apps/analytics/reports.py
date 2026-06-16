@@ -109,7 +109,7 @@ class ReportService:
                 total_score = (monthly_kpi + attendance_kpi + (discipline_coefficient * 100)) / 3
                 discipline_kpi = round(total_score)
             else:
-                discipline_kpi = 100
+                discipline_kpi = 0
             
             user_stats[user.id] = {
                 "user": user,
@@ -136,6 +136,8 @@ class ReportService:
             "left_early": 0,
             "total_kpi": 0
         }
+        
+        active_users_count = 0
 
         for user_id, stat in stats.items():
             user = stat["user"]
@@ -157,9 +159,12 @@ class ReportService:
             summary["late"] += stat["late"]
             summary["absent"] += stat["absent"]
             summary["left_early"] += stat["left_early"]
-            summary["total_kpi"] += stat["discipline_kpi"]
+            
+            if stat["total_expected"] > 0 or stat["present"] > 0:
+                summary["total_kpi"] += stat["discipline_kpi"]
+                active_users_count += 1
 
-        avg_kpi = round(summary["total_kpi"] / len(report_data)) if report_data else 0
+        avg_kpi = round(summary["total_kpi"] / active_users_count) if active_users_count > 0 else 0
         
         return {
             "results": report_data,
@@ -202,8 +207,10 @@ class ReportService:
             b["late"] += stat["late"]
             b["absent"] += stat["absent"]
             b["left_early"] += stat["left_early"]
-            b["total_kpi"] += stat["discipline_kpi"]
-            b["employee_count"] += 1
+            
+            if stat["total_expected"] > 0 or stat["present"] > 0:
+                b["total_kpi"] += stat["discipline_kpi"]
+                b["employee_count"] += 1
 
         report_data = []
         summary = {
@@ -214,6 +221,8 @@ class ReportService:
             "left_early": 0,
             "total_kpi": 0
         }
+        
+        active_branches_count = 0
 
         for b_id, b in branch_stats.items():
             avg_kpi = round(b["total_kpi"] / b["employee_count"]) if b["employee_count"] > 0 else 0
@@ -233,9 +242,12 @@ class ReportService:
             summary["late"] += b["late"]
             summary["absent"] += b["absent"]
             summary["left_early"] += b["left_early"]
-            summary["total_kpi"] += avg_kpi
+            
+            if b["employee_count"] > 0:
+                summary["total_kpi"] += avg_kpi
+                active_branches_count += 1
 
-        overall_avg_kpi = round(summary["total_kpi"] / len(report_data)) if report_data else 0
+        overall_avg_kpi = round(summary["total_kpi"] / active_branches_count) if active_branches_count > 0 else 0
         
         return {
             "results": report_data,
