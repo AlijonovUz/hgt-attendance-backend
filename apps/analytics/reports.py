@@ -6,7 +6,7 @@ from apps.attendance.models import Attendance
 class ReportService:
     @staticmethod
     def _get_users(request_user, region_id=None, district_id=None, branch_id=None):
-        users = User.objects.all()
+        users = User.objects.filter(branch__isnull=False)
         if not (request_user.is_superuser or request_user.has_permission("analytics_view_all")):
             if request_user.has_permission("analytics_view_region") and request_user.branch and request_user.branch.region:
                 users = users.filter(branch__region=request_user.branch.region)
@@ -161,15 +161,15 @@ class ReportService:
             if status == "late" and stat["late"] == 0: continue
 
             user = stat["user"]
-            branch_name = user.branch.name if user.branch else "Boshqa"
-            region_name = user.branch.region.name if user.branch and user.branch.region else "Boshqa"
-            district_name = user.branch.district.name if user.branch and user.branch.district else "Boshqa"
+            branch_name = user.branch.name if user.branch else None
+            region_name = user.branch.region.name if user.branch and user.branch.region else None
+            district_name = user.branch.district.name if user.branch and user.branch.district else None
             
             report_data.append({
                 "id": user.id,
                 "full_name": user.full_name,
-                "department": user.department.name if user.department else "Boshqa",
-                "position": user.position.name if user.position else "Boshqa",
+                "department": user.department.name if user.department else None,
+                "position": user.position.name if user.position else None,
                 "branch": branch_name,
                 "region": region_name,
                 "district": district_name,
@@ -214,9 +214,9 @@ class ReportService:
         for user_id, stat in stats.items():
             branch = stat["user"].branch
             branch_id = branch.id if branch else 0
-            branch_name = branch.name if branch else "Boshqa"
-            region_name = branch.region.name if branch and branch.region else "Boshqa"
-            district_name = branch.district.name if branch and branch.district else "Boshqa"
+            branch_name = branch.name if branch else None
+            region_name = branch.region.name if branch and branch.region else None
+            district_name = branch.district.name if branch and branch.district else None
             
             if branch_id not in branch_stats:
                 branch_stats[branch_id] = {
