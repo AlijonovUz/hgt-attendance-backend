@@ -1,3 +1,4 @@
+import hashlib
 from datetime import date
 from django.utils import timezone
 
@@ -395,11 +396,14 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
         data: dict = super().validate(attrs)
         user = self.user
 
+        offline_secret = hashlib.sha256(user.password.encode('utf-8')).hexdigest()
+
         data["user"] = {
             "id": user.id,
             "full_name": user.full_name,
             "face_image": user.face_image.url if user.face_image else None,
             "is_password_changed": user.is_password_changed,
+            "offline_secret": offline_secret,
         }
 
         return data

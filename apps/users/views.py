@@ -1,3 +1,4 @@
+import hashlib
 import logging
 from django.utils import timezone
 from django_filters.rest_framework import DjangoFilterBackend
@@ -359,8 +360,14 @@ class ChangePasswordView(generics.UpdateAPIView):
         if serializer.is_valid():
             serializer.save()
             logger.info("Foydalanuvchi parolini o'zgartirdi: ID=%s", request.user.id)
+            
+            offline_secret = hashlib.sha256(request.user.password.encode('utf-8')).hexdigest()
+            
             return Response(
-                {"message": "Parol muvaffaqiyatli o'zgartirildi."},
+                {
+                    "message": "Parol muvaffaqiyatli o'zgartirildi.",
+                    "offline_secret": offline_secret
+                },
                 status=status.HTTP_200_OK,
             )
 
