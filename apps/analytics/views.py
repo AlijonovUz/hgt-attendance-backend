@@ -106,6 +106,9 @@ class KPIResultViewSet(viewsets.ReadOnlyModelViewSet):
                 required=False,
                 type=str,
             ),
+            OpenApiParameter(name="region_id", description="Viloyat ID", required=False, type=str),
+            OpenApiParameter(name="district_id", description="Tuman ID", required=False, type=str),
+            OpenApiParameter(name="branch_id", description="Filial ID", required=False, type=str),
         ],
     )
     @action(detail=False, methods=["get"], url_path="dashboard-stats")
@@ -113,6 +116,9 @@ class KPIResultViewSet(viewsets.ReadOnlyModelViewSet):
         period = request.query_params.get("period")
         start_date_str = request.query_params.get("start_date")
         end_date_str = request.query_params.get("end_date")
+        region_id = request.query_params.get("region_id")
+        district_id = request.query_params.get("district_id")
+        branch_id = request.query_params.get("branch_id")
 
         end_date = timezone.localtime().date()
         start_date = end_date
@@ -132,7 +138,12 @@ class KPIResultViewSet(viewsets.ReadOnlyModelViewSet):
                 start_date = end_date - timedelta(days=180)
 
         stats = DashboardService.get_dashboard_stats(
-            request.user, start_date=start_date, end_date=end_date
+            request.user, 
+            start_date=start_date, 
+            end_date=end_date,
+            region_id=region_id,
+            district_id=district_id,
+            branch_id=branch_id
         )
         if stats is None:
             return Response(
@@ -149,7 +160,11 @@ class ReportViewSet(viewsets.ViewSet):
         parameters=[
             OpenApiParameter(name="period", description="Davr (daily, weekly, monthly, quarterly, yearly, custom)", required=False, type=str),
             OpenApiParameter(name="start_date", description="Boshlanish sanasi (YYYY-MM-DD), faqat custom bo'lsa", required=False, type=str),
-            OpenApiParameter(name="end_date", description="Tugash sanasi (YYYY-MM-DD), faqat custom bo'lsa", required=False, type=str)
+            OpenApiParameter(name="end_date", description="Tugash sanasi (YYYY-MM-DD), faqat custom bo'lsa", required=False, type=str),
+            OpenApiParameter(name="region_id", description="Viloyat ID", required=False, type=str),
+            OpenApiParameter(name="district_id", description="Tuman ID", required=False, type=str),
+            OpenApiParameter(name="branch_id", description="Filial ID", required=False, type=str),
+            OpenApiParameter(name="status", description="Holati (present, absent, late)", required=False, type=str),
         ]
     )
     @action(detail=False, methods=["get"], url_path="by-employee")
@@ -161,7 +176,10 @@ class ReportViewSet(viewsets.ViewSet):
         parameters=[
             OpenApiParameter(name="period", description="Davr (daily, weekly, monthly, quarterly, yearly, custom)", required=False, type=str),
             OpenApiParameter(name="start_date", description="Boshlanish sanasi (YYYY-MM-DD), faqat custom bo'lsa", required=False, type=str),
-            OpenApiParameter(name="end_date", description="Tugash sanasi (YYYY-MM-DD), faqat custom bo'lsa", required=False, type=str)
+            OpenApiParameter(name="end_date", description="Tugash sanasi (YYYY-MM-DD), faqat custom bo'lsa", required=False, type=str),
+            OpenApiParameter(name="region_id", description="Viloyat ID", required=False, type=str),
+            OpenApiParameter(name="district_id", description="Tuman ID", required=False, type=str),
+            OpenApiParameter(name="branch_id", description="Filial ID", required=False, type=str),
         ]
     )
     @action(detail=False, methods=["get"], url_path="by-branch")
@@ -210,9 +228,20 @@ class ReportViewSet(viewsets.ViewSet):
             except ValueError:
                 return Response({"detail": "Noto'g'ri sana formati."}, status=status.HTTP_400_BAD_REQUEST)
             
+        region_id = request.query_params.get("region_id")
+        district_id = request.query_params.get("district_id")
+        branch_id = request.query_params.get("branch_id")
+        status_filter = request.query_params.get("status")
+
         if report_type == "employee":
-            data = ReportService.get_report_by_employee(request.user, start_date, end_date)
+            data = ReportService.get_report_by_employee(
+                request.user, start_date, end_date,
+                region_id=region_id, district_id=district_id, branch_id=branch_id, status=status_filter
+            )
         else:
-            data = ReportService.get_report_by_branch(request.user, start_date, end_date)
+            data = ReportService.get_report_by_branch(
+                request.user, start_date, end_date,
+                region_id=region_id, district_id=district_id, branch_id=branch_id
+            )
             
         return Response(data)

@@ -235,7 +235,7 @@ class KPIService:
 
 class DashboardService:
     @staticmethod
-    def get_dashboard_stats(user, start_date=None, end_date=None):
+    def get_dashboard_stats(user, start_date=None, end_date=None, region_id=None, district_id=None, branch_id=None):
         today_date = timezone.localtime().date()
         if start_date is None or end_date is None:
             start_date = today_date
@@ -248,15 +248,28 @@ class DashboardService:
 
         base_users = (
             User.objects.all()
-            .select_related("schedule")
+            .select_related("schedule", "branch")
             .prefetch_related("schedule__mandatory_days", "schedule__optional_days")
         )
 
         if not (user.is_superuser or user.has_permission("analytics_view_all")):
-            if user.has_permission("analytics_view_dept") and user.department:
+            if user.has_permission("analytics_view_region") and user.branch and user.branch.region:
+                base_users = base_users.filter(branch__region=user.branch.region)
+            elif user.has_permission("analytics_view_district") and user.branch and user.branch.district:
+                base_users = base_users.filter(branch__district=user.branch.district)
+            elif user.has_permission("analytics_view_branch") and user.branch:
+                base_users = base_users.filter(branch=user.branch)
+            elif user.has_permission("analytics_view_dept") and user.department:
                 base_users = base_users.filter(department=user.department)
             else:
-                return None
+                base_users = base_users.filter(id=user.id)
+
+        if region_id:
+            base_users = base_users.filter(branch__region_id=region_id)
+        if district_id:
+            base_users = base_users.filter(branch__district_id=district_id)
+        if branch_id:
+            base_users = base_users.filter(branch_id=branch_id)
 
         active_users = base_users.filter(is_active=True, is_fired=False)
         total_employees = active_users.count()
@@ -405,6 +418,13 @@ class DashboardService:
         branch_ratings = []
         if user.is_superuser or user.has_permission("analytics_view_all"):
             branches = Branch.objects.all()
+            if region_id:
+                branches = branches.filter(region_id=region_id)
+            if district_id:
+                branches = branches.filter(district_id=district_id)
+            if branch_id:
+                branches = branches.filter(id=branch_id)
+                
             for branch in branches:
                 branch_users = [u for u in base_users if u.branch_id == branch.id]
                 b_total = len(branch_users)

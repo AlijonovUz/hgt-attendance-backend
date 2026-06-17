@@ -36,8 +36,52 @@ class Role(BaseModel):
         return self.name
 
 
+class Region(BaseModel):
+    name = models.CharField(max_length=255, verbose_name="Viloyat nomi")
+
+    class Meta(BaseModel.Meta):
+        verbose_name = "Viloyat"
+        verbose_name_plural = "Viloyatlar"
+
+    def __str__(self):
+        return self.name
+
+
+class District(BaseModel):
+    name = models.CharField(max_length=255, verbose_name="Tuman nomi")
+    region = models.ForeignKey(
+        Region,
+        on_delete=models.PROTECT,
+        related_name="districts",
+        verbose_name="Viloyat",
+    )
+
+    class Meta(BaseModel.Meta):
+        verbose_name = "Tuman"
+        verbose_name_plural = "Tumanlar"
+
+    def __str__(self):
+        return self.name
+
+
 class Branch(BaseModel):
     name = models.CharField(max_length=255, verbose_name="Filial nomi")
+    region = models.ForeignKey(
+        Region,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="branches",
+        verbose_name="Viloyat",
+    )
+    district = models.ForeignKey(
+        District,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="branches",
+        verbose_name="Tuman",
+    )
 
     class Meta(BaseModel.Meta):
         verbose_name = "Filial"

@@ -14,6 +14,8 @@ from apps.utils.throttles import CustomScopedRateThrottle, ThrottleExceptionHand
 
 from .filters import DepartmentFilter, PositionFilter, UserFilter
 from .models import (
+    Region,
+    District,
     Branch,
     Department,
     Permission,
@@ -26,6 +28,8 @@ from .models import (
 )
 from apps.attendance.models import FaceLog
 from .serializers import (
+    RegionSerializer,
+    DistrictSerializer,
     BranchSerializer,
     ChangePasswordSerializer,
     CustomTokenObtainPairSerializer,
@@ -44,18 +48,81 @@ from .serializers import (
 logger = logging.getLogger(__name__)
 
 
+@extend_schema(tags=["Viloyatlar"])
+class RegionViewSet(BaseManageViewSet):
+    queryset = Region.objects.active()
+    serializer_class = RegionSerializer
+    filter_backends = [DjangoFilterBackend, filters.SearchFilter]
+    search_fields = ["name"]
+    action_permissions = {
+        "create": "region_create",
+        "update": "region_edit",
+        "partial_update": "region_edit",
+        "destroy": "region_delete",
+    }
+
+    def get_queryset(self):
+        user = self.request.user
+        qs = super().get_queryset()
+        if user.is_superuser or user.has_permission("analytics_view_all"):
+            return qs
+        if user.branch and user.branch.region_id:
+            return qs.filter(id=user.branch.region_id)
+        return qs.none()
+
+
+@extend_schema(tags=["Tumanlar"])
+class DistrictViewSet(BaseManageViewSet):
+    queryset = District.objects.select_related("region").active()
+    serializer_class = DistrictSerializer
+    filter_backends = [DjangoFilterBackend, filters.SearchFilter]
+    filterset_fields = ["region"]
+    search_fields = ["name", "region__name"]
+    action_permissions = {
+        "create": "district_create",
+        "update": "district_edit",
+        "partial_update": "district_edit",
+        "destroy": "district_delete",
+    }
+
+    def get_queryset(self):
+        user = self.request.user
+        qs = super().get_queryset()
+        if user.is_superuser or user.has_permission("analytics_view_all"):
+            return qs
+        if user.has_permission("analytics_view_region") and user.branch and user.branch.region_id:
+            return qs.filter(region_id=user.branch.region_id)
+        if user.branch and user.branch.district_id:
+            return qs.filter(id=user.branch.district_id)
+        return qs.none()
+
+
 @extend_schema(tags=["Filiallar"])
 class BranchViewSet(BaseManageViewSet):
-    queryset = Branch.objects.active()
+    queryset = Branch.objects.select_related("region", "district").active()
     serializer_class = BranchSerializer
     filter_backends = [DjangoFilterBackend, filters.SearchFilter]
-    search_fields = ["name", "address"]
+    filterset_fields = ["region", "district"]
+    search_fields = ["name", "region__name", "district__name"]
     action_permissions = {
         "create": "branch_create",
         "update": "branch_edit",
         "partial_update": "branch_edit",
         "destroy": "branch_delete",
     }
+
+    def get_queryset(self):
+        user = self.request.user
+        qs = super().get_queryset()
+        if user.is_superuser or user.has_permission("analytics_view_all"):
+            return qs
+        if user.has_permission("analytics_view_region") and user.branch and user.branch.region_id:
+            return qs.filter(region_id=user.branch.region_id)
+        if user.has_permission("analytics_view_district") and user.branch and user.branch.district_id:
+            return qs.filter(district_id=user.branch.district_id)
+        if user.branch_id:
+            return qs.filter(id=user.branch_id)
+        return qs.none()
 
 
 @extend_schema(tags=["Bo'limlar"])
