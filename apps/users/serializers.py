@@ -12,6 +12,8 @@ from apps.analytics.services import KPIService
 from apps.utils.face import verify_face_image
 
 from .models import (
+    Region,
+    District,
     Branch,
     Department,
     Permission,
@@ -36,10 +38,41 @@ class RoleShortSerializer(serializers.ModelSerializer):
         fields = ["id", "name"]
 
 
+class RegionSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Region
+        fields = ["id", "name", "created_at", "is_active"]
+
+
+class DistrictSerializer(serializers.ModelSerializer):
+    region_info = RegionSerializer(source="region", read_only=True)
+
+    class Meta:
+        model = District
+        fields = ["id", "name", "region", "region_info", "created_at", "is_active"]
+        extra_kwargs = {"region": {"write_only": True}}
+
+
 class BranchSerializer(serializers.ModelSerializer):
+    region_info = RegionSerializer(source="region", read_only=True)
+    district_info = DistrictSerializer(source="district", read_only=True)
+
     class Meta:
         model = Branch
-        fields = ["id", "name", "created_at"]
+        fields = [
+            "id",
+            "name",
+            "region",
+            "district",
+            "region_info",
+            "district_info",
+            "created_at",
+            "is_active",
+        ]
+        extra_kwargs = {
+            "region": {"write_only": True},
+            "district": {"write_only": True},
+        }
 
 
 class DepartmentShortSerializer(serializers.ModelSerializer):

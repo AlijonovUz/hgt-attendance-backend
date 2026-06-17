@@ -2,6 +2,8 @@ from django.contrib import admin
 from unfold.admin import ModelAdmin
 
 from .models import (
+    Region,
+    District,
     Branch,
     Department,
     Permission,
@@ -27,10 +29,24 @@ class RoleAdmin(ModelAdmin):
     filter_horizontal = ["permissions"]
 
 
-@admin.register(Branch)
-class BranchAdmin(ModelAdmin):
+@admin.register(Region)
+class RegionAdmin(ModelAdmin):
     list_display = ["name", "is_active"]
     search_fields = ["name"]
+
+
+@admin.register(District)
+class DistrictAdmin(ModelAdmin):
+    list_display = ["name", "region", "is_active"]
+    search_fields = ["name", "region__name"]
+    list_filter = ["region"]
+
+
+@admin.register(Branch)
+class BranchAdmin(ModelAdmin):
+    list_display = ["name", "region", "district", "is_active"]
+    search_fields = ["name", "region__name", "district__name"]
+    list_filter = ["region", "district"]
 
 
 @admin.register(Department)

@@ -2,6 +2,8 @@ from django.urls import include, path
 from rest_framework.routers import DefaultRouter
 
 from .views import (
+    RegionViewSet,
+    DistrictViewSet,
     BranchViewSet,
     ChangePasswordView,
     CustomTokenObtainPairView,
@@ -22,6 +24,8 @@ router = DefaultRouter()
 router.register(r"employees", UserViewSet, basename="employees")
 router.register(r"permissions", PermissionViewSet, basename="permissions")
 router.register(r"roles", RoleViewSet, basename="roles")
+router.register(r"regions", RegionViewSet, basename="regions")
+router.register(r"districts", DistrictViewSet, basename="districts")
 router.register(r"branches", BranchViewSet, basename="branches")
 router.register(r"departments", DepartmentViewSet, basename="departments")
 router.register(r"positions", PositionViewSet, basename="positions")

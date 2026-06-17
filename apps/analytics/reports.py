@@ -6,12 +6,28 @@ from apps.analytics.services import ScheduleHelper
 
 class ReportService:
     @staticmethod
-    def _get_users(request_user):
-        if request_user.is_superuser or request_user.has_permission("analytics_view_all"):
-            return User.objects.all()
-        if request_user.has_permission("analytics_view_dept") and request_user.department:
-            return User.objects.filter(department=request_user.department)
-        return User.objects.filter(id=request_user.id)
+    def _get_users(request_user, region_id=None, district_id=None, branch_id=None):
+        users = User.objects.all()
+        if not (request_user.is_superuser or request_user.has_permission("analytics_view_all")):
+            if request_user.has_permission("analytics_view_region") and request_user.branch and request_user.branch.region:
+                users = users.filter(branch__region=request_user.branch.region)
+            elif request_user.has_permission("analytics_view_district") and request_user.branch and request_user.branch.district:
+                users = users.filter(branch__district=request_user.branch.district)
+            elif request_user.has_permission("analytics_view_branch") and request_user.branch:
+                users = users.filter(branch=request_user.branch)
+            elif request_user.has_permission("analytics_view_dept") and request_user.department:
+                users = users.filter(department=request_user.department)
+            else:
+                users = users.filter(id=request_user.id)
+                
+        if region_id:
+            users = users.filter(branch__region_id=region_id)
+        if district_id:
+            users = users.filter(branch__district_id=district_id)
+        if branch_id:
+            users = users.filter(branch_id=branch_id)
+            
+        return users
 
     @staticmethod
     def _calculate_stats(users, start_date, end_date):
@@ -123,8 +139,8 @@ class ReportService:
         return user_stats
 
     @staticmethod
-    def get_report_by_employee(request_user, start_date: date, end_date: date):
-        users = ReportService._get_users(request_user).select_related('branch', 'department')
+    def get_report_by_employee(request_user, start_date: date, end_date: date, region_id=None, district_id=None, branch_id=None, status=None):
+        users = ReportService._get_users(request_user, region_id, district_id, branch_id).select_related('branch', 'department')
         stats = ReportService._calculate_stats(users, start_date, end_date)
         
         report_data = []
@@ -140,6 +156,13 @@ class ReportService:
         active_users_count = 0
 
         for user_id, stat in stats.items():
+            if status == "present" and stat["present"] == 0:
+                continue
+            if status == "absent" and stat["absent"] == 0:
+                continue
+            if status == "late" and stat["late"] == 0:
+                continue
+
             user = stat["user"]
             report_data.append({
                 "id": user.id,
@@ -179,8 +202,8 @@ class ReportService:
         }
 
     @staticmethod
-    def get_report_by_branch(request_user, start_date: date, end_date: date):
-        users = ReportService._get_users(request_user).select_related('branch')
+    def get_report_by_branch(request_user, start_date: date, end_date: date, region_id=None, district_id=None, branch_id=None):
+        users = ReportService._get_users(request_user, region_id, district_id, branch_id).select_related('branch')
         stats = ReportService._calculate_stats(users, start_date, end_date)
         
         branch_stats = {}
