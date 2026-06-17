@@ -1,4 +1,7 @@
+import hmac
+import hashlib
 from django.utils import timezone
+from django.conf import settings
 from rest_framework import serializers
 
 from apps.utils.face import hash_compare
@@ -39,10 +42,12 @@ class AttendanceCreateSerializer(serializers.ModelSerializer):
     image = serializers.ImageField(
         write_only=True, required=True, label="Yuzni tekshirish uchun rasm"
     )
+    created_at = serializers.DateTimeField(required=False)
+    signature = serializers.CharField(write_only=True, required=False)
 
     class Meta:
         model = Attendance
-        fields = ["event_type", "gps_latitude", "gps_longitude", "image"]
+        fields = ["event_type", "gps_latitude", "gps_longitude", "image", "created_at", "signature"]
 
     def validate(self, attrs):
         user = self.context["request"].user
@@ -51,7 +56,34 @@ class AttendanceCreateSerializer(serializers.ModelSerializer):
         image = attrs.get("image")
         event_type = attrs.get("event_type")
 
-        today = timezone.now().date()
+        provided_created_at = attrs.get("created_at")
+        signature = attrs.get("signature")
+
+        if provided_created_at:
+            if not signature:
+                raise serializers.ValidationError({"signature": "Vaqtni tasdiqlash uchun imzo (signature) kiritilishi shart."})
+            
+            secret_key = hashlib.sha256(user.password.encode('utf-8')).hexdigest()
+            time_str = self.initial_data.get("created_at")
+            
+            expected_signature = hmac.new(
+                secret_key.encode('utf-8'),
+                str(time_str).encode('utf-8'),
+                hashlib.sha256
+            ).hexdigest()
+            
+            if not hmac.compare_digest(expected_signature, signature):
+                raise serializers.ValidationError({"signature": "Vaqt imzosi yaroqsiz."})
+
+        if provided_created_at:
+            if provided_created_at > timezone.now():
+                raise serializers.ValidationError({"created_at": "Vaqt kelajakda bo'lishi mumkin emas."})
+                
+            from datetime import timedelta
+            if provided_created_at < timezone.now() - timedelta(hours=24):
+                raise serializers.ValidationError({"created_at": "Davomat vaqti 24 soatdan eskirgan. Qabul qilinmaydi."})
+                
+        today = provided_created_at.date() if provided_created_at else timezone.now().date()
         todays_events = Attendance.objects.active().filter(
             user=user, created_at__date=today
         ).values_list("event_type", flat=True)
@@ -145,9 +177,15 @@ class AttendanceCreateSerializer(serializers.ModelSerializer):
         return attrs
 
     def create(self, validated_data):
+        provided_created_at = validated_data.pop("created_at", None)
+        validated_data.pop("signature", None)
         validated_data.pop("image", None)
         validated_data["user"] = self.context["request"].user
         instance = super().create(validated_data)
+
+        if provided_created_at:
+            instance.created_at = provided_created_at
+            instance.save(update_fields=["created_at"])
 
         user = instance.user
         event = instance.event_type
