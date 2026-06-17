@@ -415,28 +415,25 @@ class DashboardService:
             "total_percent": round(t_pct, 1),
         }
 
+        from apps.analytics.reports import ReportService
+        branch_report = ReportService.get_report_by_branch(
+            user, start_date, end_date, region_id, district_id, branch_id
+        )
+        
         branch_ratings = []
-        if user.is_superuser or user.has_permission("analytics_view_all"):
-            branches = Branch.objects.all()
-            if region_id:
-                branches = branches.filter(region_id=region_id)
-            if district_id:
-                branches = branches.filter(district_id=district_id)
-            if branch_id:
-                branches = branches.filter(id=branch_id)
-                
-            for branch in branches:
-                branch_users = [u for u in base_users if u.branch_id == branch.id]
-                b_total = len(branch_users)
-                if b_total == 0:
-                    continue
-                b_arrived, _, _, b_absent, b_pct = get_stats_for_period(
-                    start_date, end_date, branch_users
-                )
-                if (b_arrived + b_absent) == 0:
-                    continue
-                branch_ratings.append({"name": branch.name, "rating": round(b_pct)})
-            branch_ratings.sort(key=lambda x: x["rating"], reverse=True)
+        for b_data in branch_report["results"]:
+            kpi_str = str(b_data["discipline_kpi"]).replace("%", "")
+            try:
+                rating = float(kpi_str)
+            except ValueError:
+                rating = 0
+            branch_ratings.append({
+                "name": b_data["branch"],
+                "rating": rating
+            })
+            
+        branch_ratings.sort(key=lambda x: x["rating"], reverse=True)
+        branch_ratings = branch_ratings[:10]
 
         return {
             "summary": {

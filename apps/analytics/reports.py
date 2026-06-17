@@ -2,7 +2,6 @@ from datetime import datetime, date, timedelta
 from django.utils import timezone
 from apps.users.models import User
 from apps.attendance.models import Attendance
-from apps.analytics.services import ScheduleHelper
 
 class ReportService:
     @staticmethod
@@ -31,6 +30,7 @@ class ReportService:
 
     @staticmethod
     def _calculate_stats(users, start_date, end_date):
+        from apps.analytics.services import ScheduleHelper
         start_dt = timezone.make_aware(datetime.combine(start_date, datetime.min.time()))
         end_dt = timezone.make_aware(datetime.combine(end_date, datetime.max.time()))
         
@@ -140,7 +140,7 @@ class ReportService:
 
     @staticmethod
     def get_report_by_employee(request_user, start_date: date, end_date: date, region_id=None, district_id=None, branch_id=None, status=None):
-        users = ReportService._get_users(request_user, region_id, district_id, branch_id).select_related('branch', 'department')
+        users = ReportService._get_users(request_user, region_id, district_id, branch_id).select_related('department', 'position', 'branch', 'branch__region', 'branch__district')
         stats = ReportService._calculate_stats(users, start_date, end_date)
         
         report_data = []
@@ -156,19 +156,23 @@ class ReportService:
         active_users_count = 0
 
         for user_id, stat in stats.items():
-            if status == "present" and stat["present"] == 0:
-                continue
-            if status == "absent" and stat["absent"] == 0:
-                continue
-            if status == "late" and stat["late"] == 0:
-                continue
+            if status == "present" and stat["present"] == 0: continue
+            if status == "absent" and stat["absent"] == 0: continue
+            if status == "late" and stat["late"] == 0: continue
 
             user = stat["user"]
+            branch_name = user.branch.name if user.branch else "Boshqa"
+            region_name = user.branch.region.name if user.branch and user.branch.region else "Boshqa"
+            district_name = user.branch.district.name if user.branch and user.branch.district else "Boshqa"
+            
             report_data.append({
                 "id": user.id,
                 "full_name": user.full_name,
-                "branch": user.branch.name if user.branch else None,
-                "department": user.department.name if user.department else None,
+                "department": user.department.name if user.department else "Boshqa",
+                "position": user.position.name if user.position else "Boshqa",
+                "branch": branch_name,
+                "region": region_name,
+                "district": district_name,
                 "total_expected": stat["total_expected"],
                 "present": stat["present"],
                 "late": stat["late"],
@@ -203,18 +207,23 @@ class ReportService:
 
     @staticmethod
     def get_report_by_branch(request_user, start_date: date, end_date: date, region_id=None, district_id=None, branch_id=None):
-        users = ReportService._get_users(request_user, region_id, district_id, branch_id).select_related('branch')
+        users = ReportService._get_users(request_user, region_id, district_id, branch_id).select_related('branch', 'branch__region', 'branch__district')
         stats = ReportService._calculate_stats(users, start_date, end_date)
         
         branch_stats = {}
         for user_id, stat in stats.items():
-            branch_id = stat["user"].branch_id
-            branch_name = stat["user"].branch.name if stat["user"].branch else "Boshqa"
+            branch = stat["user"].branch
+            branch_id = branch.id if branch else 0
+            branch_name = branch.name if branch else "Boshqa"
+            region_name = branch.region.name if branch and branch.region else "Boshqa"
+            district_name = branch.district.name if branch and branch.district else "Boshqa"
             
             if branch_id not in branch_stats:
                 branch_stats[branch_id] = {
                     "id": branch_id,
                     "name": branch_name,
+                    "region": region_name,
+                    "district": district_name,
                     "total_expected": 0,
                     "present": 0,
                     "late": 0,
@@ -252,6 +261,8 @@ class ReportService:
             report_data.append({
                 "id": b["id"],
                 "branch": b["name"],
+                "region": b["region"],
+                "district": b["district"],
                 "total_expected": b["total_expected"],
                 "present": b["present"],
                 "late": b["late"],
