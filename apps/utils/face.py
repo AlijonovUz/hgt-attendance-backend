@@ -18,7 +18,7 @@ logger = logging.getLogger("face_verification")
 
 MODEL_NAME = "ArcFace"
 DETECTOR_BACKEND = "retinaface"
-MAX_DISTANCE = 0.58
+MAX_DISTANCE = 0.40
 REQUIRE_ANTISPOOFING = True
 
 
