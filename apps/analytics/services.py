@@ -107,7 +107,12 @@ class KPIService:
             user.schedule, actual_start_date, actual_end_date
         )
 
-        work_days = sum(1 for d, info in schedule_map.items() if info["is_mandatory"])
+        work_days = 0
+        for d, info in schedule_map.items():
+            if info["is_mandatory"]:
+                if d < today or (d == today and timezone.localtime().time() > info["end_time"]) or d in grouped:
+                    work_days += 1
+
         if work_days == 0:
             return None
 
