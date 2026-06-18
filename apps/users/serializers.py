@@ -56,6 +56,13 @@ class PermissionSerializer(serializers.ModelSerializer):
                         grouped[module_key] = []
                     grouped[module_key].append(perm)
                 return grouped
+
+            @property
+            def data(self):
+                ret = super(serializers.ListSerializer, self).data
+                from rest_framework.utils.serializer_helpers import ReturnDict
+                return ReturnDict(ret, serializer=self)
+                
         kwargs['child'] = cls()
         return GroupedPermissionListSerializer(*args, **kwargs)
 
