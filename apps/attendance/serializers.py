@@ -10,14 +10,22 @@ from apps.users.serializers import UserShortInfoSerializer
 from apps.notifications.models import Notification
 from datetime import time
 
-from .models import Attendance, Geozone, FaceLog, GpsLog
+from .models import Attendance, Geozone, FaceLog, GpsLog, SignatureLog
 
 
 class GeozoneSerializer(serializers.ModelSerializer):
+    workers_count = serializers.SerializerMethodField()
+
     class Meta:
         model = Geozone
         exclude = ["is_active"]
         read_only_fields = ["id", "created_at", "updated_at"]
+
+    def get_workers_count(self, obj):
+        if obj.branch:
+            from apps.users.models import User
+            return User.objects.filter(branch=obj.branch, is_active=True).count()
+        return 0
 
 
 class AttendanceListSerializer(serializers.ModelSerializer):
@@ -73,15 +81,20 @@ class AttendanceCreateSerializer(serializers.ModelSerializer):
             ).hexdigest()
             
             if not hmac.compare_digest(expected_signature, signature):
+                SignatureLog.objects.create(user=user, is_valid=False, provided_time=provided_created_at, message="Vaqt imzosi yaroqsiz.")
                 raise serializers.ValidationError({"signature": "Vaqt imzosi yaroqsiz."})
 
         if provided_created_at:
             if provided_created_at > timezone.now():
+                SignatureLog.objects.create(user=user, is_valid=False, provided_time=provided_created_at, message="Kelajakdagi vaqt.")
                 raise serializers.ValidationError({"created_at": "Vaqt kelajakda bo'lishi mumkin emas."})
                 
             from datetime import timedelta
             if provided_created_at < timezone.now() - timedelta(hours=24):
+                SignatureLog.objects.create(user=user, is_valid=False, provided_time=provided_created_at, message="24 soatdan eskirgan vaqt.")
                 raise serializers.ValidationError({"created_at": "Davomat vaqti 24 soatdan eskirgan. Qabul qilinmaydi."})
+
+            SignatureLog.objects.create(user=user, is_valid=True, provided_time=provided_created_at, message="Imzo muvaffaqiyatli tasdiqlandi.")
                 
         today = provided_created_at.date() if provided_created_at else timezone.now().date()
         todays_events = Attendance.objects.active().filter(
@@ -238,4 +251,12 @@ class GpsLogSerializer(serializers.ModelSerializer):
     class Meta:
         model = GpsLog
         fields = ["id", "user", "user_info", "is_success", "latitude", "longitude", "distance_meters", "message", "created_at"]
+
+
+class SignatureLogSerializer(serializers.ModelSerializer):
+    user_info = UserShortInfoSerializer(source="user", read_only=True)
+
+    class Meta:
+        model = SignatureLog
+        fields = ["id", "user", "user_info", "is_valid", "provided_time", "message", "created_at"]
 

@@ -1,7 +1,7 @@
 from django.contrib import admin
 from .models import Notification
 
-from unfold.admin import ModelAdmin
+from apps.utils.admin import BaseModelAdmin as ModelAdmin
 
 
 @admin.register(Notification)

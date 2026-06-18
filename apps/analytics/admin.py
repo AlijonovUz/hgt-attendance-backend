@@ -1,5 +1,5 @@
 from django.contrib import admin
-from unfold.admin import ModelAdmin
+from apps.utils.admin import BaseModelAdmin as ModelAdmin
 
 from .models import KPIResult
 

@@ -2,7 +2,7 @@ from django_filters.rest_framework import DjangoFilterBackend
 from drf_spectacular.utils import extend_schema
 from rest_framework import filters
 
-from apps.utils.views import BaseManageViewSet
+from apps.utils.views import BaseReadOnlyViewSet
 
 from .filters import AuditLogFilter
 from .models import AuditLog
@@ -10,7 +10,7 @@ from .serializers import AuditLogSerializer
 
 
 @extend_schema(tags=["Audit jurnallari"])
-class AuditLogViewSet(BaseManageViewSet):
+class AuditLogViewSet(BaseReadOnlyViewSet):
     queryset = AuditLog.objects.select_related("user").all()
     serializer_class = AuditLogSerializer
     filter_backends = [DjangoFilterBackend, filters.SearchFilter]
