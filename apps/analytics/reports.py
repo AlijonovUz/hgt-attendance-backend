@@ -55,18 +55,20 @@ class ReportService:
         )
         end_dt = timezone.make_aware(datetime.combine(end_date, datetime.max.time()))
 
+        users_ids = list(users.values_list("id", flat=True))
         attendances = Attendance.objects.filter(
-            user__in=users, created_at__range=(start_dt, end_dt)
+            user_id__in=users_ids, created_at__range=(start_dt, end_dt)
         ).order_by("created_at")
 
         att_by_user_day = {}
         for att in attendances:
             day = timezone.localtime(att.created_at).date()
-            if att.user_id not in att_by_user_day:
-                att_by_user_day[att.user_id] = {}
-            if day not in att_by_user_day[att.user_id]:
-                att_by_user_day[att.user_id][day] = []
-            att_by_user_day[att.user_id][day].append(att)
+            uid = str(att.user_id)
+            if uid not in att_by_user_day:
+                att_by_user_day[uid] = {}
+            if day not in att_by_user_day[uid]:
+                att_by_user_day[uid][day] = []
+            att_by_user_day[uid][day].append(att)
 
         user_stats = {}
         today = timezone.localtime().date()
@@ -82,7 +84,7 @@ class ReportService:
             absent = 0
             left_early = 0
 
-            user_join_date = timezone.localtime(user.created_at).date()
+            user_join_date = timezone.localtime(user.date_joined).date()
             actual_start_date = max(start_date, user_join_date)
 
             actual_end_date = min(end_date, today)
@@ -106,7 +108,7 @@ class ReportService:
                 day_info = schedule_map.get(curr)
                 if day_info and day_info["is_mandatory"]:
                     total_expected += 1
-                    day_atts = att_by_user_day.get(user.id, {}).get(curr, [])
+                    day_atts = att_by_user_day.get(str(user.id), {}).get(curr, [])
 
                     check_in = next(
                         (
@@ -198,6 +200,7 @@ class ReportService:
                 discipline_kpi = round(total_score)
             else:
                 discipline_kpi = 0
+                total_expected_actions = 0
 
             user_stats[user.id] = {
                 "user": user,
@@ -207,6 +210,8 @@ class ReportService:
                 "absent": absent,
                 "left_early": left_early,
                 "discipline_kpi": discipline_kpi,
+                "total_actions_expected": total_expected_actions,
+                "compliant_actions": compliant_actions,
             }
         return user_stats
 
