@@ -4,10 +4,12 @@ from .models import Attendance, Geozone
 
 
 class AttendanceFilter(django_filters.FilterSet):
-    date_from = django_filters.DateTimeFilter(
+    start_date = django_filters.DateTimeFilter(
         field_name="created_at", lookup_expr="gte"
     )
-    date_to = django_filters.DateTimeFilter(field_name="created_at", lookup_expr="lte")
+    end_date = django_filters.DateTimeFilter(field_name="created_at", lookup_expr="lte")
+    department = django_filters.CharFilter(field_name="user__department")
+    branch = django_filters.CharFilter(field_name="user__branch")
 
     class Meta:
         model = Attendance
@@ -15,18 +17,20 @@ class AttendanceFilter(django_filters.FilterSet):
             "user",
             "event_type",
             "face_verify",
-            "user__department",
-            "user__branch",
+            "department",
+            "branch",
         ]
 
 
 class GeozoneFilter(django_filters.FilterSet):
+    region = django_filters.CharFilter(field_name="branch__region")
+    district = django_filters.CharFilter(field_name="branch__district")
+
     class Meta:
         model = Geozone
         fields = [
             "branch",
-            "branch__region",
-            "branch__district",
+            "region",
+            "district",
             "zone_type",
         ]
-
