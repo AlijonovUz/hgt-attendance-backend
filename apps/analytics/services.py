@@ -424,9 +424,7 @@ class DashboardService:
                         ]
 
                         if check_ins or check_outs:
-                            if info["is_optional"] or not (
-                                info["is_mandatory"] or info["is_optional"]
-                            ):
+                            if not info["is_mandatory"]:
                                 expected += 1
                             arrived += 1
 
@@ -437,7 +435,7 @@ class DashboardService:
                                     for a in check_ins
                                 ]
                             )
-                            if first_in > info["start_time"]:
+                            if first_in > info["start_time"] and is_mand:
                                 lates += 1
 
                         if check_outs:
@@ -447,7 +445,7 @@ class DashboardService:
                                     for a in check_outs
                                 ]
                             )
-                            if last_out < info["end_time"]:
+                            if last_out < info["end_time"] and is_mand:
                                 early_leaves += 1
                     curr += timedelta(days=1)
 
