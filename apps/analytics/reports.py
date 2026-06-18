@@ -132,8 +132,10 @@ class ReportService:
                         None,
                     )
 
-                    if check_in:
+                    if day_atts:
                         present += 1
+
+                    if check_in:
                         check_in_time = timezone.localtime(check_in.created_at).time()
                         if check_in_time <= day_info["start_time"]:
                             on_time_in += 1
@@ -151,7 +153,7 @@ class ReportService:
                         else:
                             left_early += 1
 
-                    if not check_in and is_mand:
+                    if not day_atts and is_mand:
                         absent += 1
 
                     if is_mand and has_lunch and day_info.get("lunch_start") and day_info.get("lunch_end"):
