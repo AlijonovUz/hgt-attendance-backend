@@ -85,33 +85,6 @@ class KPIResultViewSet(viewsets.ReadOnlyModelViewSet):
         except Exception as e:
             return Response({"detail": str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
-    @extend_schema(
-        summary="Umumiy Dashboard Statistikasi",
-        parameters=[
-            OpenApiParameter(
-                name="period",
-                description="Filtr oylarda (1, 3, 6). Kiritilmasa faqat bugun.",
-                required=False,
-                type=str,
-            ),
-            OpenApiParameter(
-                name="start_date",
-                description="Boshlanish sanasi (YYYY-MM-DD)",
-                required=False,
-                type=str,
-            ),
-            OpenApiParameter(
-                name="end_date",
-                description="Tugash sanasi (YYYY-MM-DD)",
-                required=False,
-                type=str,
-            ),
-            OpenApiParameter(name="region_id", description="Viloyat ID", required=False, type=str),
-            OpenApiParameter(name="district_id", description="Tuman ID", required=False, type=str),
-            OpenApiParameter(name="branch_id", description="Filial ID", required=False, type=str),
-        ],
-    )
-    @action(detail=False, methods=["get"], url_path="dashboard-stats")
     def _get_dashboard_params(self, request):
         period = request.query_params.get("period")
         start_date_str = request.query_params.get("start_date")
@@ -150,27 +123,7 @@ class KPIResultViewSet(viewsets.ReadOnlyModelViewSet):
             "branch_id": branch_id
         }
 
-    @extend_schema(
-        summary="Umumiy Dashboard Statistikasi (Barchasi birdaniga)",
-        parameters=[
-            OpenApiParameter(name="period", description="Davr (daily, weekly, monthly, quarterly, yearly). Aniq sana yuborilsa buni umuman qo'shmang.", required=False, type=str),
-            OpenApiParameter(name="start_date", description="Boshlanish sanasi (YYYY-MM-DD). Agar yuborilsa, period parametrini qo'shmang.", required=False, type=str),
-            OpenApiParameter(name="end_date", description="Tugash sanasi (YYYY-MM-DD). Agar yuborilsa, period parametrini qo'shmang.", required=False, type=str),
-            OpenApiParameter(name="region_id", description="Viloyat ID", required=False, type=str),
-            OpenApiParameter(name="district_id", description="Tuman ID", required=False, type=str),
-            OpenApiParameter(name="branch_id", description="Filial ID", required=False, type=str),
-        ],
-    )
-    @action(detail=False, methods=["get"], url_path="dashboard-stats")
-    def dashboard_stats(self, request):
-        params = self._get_dashboard_params(request)
-        stats = DashboardService.get_dashboard_stats(
-            request.user, 
-            **params
-        )
-        if stats is None:
-            return Response({"detail": "Ruxsat etilmagan."}, status=status.HTTP_403_FORBIDDEN)
-        return Response(stats)
+
 
     @extend_schema(
         summary="Dashboard: Asosiy ko'rsatkichlar",
