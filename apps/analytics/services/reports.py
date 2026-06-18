@@ -78,10 +78,6 @@ class ReportService:
             absent=Sum('absent'),
             late=Sum('late'),
             left_early=Sum('left_early'),
-            on_time_in=Sum('on_time_in'),
-            on_time_out=Sum('on_time_out'),
-            compliant_actions=Sum('compliant_actions'),
-            total_expected_actions=Sum('total_expected_actions'),
         )
 
         stats_map = {item['user']: item for item in all_stats}
@@ -95,11 +91,11 @@ class ReportService:
             late = user_stat.get('late') or 0
             absent = user_stat.get('absent') or 0
             left_early = user_stat.get('left_early') or 0
-            
-            on_time_in = user_stat.get('on_time_in') or 0
-            on_time_out = user_stat.get('on_time_out') or 0
-            compliant_actions = user_stat.get('compliant_actions') or 0
-            total_expected_actions = user_stat.get('total_expected_actions') or 0
+
+            on_time_in = max(0, present - late)
+            on_time_out = max(0, present - left_early)
+            compliant_actions = on_time_in + on_time_out
+            total_expected_actions = total_expected * 2
 
             attendance_kpi = 0
             monthly_kpi = 0

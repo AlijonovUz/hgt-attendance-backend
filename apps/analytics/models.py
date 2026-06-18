@@ -84,11 +84,6 @@ class DailyAttendance(BaseModel):
     late = models.PositiveIntegerField(default=0, verbose_name="Kechikkan")
     left_early = models.PositiveIntegerField(default=0, verbose_name="Erta ketgan")
 
-    on_time_in = models.PositiveIntegerField(default=0)
-    on_time_out = models.PositiveIntegerField(default=0)
-    compliant_actions = models.PositiveIntegerField(default=0)
-    total_expected_actions = models.PositiveIntegerField(default=0)
-
     class Meta(BaseModel.Meta):
         verbose_name = "Kunlik Davomat"
         verbose_name_plural = "Kunlik Davomatlar"

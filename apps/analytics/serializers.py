@@ -51,10 +51,6 @@ class DailyAttendanceSerializer(serializers.ModelSerializer):
             "absent",
             "late",
             "left_early",
-            "on_time_in",
-            "on_time_out",
-            "compliant_actions",
-            "total_expected_actions",
             "created_at",
             "updated_at",
         ]
