@@ -10,6 +10,41 @@ from .models import KPIResult
 from .serializers import KPIResultSerializer
 from .services import KPIService, DashboardService
 from .reports import ReportService
+from rest_framework.exceptions import ValidationError
+
+
+LOCATION_PARAMS = [
+    OpenApiParameter(
+        name="region_id", description="Viloyat ID", required=False, type=str
+    ),
+    OpenApiParameter(
+        name="district_id", description="Tuman ID", required=False, type=str
+    ),
+    OpenApiParameter(
+        name="branch_id", description="Filial ID", required=False, type=str
+    ),
+]
+
+COMMON_ANALYTICS_PARAMS = [
+    OpenApiParameter(
+        name="period",
+        description="Davr (daily, weekly, monthly, quarterly, yearly). Aniq sana yuborilsa buni umuman qo'shmang.",
+        required=False,
+        type=str,
+    ),
+    OpenApiParameter(
+        name="start_date",
+        description="Boshlanish sanasi (YYYY-MM-DD). Agar yuborilsa, period parametrini qo'shmang.",
+        required=False,
+        type=str,
+    ),
+    OpenApiParameter(
+        name="end_date",
+        description="Tugash sanasi (YYYY-MM-DD). Agar yuborilsa, period parametrini qo'shmang.",
+        required=False,
+        type=str,
+    ),
+] + LOCATION_PARAMS
 
 
 @extend_schema(tags=["Analitika va KPI"])
@@ -93,6 +128,11 @@ class KPIResultViewSet(viewsets.ReadOnlyModelViewSet):
         district_id = request.query_params.get("district_id")
         branch_id = request.query_params.get("branch_id")
 
+        if period and (start_date_str or end_date_str):
+            raise ValidationError(
+                detail="period parametri start_date va end_date bilan birga ishlatilishi mumkin emas."
+            )
+
         end_date = timezone.localtime().date()
         start_date = end_date
 
@@ -101,7 +141,9 @@ class KPIResultViewSet(viewsets.ReadOnlyModelViewSet):
                 start_date = datetime.strptime(start_date_str, "%Y-%m-%d").date()
                 end_date = datetime.strptime(end_date_str, "%Y-%m-%d").date()
             except ValueError:
-                pass
+                raise ValidationError(detail="Noto'g'ri sana formati.")
+        elif start_date_str or end_date_str:
+            raise ValidationError(detail="start_date va end_date parametrlari birgalikda ishlatilishi shart.")
         elif period:
             if period == "daily":
                 start_date = end_date
@@ -125,35 +167,7 @@ class KPIResultViewSet(viewsets.ReadOnlyModelViewSet):
 
     @extend_schema(
         summary="Dashboard: Asosiy ko'rsatkichlar",
-        parameters=[
-            OpenApiParameter(
-                name="period",
-                description="Davr (daily, weekly, monthly, quarterly, yearly). Aniq sana yuborilsa buni umuman qo'shmang.",
-                required=False,
-                type=str,
-            ),
-            OpenApiParameter(
-                name="start_date",
-                description="Boshlanish sanasi (YYYY-MM-DD). Agar yuborilsa, period parametrini qo'shmang.",
-                required=False,
-                type=str,
-            ),
-            OpenApiParameter(
-                name="end_date",
-                description="Tugash sanasi (YYYY-MM-DD). Agar yuborilsa, period parametrini qo'shmang.",
-                required=False,
-                type=str,
-            ),
-            OpenApiParameter(
-                name="region_id", description="Viloyat ID", required=False, type=str
-            ),
-            OpenApiParameter(
-                name="district_id", description="Tuman ID", required=False, type=str
-            ),
-            OpenApiParameter(
-                name="branch_id", description="Filial ID", required=False, type=str
-            ),
-        ],
+        parameters=COMMON_ANALYTICS_PARAMS,
     )
     @action(detail=False, methods=["get"], url_path="dashboard-summary")
     def dashboard_summary(self, request):
@@ -169,17 +183,7 @@ class KPIResultViewSet(viewsets.ReadOnlyModelViewSet):
 
     @extend_schema(
         summary="Dashboard: Haftalik dinamika",
-        parameters=[
-            OpenApiParameter(
-                name="region_id", description="Viloyat ID", required=False, type=str
-            ),
-            OpenApiParameter(
-                name="district_id", description="Tuman ID", required=False, type=str
-            ),
-            OpenApiParameter(
-                name="branch_id", description="Filial ID", required=False, type=str
-            ),
-        ],
+        parameters=LOCATION_PARAMS,
     )
     @action(detail=False, methods=["get"], url_path="dashboard-weekly-dynamics")
     def dashboard_weekly_dynamics(self, request):
@@ -195,17 +199,7 @@ class KPIResultViewSet(viewsets.ReadOnlyModelViewSet):
 
     @extend_schema(
         summary="Dashboard: Holat bo'yicha taqsimot",
-        parameters=[
-            OpenApiParameter(
-                name="region_id", description="Viloyat ID", required=False, type=str
-            ),
-            OpenApiParameter(
-                name="district_id", description="Tuman ID", required=False, type=str
-            ),
-            OpenApiParameter(
-                name="branch_id", description="Filial ID", required=False, type=str
-            ),
-        ],
+        parameters=LOCATION_PARAMS,
     )
     @action(detail=False, methods=["get"], url_path="dashboard-today-status")
     def dashboard_today_status(self, request):
@@ -221,35 +215,7 @@ class KPIResultViewSet(viewsets.ReadOnlyModelViewSet):
 
     @extend_schema(
         summary="Dashboard: Intizom reytingi",
-        parameters=[
-            OpenApiParameter(
-                name="period",
-                description="Davr (daily, weekly, monthly, quarterly, yearly). Aniq sana yuborilsa buni umuman qo'shmang.",
-                required=False,
-                type=str,
-            ),
-            OpenApiParameter(
-                name="start_date",
-                description="Boshlanish sanasi (YYYY-MM-DD). Agar yuborilsa, period parametrini qo'shmang.",
-                required=False,
-                type=str,
-            ),
-            OpenApiParameter(
-                name="end_date",
-                description="Tugash sanasi (YYYY-MM-DD). Agar yuborilsa, period parametrini qo'shmang.",
-                required=False,
-                type=str,
-            ),
-            OpenApiParameter(
-                name="region_id", description="Viloyat ID", required=False, type=str
-            ),
-            OpenApiParameter(
-                name="district_id", description="Tuman ID", required=False, type=str
-            ),
-            OpenApiParameter(
-                name="branch_id", description="Filial ID", required=False, type=str
-            ),
-        ],
+        parameters=COMMON_ANALYTICS_PARAMS,
     )
     @action(detail=False, methods=["get"], url_path="dashboard-branch-ratings")
     def dashboard_branch_ratings(self, request):
@@ -268,34 +234,8 @@ class KPIResultViewSet(viewsets.ReadOnlyModelViewSet):
 class ReportViewSet(viewsets.ViewSet):
     @extend_schema(
         summary="Xodimlar bo'yicha hisobot",
-        parameters=[
-            OpenApiParameter(
-                name="period",
-                description="Davr (daily, weekly, monthly, quarterly, yearly). Aniq sana yuborilsa buni umuman qo'shmang.",
-                required=False,
-                type=str,
-            ),
-            OpenApiParameter(
-                name="start_date",
-                description="Boshlanish sanasi (YYYY-MM-DD). Agar yuborilsa, period parametrini qo'shmang.",
-                required=False,
-                type=str,
-            ),
-            OpenApiParameter(
-                name="end_date",
-                description="Tugash sanasi (YYYY-MM-DD). Agar yuborilsa, period parametrini qo'shmang.",
-                required=False,
-                type=str,
-            ),
-            OpenApiParameter(
-                name="region_id", description="Viloyat ID", required=False, type=str
-            ),
-            OpenApiParameter(
-                name="district_id", description="Tuman ID", required=False, type=str
-            ),
-            OpenApiParameter(
-                name="branch_id", description="Filial ID", required=False, type=str
-            ),
+        parameters=COMMON_ANALYTICS_PARAMS
+        + [
             OpenApiParameter(
                 name="status",
                 description="Holati (present, absent, late)",
@@ -310,35 +250,7 @@ class ReportViewSet(viewsets.ViewSet):
 
     @extend_schema(
         summary="Filiallar bo'yicha hisobot",
-        parameters=[
-            OpenApiParameter(
-                name="period",
-                description="Davr (daily, weekly, monthly, quarterly, yearly). Aniq sana yuborilsa buni umuman qo'shmang.",
-                required=False,
-                type=str,
-            ),
-            OpenApiParameter(
-                name="start_date",
-                description="Boshlanish sanasi (YYYY-MM-DD). Agar yuborilsa, period parametrini qo'shmang.",
-                required=False,
-                type=str,
-            ),
-            OpenApiParameter(
-                name="end_date",
-                description="Tugash sanasi (YYYY-MM-DD). Agar yuborilsa, period parametrini qo'shmang.",
-                required=False,
-                type=str,
-            ),
-            OpenApiParameter(
-                name="region_id", description="Viloyat ID", required=False, type=str
-            ),
-            OpenApiParameter(
-                name="district_id", description="Tuman ID", required=False, type=str
-            ),
-            OpenApiParameter(
-                name="branch_id", description="Filial ID", required=False, type=str
-            ),
-        ],
+        parameters=COMMON_ANALYTICS_PARAMS,
     )
     @action(detail=False, methods=["get"], url_path="by-branch")
     def by_branch(self, request):
@@ -360,6 +272,12 @@ class ReportViewSet(viewsets.ViewSet):
         start_str = request.query_params.get("start_date")
         end_str = request.query_params.get("end_date")
 
+        if period and (start_str or end_str):
+            return Response(
+                {"detail": "period parametri start_date va end_date bilan birga ishlatilishi mumkin emas."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
         today = timezone.localtime().date()
         end_date = today
         start_date = today
@@ -373,6 +291,11 @@ class ReportViewSet(viewsets.ViewSet):
                     {"detail": "Noto'g'ri sana formati."},
                     status=status.HTTP_400_BAD_REQUEST,
                 )
+        elif start_str or end_str:
+            return Response(
+                {"detail": "start_date va end_date parametrlari birgalikda ishlatilishi shart."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
         elif period:
             if period == "daily":
                 start_date = end_date

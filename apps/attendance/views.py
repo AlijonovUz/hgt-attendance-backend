@@ -5,7 +5,7 @@ from rest_framework import filters
 
 from apps.utils.views import BaseManageViewSet, BaseReadOnlyViewSet
 
-from .filters import AttendanceFilter
+from .filters import AttendanceFilter, GeozoneFilter
 from .models import Attendance, Geozone, FaceLog, GpsLog, SignatureLog
 from .serializers import (
     AttendanceCreateSerializer,
@@ -22,7 +22,7 @@ class GeozoneViewSet(BaseManageViewSet):
     queryset = Geozone.objects.select_related("branch").active()
     serializer_class = GeozoneSerializer
     filter_backends = [DjangoFilterBackend, filters.SearchFilter]
-    filterset_fields = ["branch", "is_active"]
+    filterset_class = GeozoneFilter
     search_fields = ["name"]
     action_permissions = {
         "create": "geozone_create",
