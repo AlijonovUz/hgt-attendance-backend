@@ -153,9 +153,9 @@ class KPIResultViewSet(viewsets.ReadOnlyModelViewSet):
     @extend_schema(
         summary="Umumiy Dashboard Statistikasi (Barchasi birdaniga)",
         parameters=[
-            OpenApiParameter(name="period", description="Filtr oylarda (1, 3, 6)", required=False, type=str),
-            OpenApiParameter(name="start_date", description="Boshlanish sanasi (YYYY-MM-DD)", required=False, type=str),
-            OpenApiParameter(name="end_date", description="Tugash sanasi (YYYY-MM-DD)", required=False, type=str),
+            OpenApiParameter(name="period", description="Davr (daily, weekly, monthly, quarterly, yearly). Aniq sana yuborilsa buni umuman qo'shmang.", required=False, type=str),
+            OpenApiParameter(name="start_date", description="Boshlanish sanasi (YYYY-MM-DD). Agar yuborilsa, period parametrini qo'shmang.", required=False, type=str),
+            OpenApiParameter(name="end_date", description="Tugash sanasi (YYYY-MM-DD). Agar yuborilsa, period parametrini qo'shmang.", required=False, type=str),
             OpenApiParameter(name="region_id", description="Viloyat ID", required=False, type=str),
             OpenApiParameter(name="district_id", description="Tuman ID", required=False, type=str),
             OpenApiParameter(name="branch_id", description="Filial ID", required=False, type=str),
@@ -175,9 +175,9 @@ class KPIResultViewSet(viewsets.ReadOnlyModelViewSet):
     @extend_schema(
         summary="Dashboard: Asosiy ko'rsatkichlar",
         parameters=[
-            OpenApiParameter(name="period", description="Filtr oylarda (1, 3, 6)", required=False, type=str),
-            OpenApiParameter(name="start_date", description="Boshlanish sanasi", required=False, type=str),
-            OpenApiParameter(name="end_date", description="Tugash sanasi", required=False, type=str),
+            OpenApiParameter(name="period", description="Davr (daily, weekly, monthly, quarterly, yearly). Aniq sana yuborilsa buni umuman qo'shmang.", required=False, type=str),
+            OpenApiParameter(name="start_date", description="Boshlanish sanasi (YYYY-MM-DD). Agar yuborilsa, period parametrini qo'shmang.", required=False, type=str),
+            OpenApiParameter(name="end_date", description="Tugash sanasi (YYYY-MM-DD). Agar yuborilsa, period parametrini qo'shmang.", required=False, type=str),
             OpenApiParameter(name="region_id", description="Viloyat ID", required=False, type=str),
             OpenApiParameter(name="district_id", description="Tuman ID", required=False, type=str),
             OpenApiParameter(name="branch_id", description="Filial ID", required=False, type=str),
@@ -226,9 +226,9 @@ class KPIResultViewSet(viewsets.ReadOnlyModelViewSet):
     @extend_schema(
         summary="Dashboard: Intizom reytingi",
         parameters=[
-            OpenApiParameter(name="period", description="Filtr oylarda (1, 3, 6)", required=False, type=str),
-            OpenApiParameter(name="start_date", description="Boshlanish sanasi", required=False, type=str),
-            OpenApiParameter(name="end_date", description="Tugash sanasi", required=False, type=str),
+            OpenApiParameter(name="period", description="Davr (daily, weekly, monthly, quarterly, yearly). Aniq sana yuborilsa buni umuman qo'shmang.", required=False, type=str),
+            OpenApiParameter(name="start_date", description="Boshlanish sanasi (YYYY-MM-DD). Agar yuborilsa, period parametrini qo'shmang.", required=False, type=str),
+            OpenApiParameter(name="end_date", description="Tugash sanasi (YYYY-MM-DD). Agar yuborilsa, period parametrini qo'shmang.", required=False, type=str),
             OpenApiParameter(name="region_id", description="Viloyat ID", required=False, type=str),
             OpenApiParameter(name="district_id", description="Tuman ID", required=False, type=str),
             OpenApiParameter(name="branch_id", description="Filial ID", required=False, type=str),
@@ -248,9 +248,9 @@ class ReportViewSet(viewsets.ViewSet):
     @extend_schema(
         summary="Xodimlar bo'yicha hisobot",
         parameters=[
-            OpenApiParameter(name="period", description="Davr (daily, weekly, monthly, quarterly, yearly, custom)", required=False, type=str),
-            OpenApiParameter(name="start_date", description="Boshlanish sanasi (YYYY-MM-DD), faqat custom bo'lsa", required=False, type=str),
-            OpenApiParameter(name="end_date", description="Tugash sanasi (YYYY-MM-DD), faqat custom bo'lsa", required=False, type=str),
+            OpenApiParameter(name="period", description="Davr (daily, weekly, monthly, quarterly, yearly). Aniq sana yuborilsa buni umuman qo'shmang.", required=False, type=str),
+            OpenApiParameter(name="start_date", description="Boshlanish sanasi (YYYY-MM-DD). Agar yuborilsa, period parametrini qo'shmang.", required=False, type=str),
+            OpenApiParameter(name="end_date", description="Tugash sanasi (YYYY-MM-DD). Agar yuborilsa, period parametrini qo'shmang.", required=False, type=str),
             OpenApiParameter(name="region_id", description="Viloyat ID", required=False, type=str),
             OpenApiParameter(name="district_id", description="Tuman ID", required=False, type=str),
             OpenApiParameter(name="branch_id", description="Filial ID", required=False, type=str),
@@ -264,9 +264,9 @@ class ReportViewSet(viewsets.ViewSet):
     @extend_schema(
         summary="Filiallar bo'yicha hisobot",
         parameters=[
-            OpenApiParameter(name="period", description="Davr (daily, weekly, monthly, quarterly, yearly, custom)", required=False, type=str),
-            OpenApiParameter(name="start_date", description="Boshlanish sanasi (YYYY-MM-DD), faqat custom bo'lsa", required=False, type=str),
-            OpenApiParameter(name="end_date", description="Tugash sanasi (YYYY-MM-DD), faqat custom bo'lsa", required=False, type=str),
+            OpenApiParameter(name="period", description="Davr (daily, weekly, monthly, quarterly, yearly). Aniq sana yuborilsa buni umuman qo'shmang.", required=False, type=str),
+            OpenApiParameter(name="start_date", description="Boshlanish sanasi (YYYY-MM-DD). Agar yuborilsa, period parametrini qo'shmang.", required=False, type=str),
+            OpenApiParameter(name="end_date", description="Tugash sanasi (YYYY-MM-DD). Agar yuborilsa, period parametrini qo'shmang.", required=False, type=str),
             OpenApiParameter(name="region_id", description="Viloyat ID", required=False, type=str),
             OpenApiParameter(name="district_id", description="Tuman ID", required=False, type=str),
             OpenApiParameter(name="branch_id", description="Filial ID", required=False, type=str),
