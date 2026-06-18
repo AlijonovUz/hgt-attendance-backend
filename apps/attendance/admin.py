@@ -1,7 +1,7 @@
-from unfold.admin import ModelAdmin
+from apps.utils.admin import BaseModelAdmin as ModelAdmin
 from django.contrib import admin
 
-from .models import Attendance, Geozone, FaceLog, GpsLog
+from .models import Attendance, Geozone, FaceLog, GpsLog, SignatureLog
 
 
 @admin.register(Geozone)
@@ -32,6 +32,15 @@ class FaceLogAdmin(ModelAdmin):
     def get_queryset(self, request):
         return super().get_queryset(request).select_related("user")
 
+    def has_add_permission(self, request):
+        return False
+
+    def has_change_permission(self, request, obj=None):
+        return False
+
+    def has_delete_permission(self, request, obj=None):
+        return False
+
 
 @admin.register(GpsLog)
 class GpsLogAdmin(ModelAdmin):
@@ -42,3 +51,32 @@ class GpsLogAdmin(ModelAdmin):
 
     def get_queryset(self, request):
         return super().get_queryset(request).select_related("user")
+
+    def has_add_permission(self, request):
+        return False
+
+    def has_change_permission(self, request, obj=None):
+        return False
+
+    def has_delete_permission(self, request, obj=None):
+        return False
+
+
+@admin.register(SignatureLog)
+class SignatureLogAdmin(ModelAdmin):
+    list_display = ["user", "is_valid", "provided_time", "message", "created_at"]
+    search_fields = ["user__full_name", "message"]
+    list_filter = ["is_valid", "created_at"]
+    readonly_fields = ["created_at", "updated_at"]
+
+    def get_queryset(self, request):
+        return super().get_queryset(request).select_related("user")
+
+    def has_add_permission(self, request):
+        return False
+
+    def has_change_permission(self, request, obj=None):
+        return False
+
+    def has_delete_permission(self, request, obj=None):
+        return False

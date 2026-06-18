@@ -1,5 +1,5 @@
 from django.contrib import admin
-from unfold.admin import ModelAdmin
+from apps.utils.admin import BaseModelAdmin as ModelAdmin
 
 from .models import (
     Region,
@@ -20,6 +20,15 @@ from .models import (
 class PermissionAdmin(ModelAdmin):
     list_display = ["name", "code", "is_active"]
     search_fields = ["name", "code"]
+
+    def has_add_permission(self, request):
+        return False
+
+    def has_change_permission(self, request, obj=None):
+        return False
+
+    def has_delete_permission(self, request, obj=None):
+        return False
 
 
 @admin.register(Role)
