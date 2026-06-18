@@ -107,7 +107,13 @@ class KPIService:
             user.schedule, actual_start_date, actual_end_date
         )
 
-        work_days = sum(1 for d, info in schedule_map.items() if info["is_mandatory"])
+        work_days = 0
+        for d, info in schedule_map.items():
+            if info["is_mandatory"]:
+                has_arrival = d in grouped and any(a.event_type in (Attendance.EventType.CHECK_IN, Attendance.EventType.CHECK_OUT) for a in grouped[d])
+                if d < today or (d == today and timezone.localtime().time() > info["end_time"]) or has_arrival:
+                    work_days += 1
+
         if work_days == 0:
             return None
 
@@ -213,7 +219,11 @@ class KPIService:
         ) / 3
         total_score = round(total_score, 2)
 
-        attended_days = sum(1 for d in grouped.keys() if d in schedule_map)
+        attended_days = 0
+        for d, atts in grouped.items():
+            if d in schedule_map:
+                if any(a.event_type in (Attendance.EventType.CHECK_IN, Attendance.EventType.CHECK_OUT) for a in atts):
+                    attended_days += 1
 
         if total_score >= 90:
             rating_category = KPIResult.RatingCategory.EXCELLENT

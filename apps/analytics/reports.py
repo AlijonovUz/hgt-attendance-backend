@@ -112,18 +112,13 @@ class ReportService:
                     is_mand = day_info["is_mandatory"]
                     day_atts = att_by_user_day.get(str(user.id), {}).get(curr, [])
 
+                    check_in = next((a for a in day_atts if a.event_type == Attendance.EventType.CHECK_IN), None)
+                    check_out = next((a for a in day_atts if a.event_type == Attendance.EventType.CHECK_OUT), None)
+
                     if is_mand:
-                        if day_atts or curr < today or (curr == today and timezone.localtime().time() > day_info["end_time"]):
+                        if check_in or check_out or curr < today or (curr == today and timezone.localtime().time() > day_info["end_time"]):
                             total_expected += 1
 
-                    check_in = next(
-                        (a for a in day_atts if a.event_type == Attendance.EventType.CHECK_IN),
-                        None,
-                    )
-                    check_out = next(
-                        (a for a in day_atts if a.event_type == Attendance.EventType.CHECK_OUT),
-                        None,
-                    )
                     lunch_start = next(
                         (a for a in day_atts if a.event_type == Attendance.EventType.LUNCH_START),
                         None,
@@ -133,7 +128,7 @@ class ReportService:
                         None,
                     )
 
-                    if day_atts:
+                    if check_in or check_out:
                         present += 1
 
                     if check_in:
@@ -154,7 +149,7 @@ class ReportService:
                         else:
                             left_early += 1
 
-                    if not day_atts and is_mand:
+                    if not (check_in or check_out) and is_mand:
                         if curr < today:
                             absent += 1
                         elif curr == today and timezone.localtime().time() > day_info["end_time"]:
