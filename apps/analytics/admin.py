@@ -1,7 +1,7 @@
 from django.contrib import admin
 from apps.utils.admin import BaseModelAdmin as ModelAdmin
 
-from .models import KPIResult
+from .models import KPIResult, DailyAttendance
 
 
 @admin.register(KPIResult)
@@ -33,6 +33,41 @@ class KPIResultAdmin(ModelAdmin):
         "discipline_coefficient",
         "total_score",
         "rating_category",
+    ]
+
+    def has_add_permission(self, request):
+        return False
+
+
+@admin.register(DailyAttendance)
+class DailyAttendanceAdmin(ModelAdmin):
+    list_display = [
+        "user",
+        "date",
+        "schedule_name",
+        "present",
+        "absent",
+        "late",
+        "left_early",
+        "is_active",
+    ]
+    search_fields = ["user__full_name", "user__jshshir", "schedule_name"]
+    list_filter = ["date", "is_mandatory", "is_holiday", "present", "absent", "late"]
+    readonly_fields = [
+        "user",
+        "date",
+        "schedule_name",
+        "is_mandatory",
+        "is_holiday",
+        "total_expected",
+        "present",
+        "absent",
+        "late",
+        "left_early",
+        "on_time_in",
+        "on_time_out",
+        "compliant_actions",
+        "total_expected_actions",
     ]
 
     def has_add_permission(self, request):
