@@ -59,119 +59,56 @@ class ReportService:
             user_id__in=users.values("id"), created_at__range=(start_dt, end_dt)
         ).order_by("created_at")
 
-        att_by_user_day = {}
-        for att in attendances:
-            day = timezone.localtime(att.created_at).date()
-            uid = str(att.user_id)
-            if uid not in att_by_user_day:
-                att_by_user_day[uid] = {}
-            if day not in att_by_user_day[uid]:
-                att_by_user_day[uid][day] = []
-            att_by_user_day[uid][day].append(att)
-
-        user_stats = {}
+        from django.db.models import Sum
+        from apps.analytics.models import DailyAttendance
+        
         today = timezone.localtime().date()
+        from apps.analytics.daily_service import DailyKPIService
+        for u in users:
+            DailyKPIService.calculate_daily_snapshot(u, end_date)
+            if end_date == today:
+                DailyKPIService.calculate_daily_snapshot(u, end_date - timedelta(days=1))
 
-        for user in users.iterator(chunk_size=1000):
-            schedule_map = ScheduleHelper.get_period_schedule(
-                user.schedule, start_date, end_date
-            )
+        all_stats = DailyAttendance.objects.filter(
+            user__in=users,
+            date__range=(start_date, end_date)
+        ).values('user').annotate(
+            total_expected=Sum('total_expected'),
+            present=Sum('present'),
+            absent=Sum('absent'),
+            late=Sum('late'),
+            left_early=Sum('left_early'),
+            on_time_in=Sum('on_time_in'),
+            on_time_out=Sum('on_time_out'),
+            compliant_actions=Sum('compliant_actions'),
+            total_expected_actions=Sum('total_expected_actions'),
+        )
 
-            total_expected = 0
-            present = 0
-            late = 0
-            absent = 0
-            left_early = 0
+        stats_map = {item['user']: item for item in all_stats}
+        user_stats = {}
 
-            user_join_date = timezone.localtime(user.created_at).date()
-            u_atts_days = att_by_user_day.get(str(user.id), {}).keys()
-            if u_atts_days:
-                user_join_date = min(user_join_date, min(u_atts_days))
-            actual_start_date = max(start_date, user_join_date)
+        for user in users:
+            user_stat = stats_map.get(user.id, {})
+            
+            total_expected = user_stat.get('total_expected') or 0
+            present = user_stat.get('present') or 0
+            late = user_stat.get('late') or 0
+            absent = user_stat.get('absent') or 0
+            left_early = user_stat.get('left_early') or 0
+            
+            on_time_in = user_stat.get('on_time_in') or 0
+            on_time_out = user_stat.get('on_time_out') or 0
+            compliant_actions = user_stat.get('compliant_actions') or 0
+            total_expected_actions = user_stat.get('total_expected_actions') or 0
 
-            actual_end_date = min(end_date, today)
-            if user.is_fired and user.fired_at:
-                user_fire_date = timezone.localtime(user.fired_at).date()
-                actual_end_date = min(actual_end_date, user_fire_date)
-
-            on_time_in = 0
-            on_time_out = 0
-            compliant_actions = 0
-
-            has_lunch = (
-                user.schedule
-                and user.schedule.lunch_start_time
-                and user.schedule.lunch_end_time
-            )
-            actions_per_day = 4 if has_lunch else 2
-
-            curr = actual_start_date
-            while curr <= actual_end_date:
-                day_info = schedule_map.get(curr)
-                if day_info:
-                    is_mand = day_info["is_mandatory"]
-                    day_atts = att_by_user_day.get(str(user.id), {}).get(curr, [])
-
-                    check_in = next((a for a in day_atts if a.event_type == Attendance.EventType.CHECK_IN), None)
-                    check_out = next((a for a in day_atts if a.event_type == Attendance.EventType.CHECK_OUT), None)
-
-                    if is_mand:
-                        if check_in or check_out or curr < today or (curr == today and timezone.localtime().time() > day_info["end_time"]):
-                            total_expected += 1
-                    elif check_in or check_out:
-                        total_expected += 1
-
-                    lunch_start = next(
-                        (a for a in day_atts if a.event_type == Attendance.EventType.LUNCH_START),
-                        None,
-                    )
-                    lunch_end = next(
-                        (a for a in day_atts if a.event_type == Attendance.EventType.LUNCH_END),
-                        None,
-                    )
-
-                    if check_in or check_out:
-                        present += 1
-
-                    if check_in:
-                        check_in_time = timezone.localtime(check_in.created_at).time()
-                        if check_in_time <= day_info["start_time"]:
-                            on_time_in += 1
-                            if is_mand:
-                                compliant_actions += 1
-                        else:
-                            if is_mand:
-                                late += 1
-
-                    if check_out:
-                        check_out_time = timezone.localtime(check_out.created_at).time()
-                        if check_out_time >= day_info["end_time"]:
-                            on_time_out += 1
-                            if is_mand:
-                                compliant_actions += 1
-                        else:
-                            if is_mand:
-                                left_early += 1
-
-                    if not (check_in or check_out) and is_mand:
-                        if curr < today:
-                            absent += 1
-                        elif curr == today and timezone.localtime().time() > day_info["end_time"]:
-                            absent += 1
-
-                    if is_mand and has_lunch and day_info.get("lunch_start") and day_info.get("lunch_end"):
-                        if lunch_start and timezone.localtime(lunch_start.created_at).time() >= day_info["lunch_start"]:
-                            compliant_actions += 1
-                        if lunch_end and timezone.localtime(lunch_end.created_at).time() <= day_info["lunch_end"]:
-                            compliant_actions += 1
-
-                curr += timedelta(days=1)
+            attendance_kpi = 0
+            monthly_kpi = 0
+            discipline_kpi = 0
 
             if total_expected > 0:
                 attendance_kpi = (on_time_in / total_expected) * 100
                 monthly_kpi = ((on_time_in + on_time_out) / (total_expected * 2)) * 100
 
-                total_expected_actions = total_expected * actions_per_day
                 discipline_coefficient = (
                     (compliant_actions / total_expected_actions)
                     if total_expected_actions > 0

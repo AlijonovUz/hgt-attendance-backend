@@ -8,8 +8,7 @@ from datetime import timedelta, datetime
 from apps.users.models import User
 from .models import KPIResult
 from .serializers import KPIResultSerializer
-from .services import KPIService, DashboardService
-from .reports import ReportService
+from .services import KPIService, ReportService, DashboardService
 from rest_framework.exceptions import ValidationError
 
 
