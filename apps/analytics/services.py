@@ -235,7 +235,10 @@ class KPIService:
 
 class DashboardService:
     @staticmethod
-    def get_dashboard_stats(user, start_date=None, end_date=None, region_id=None, district_id=None, branch_id=None):
+    def get_dashboard_stats(user, start_date=None, end_date=None, region_id=None, district_id=None, branch_id=None, widgets=None):
+        if widgets is None:
+            widgets = ["summary", "weekly_dynamics", "today_status", "branch_ratings"]
+            
         today_date = timezone.localtime().date()
         if start_date is None or end_date is None:
             start_date = today_date
@@ -377,12 +380,16 @@ class DashboardService:
 
             return arrived, lates, early_leaves, absent, pct
 
-        cur_arrived, cur_lates, cur_early, cur_absent, cur_pct = get_stats_for_period(
-            start_date, end_date, base_users
-        )
-        prv_arrived, prv_lates, prv_early, prv_absent, prv_pct = get_stats_for_period(
-            prev_start_date, prev_end_date, base_users
-        )
+        cur_arrived, cur_lates, cur_early, cur_absent, cur_pct = 0, 0, 0, 0, 0
+        prv_arrived, prv_lates, prv_early, prv_absent, prv_pct = 0, 0, 0, 0, 0
+        
+        if "summary" in widgets:
+            cur_arrived, cur_lates, cur_early, cur_absent, cur_pct = get_stats_for_period(
+                start_date, end_date, base_users
+            )
+            prv_arrived, prv_lates, prv_early, prv_absent, prv_pct = get_stats_for_period(
+                prev_start_date, prev_end_date, base_users
+            )
 
         def calc_trend(cur, prv):
             if prv == 0:
@@ -392,48 +399,52 @@ class DashboardService:
 
         day_names = ["Du", "Se", "Ch", "Pa", "Ju", "Sh", "Ya"]
         weekly_dynamics = []
-        for i, day in enumerate(week_days_dates):
-            d_arrived, d_lates, _, _, _ = get_stats_for_period(day, day, base_users)
-            d_on_time = d_arrived - d_lates
-            weekly_dynamics.append(
-                {
-                    "day_name": day_names[i],
-                    "date": day.isoformat(),
-                    "on_time": d_on_time,
-                    "late": d_lates,
-                }
+        if "weekly_dynamics" in widgets:
+            for i, day in enumerate(week_days_dates):
+                d_arrived, d_lates, _, _, _ = get_stats_for_period(day, day, base_users)
+                d_on_time = d_arrived - d_lates
+                weekly_dynamics.append(
+                    {
+                        "day_name": day_names[i],
+                        "date": day.isoformat(),
+                        "on_time": d_on_time,
+                        "late": d_lates,
+                    }
+                )
+
+        today_status = {}
+        if "today_status" in widgets:
+            t_arrived, t_lates, t_early, t_absent, t_pct = get_stats_for_period(
+                end_date, end_date, base_users
             )
+            today_status = {
+                "on_time": t_arrived - t_lates,
+                "late": t_lates,
+                "early_left": t_early,
+                "absent": t_absent,
+                "total_percent": round(t_pct, 1),
+            }
 
-        t_arrived, t_lates, t_early, t_absent, t_pct = get_stats_for_period(
-            end_date, end_date, base_users
-        )
-        today_status = {
-            "on_time": t_arrived - t_lates,
-            "late": t_lates,
-            "early_left": t_early,
-            "absent": t_absent,
-            "total_percent": round(t_pct, 1),
-        }
-
-        from apps.analytics.reports import ReportService
-        branch_report = ReportService.get_report_by_branch(
-            user, start_date, end_date, region_id, district_id, branch_id
-        )
-        
         branch_ratings = []
-        for b_data in branch_report["results"]:
-            kpi_str = str(b_data["discipline_kpi"]).replace("%", "")
-            try:
-                rating = float(kpi_str)
-            except ValueError:
-                rating = 0
-            branch_ratings.append({
-                "name": b_data["branch"],
-                "rating": rating
-            })
+        if "branch_ratings" in widgets:
+            from apps.analytics.reports import ReportService
+            branch_report = ReportService.get_report_by_branch(
+                user, start_date, end_date, region_id, district_id, branch_id
+            )
             
-        branch_ratings.sort(key=lambda x: x["rating"], reverse=True)
-        branch_ratings = branch_ratings[:10]
+            for b_data in branch_report["results"]:
+                kpi_str = str(b_data["discipline_kpi"]).replace("%", "")
+                try:
+                    rating = float(kpi_str)
+                except ValueError:
+                    rating = 0
+                branch_ratings.append({
+                    "name": b_data["branch"],
+                    "rating": rating
+                })
+                
+            branch_ratings.sort(key=lambda x: x["rating"], reverse=True)
+            branch_ratings = branch_ratings[:10]
 
         return {
             "summary": {

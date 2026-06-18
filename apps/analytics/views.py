@@ -112,7 +112,7 @@ class KPIResultViewSet(viewsets.ReadOnlyModelViewSet):
         ],
     )
     @action(detail=False, methods=["get"], url_path="dashboard-stats")
-    def dashboard_stats(self, request):
+    def _get_dashboard_params(self, request):
         period = request.query_params.get("period")
         start_date_str = request.query_params.get("start_date")
         end_date_str = request.query_params.get("end_date")
@@ -130,27 +130,117 @@ class KPIResultViewSet(viewsets.ReadOnlyModelViewSet):
             except ValueError:
                 pass
         elif period:
-            if period == "1":
-                start_date = end_date - timedelta(days=30)
-            elif period == "3":
-                start_date = end_date - timedelta(days=90)
-            elif period == "6":
-                start_date = end_date - timedelta(days=180)
+            if period == "daily":
+                start_date = end_date
+            elif period == "weekly":
+                start_date = end_date - timedelta(days=end_date.weekday())
+            elif period == "monthly":
+                start_date = end_date.replace(day=1)
+            elif period == "quarterly":
+                start_month = 3 * ((end_date.month - 1) // 3) + 1
+                start_date = end_date.replace(month=start_month, day=1)
+            elif period == "yearly":
+                start_date = end_date.replace(month=1, day=1)
 
+        return {
+            "start_date": start_date,
+            "end_date": end_date,
+            "region_id": region_id,
+            "district_id": district_id,
+            "branch_id": branch_id
+        }
+
+    @extend_schema(
+        summary="Umumiy Dashboard Statistikasi (Barchasi birdaniga)",
+        parameters=[
+            OpenApiParameter(name="period", description="Filtr oylarda (1, 3, 6)", required=False, type=str),
+            OpenApiParameter(name="start_date", description="Boshlanish sanasi (YYYY-MM-DD)", required=False, type=str),
+            OpenApiParameter(name="end_date", description="Tugash sanasi (YYYY-MM-DD)", required=False, type=str),
+            OpenApiParameter(name="region_id", description="Viloyat ID", required=False, type=str),
+            OpenApiParameter(name="district_id", description="Tuman ID", required=False, type=str),
+            OpenApiParameter(name="branch_id", description="Filial ID", required=False, type=str),
+        ],
+    )
+    @action(detail=False, methods=["get"], url_path="dashboard-stats")
+    def dashboard_stats(self, request):
+        params = self._get_dashboard_params(request)
         stats = DashboardService.get_dashboard_stats(
             request.user, 
-            start_date=start_date, 
-            end_date=end_date,
-            region_id=region_id,
-            district_id=district_id,
-            branch_id=branch_id
+            **params
         )
         if stats is None:
-            return Response(
-                {"detail": "Ruxsat etilmagan."}, status=status.HTTP_403_FORBIDDEN
-            )
-
+            return Response({"detail": "Ruxsat etilmagan."}, status=status.HTTP_403_FORBIDDEN)
         return Response(stats)
+
+    @extend_schema(
+        summary="Dashboard: Asosiy ko'rsatkichlar",
+        parameters=[
+            OpenApiParameter(name="period", description="Filtr oylarda (1, 3, 6)", required=False, type=str),
+            OpenApiParameter(name="start_date", description="Boshlanish sanasi", required=False, type=str),
+            OpenApiParameter(name="end_date", description="Tugash sanasi", required=False, type=str),
+            OpenApiParameter(name="region_id", description="Viloyat ID", required=False, type=str),
+            OpenApiParameter(name="district_id", description="Tuman ID", required=False, type=str),
+            OpenApiParameter(name="branch_id", description="Filial ID", required=False, type=str),
+        ],
+    )
+    @action(detail=False, methods=["get"], url_path="dashboard-summary")
+    def dashboard_summary(self, request):
+        params = self._get_dashboard_params(request)
+        stats = DashboardService.get_dashboard_stats(request.user, **params, widgets=["summary"])
+        if stats is None:
+            return Response({"detail": "Ruxsat etilmagan."}, status=status.HTTP_403_FORBIDDEN)
+        return Response(stats["summary"])
+
+    @extend_schema(
+        summary="Dashboard: Haftalik dinamika",
+        parameters=[
+            OpenApiParameter(name="region_id", description="Viloyat ID", required=False, type=str),
+            OpenApiParameter(name="district_id", description="Tuman ID", required=False, type=str),
+            OpenApiParameter(name="branch_id", description="Filial ID", required=False, type=str),
+        ],
+    )
+    @action(detail=False, methods=["get"], url_path="dashboard-weekly-dynamics")
+    def dashboard_weekly_dynamics(self, request):
+        params = self._get_dashboard_params(request)
+        stats = DashboardService.get_dashboard_stats(request.user, **params, widgets=["weekly_dynamics"])
+        if stats is None:
+            return Response({"detail": "Ruxsat etilmagan."}, status=status.HTTP_403_FORBIDDEN)
+        return Response(stats["weekly_dynamics"])
+
+    @extend_schema(
+        summary="Dashboard: Holat bo'yicha taqsimot",
+        parameters=[
+            OpenApiParameter(name="region_id", description="Viloyat ID", required=False, type=str),
+            OpenApiParameter(name="district_id", description="Tuman ID", required=False, type=str),
+            OpenApiParameter(name="branch_id", description="Filial ID", required=False, type=str),
+        ],
+    )
+    @action(detail=False, methods=["get"], url_path="dashboard-today-status")
+    def dashboard_today_status(self, request):
+        params = self._get_dashboard_params(request)
+        stats = DashboardService.get_dashboard_stats(request.user, **params, widgets=["today_status"])
+        if stats is None:
+            return Response({"detail": "Ruxsat etilmagan."}, status=status.HTTP_403_FORBIDDEN)
+        return Response(stats["today_status"])
+
+    @extend_schema(
+        summary="Dashboard: Intizom reytingi",
+        parameters=[
+            OpenApiParameter(name="period", description="Filtr oylarda (1, 3, 6)", required=False, type=str),
+            OpenApiParameter(name="start_date", description="Boshlanish sanasi", required=False, type=str),
+            OpenApiParameter(name="end_date", description="Tugash sanasi", required=False, type=str),
+            OpenApiParameter(name="region_id", description="Viloyat ID", required=False, type=str),
+            OpenApiParameter(name="district_id", description="Tuman ID", required=False, type=str),
+            OpenApiParameter(name="branch_id", description="Filial ID", required=False, type=str),
+        ],
+    )
+    @action(detail=False, methods=["get"], url_path="dashboard-branch-ratings")
+    def dashboard_branch_ratings(self, request):
+        params = self._get_dashboard_params(request)
+        stats = DashboardService.get_dashboard_stats(request.user, **params, widgets=["branch_ratings"])
+        if stats is None:
+            return Response({"detail": "Ruxsat etilmagan."}, status=status.HTTP_403_FORBIDDEN)
+        return Response(stats["branch_ratings"])
 
 
 @extend_schema(tags=["Hisobotlar"])
@@ -196,37 +286,32 @@ class ReportViewSet(viewsets.ViewSet):
         if not has_access:
             return Response({"detail": "Ruxsat etilmagan."}, status=status.HTTP_403_FORBIDDEN)
             
-        period = request.query_params.get("period", "custom")
-        today = timezone.localtime().date()
+        period = request.query_params.get("period")
+        start_str = request.query_params.get("start_date")
+        end_str = request.query_params.get("end_date")
         
-        if period == "daily":
-            start_date = today
-            end_date = today
-        elif period == "weekly":
-            start_date = today - timedelta(days=today.weekday())
-            end_date = today
-        elif period == "monthly":
-            start_date = today.replace(day=1)
-            end_date = today
-        elif period == "quarterly":
-            start_month = 3 * ((today.month - 1) // 3) + 1
-            start_date = today.replace(month=start_month, day=1)
-            end_date = today
-        elif period == "yearly":
-            start_date = today.replace(month=1, day=1)
-            end_date = today
-        else:
-            start_str = request.query_params.get("start_date")
-            end_str = request.query_params.get("end_date")
-            
-            if not start_str or not end_str:
-                return Response({"detail": "Custom davr uchun start_date va end_date majburiy."}, status=status.HTTP_400_BAD_REQUEST)
-                
+        today = timezone.localtime().date()
+        end_date = today
+        start_date = today
+        
+        if start_str and end_str:
             try:
                 start_date = datetime.strptime(start_str, "%Y-%m-%d").date()
                 end_date = datetime.strptime(end_str, "%Y-%m-%d").date()
             except ValueError:
                 return Response({"detail": "Noto'g'ri sana formati."}, status=status.HTTP_400_BAD_REQUEST)
+        elif period:
+            if period == "daily":
+                start_date = end_date
+            elif period == "weekly":
+                start_date = end_date - timedelta(days=end_date.weekday())
+            elif period == "monthly":
+                start_date = end_date.replace(day=1)
+            elif period == "quarterly":
+                start_month = 3 * ((end_date.month - 1) // 3) + 1
+                start_date = end_date.replace(month=start_month, day=1)
+            elif period == "yearly":
+                start_date = end_date.replace(month=1, day=1)
             
         region_id = request.query_params.get("region_id")
         district_id = request.query_params.get("district_id")
