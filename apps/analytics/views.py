@@ -1,4 +1,5 @@
 from django_filters.rest_framework import DjangoFilterBackend
+from rest_framework.exceptions import ValidationError
 from drf_spectacular.utils import extend_schema, OpenApiParameter, inline_serializer
 from rest_framework import filters, viewsets, status, permissions, serializers
 from rest_framework.decorators import action
@@ -6,10 +7,10 @@ from rest_framework.response import Response
 from django.utils import timezone
 from datetime import timedelta, datetime
 from apps.users.models import User
-from .models import KPIResult
-from .serializers import KPIResultSerializer
+
+from .models import KPIResult, DailyAttendance
+from .serializers import KPIResultSerializer, DailyAttendanceSerializer
 from .services import KPIService, ReportService, DashboardService
-from rest_framework.exceptions import ValidationError
 
 
 LOCATION_PARAMS = [
@@ -117,6 +118,30 @@ class KPIResultViewSet(viewsets.ReadOnlyModelViewSet):
             )
         except Exception as e:
             return Response({"detail": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+
+@extend_schema(tags=["Analitika va KPI"])
+class DailyAttendanceViewSet(viewsets.ReadOnlyModelViewSet):
+    queryset = DailyAttendance.objects.select_related("user").all()
+    serializer_class = DailyAttendanceSerializer
+    filter_backends = [
+        DjangoFilterBackend,
+        filters.SearchFilter,
+        filters.OrderingFilter,
+    ]
+    permission_classes = [permissions.IsAuthenticated]
+    filterset_fields = ["user", "date", "schedule_name", "is_mandatory", "is_holiday"]
+    search_fields = ["user__full_name", "user__jshshir"]
+    ordering_fields = ["date", "user__full_name"]
+    ordering = ["-date"]
+
+    def get_queryset(self):
+        user = self.request.user
+        if user.is_superuser or user.has_permission("analytics_view_all"):
+            return super().get_queryset()
+        if user.has_permission("analytics_view_dept") and user.department:
+            return super().get_queryset().filter(user__department=user.department)
+        return super().get_queryset().filter(user=user)
 
 
 @extend_schema(tags=["Dashboard"])

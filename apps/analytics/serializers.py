@@ -1,6 +1,7 @@
 from rest_framework import serializers
 from apps.users.serializers import UserShortInfoSerializer
-from .models import KPIResult
+from .models import KPIResult, DailyAttendance
+
 
 class KPIResultSerializer(serializers.ModelSerializer):
     user_info = UserShortInfoSerializer(source="user", read_only=True)
@@ -27,6 +28,33 @@ class KPIResultSerializer(serializers.ModelSerializer):
             "total_score",
             "rating_category",
             "rating_display",
+            "created_at",
+            "updated_at",
+        ]
+
+
+class DailyAttendanceSerializer(serializers.ModelSerializer):
+    user_info = UserShortInfoSerializer(source="user", read_only=True)
+
+    class Meta:
+        model = DailyAttendance
+        fields = [
+            "id",
+            "user",
+            "user_info",
+            "date",
+            "schedule_name",
+            "is_mandatory",
+            "is_holiday",
+            "total_expected",
+            "present",
+            "absent",
+            "late",
+            "left_early",
+            "on_time_in",
+            "on_time_out",
+            "compliant_actions",
+            "total_expected_actions",
             "created_at",
             "updated_at",
         ]
