@@ -64,10 +64,6 @@ class DailyAttendanceAdmin(ModelAdmin):
         "absent",
         "late",
         "left_early",
-        "on_time_in",
-        "on_time_out",
-        "compliant_actions",
-        "total_expected_actions",
     ]
 
     def has_add_permission(self, request):

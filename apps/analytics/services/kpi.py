@@ -29,24 +29,22 @@ class KPIService:
             absent=Sum('absent'),
             late=Sum('late'),
             left_early=Sum('left_early'),
-            on_time_in=Sum('on_time_in'),
-            on_time_out=Sum('on_time_out'),
-            compliant_actions=Sum('compliant_actions'),
-            total_expected_actions=Sum('total_expected_actions'),
         )
 
         total_expected = stats['total_expected'] or 0
         if total_expected == 0:
             return None
 
-        on_time_in = stats['on_time_in'] or 0
-        on_time_out = stats['on_time_out'] or 0
         lates_count = stats['late'] or 0
         left_early = stats['left_early'] or 0
         absent = stats['absent'] or 0
         present = stats['present'] or 0
-        compliant_actions = stats['compliant_actions'] or 0
-        total_expected_actions = stats['total_expected_actions'] or 0
+
+        on_time_in = max(0, present - lates_count)
+        on_time_out = max(0, present - left_early)
+        
+        compliant_actions = on_time_in + on_time_out
+        total_expected_actions = total_expected * 2
 
         attendance_kpi = (on_time_in / total_expected) * 100
         monthly_kpi = ((on_time_in + on_time_out) / (total_expected * 2)) * 100
