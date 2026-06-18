@@ -63,7 +63,7 @@ class ReportService:
         from apps.analytics.models import DailyAttendance
         
         today = timezone.localtime().date()
-        from apps.analytics.daily_service import DailyKPIService
+        from apps.analytics.services.daily import DailyKPIService
         for u in users:
             DailyKPIService.calculate_daily_snapshot(u, end_date)
             if end_date == today:

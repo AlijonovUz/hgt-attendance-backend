@@ -15,7 +15,7 @@ class KPIService:
 
         from django.db.models import Sum
         from apps.analytics.models import DailyAttendance
-        from apps.analytics.daily_service import DailyKPIService
+        from apps.analytics.services.daily import DailyKPIService
 
         today = timezone.localtime().date()
         DailyKPIService.calculate_daily_snapshot(user, today)
