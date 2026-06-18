@@ -230,6 +230,8 @@ class KPIService:
                 "days_arrived_on_time": days_arrived_on_time,
                 "days_left_on_time": days_left_on_time,
                 "lates_count": lates_count,
+                "total_actions_expected": total_expected_actions,
+                "compliant_actions": compliant_actions,
                 "attendance_kpi": round(attendance_kpi, 2),
                 "monthly_kpi": round(monthly_kpi, 2),
                 "late_coefficient": round(late_coefficient, 2),
