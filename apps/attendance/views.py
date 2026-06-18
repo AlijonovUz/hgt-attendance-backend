@@ -3,16 +3,17 @@ from django_filters.rest_framework import DjangoFilterBackend
 from drf_spectacular.utils import extend_schema
 from rest_framework import filters
 
-from apps.utils.views import BaseManageViewSet
+from apps.utils.views import BaseManageViewSet, BaseReadOnlyViewSet
 
 from .filters import AttendanceFilter
-from .models import Attendance, Geozone, FaceLog, GpsLog
+from .models import Attendance, Geozone, FaceLog, GpsLog, SignatureLog
 from .serializers import (
     AttendanceCreateSerializer,
     AttendanceListSerializer,
     GeozoneSerializer,
     FaceLogSerializer,
     GpsLogSerializer,
+    SignatureLogSerializer,
 )
 
 
@@ -68,7 +69,7 @@ class AttendanceViewSet(BaseManageViewSet):
 
 
 @extend_schema(tags=["Face Logs"])
-class FaceLogViewSet(BaseManageViewSet):
+class FaceLogViewSet(BaseReadOnlyViewSet):
     queryset = FaceLog.objects.select_related("user").active()
     serializer_class = FaceLogSerializer
     filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
@@ -84,11 +85,27 @@ class FaceLogViewSet(BaseManageViewSet):
 
 
 @extend_schema(tags=["GPS Logs"])
-class GpsLogViewSet(BaseManageViewSet):
+class GpsLogViewSet(BaseReadOnlyViewSet):
     queryset = GpsLog.objects.select_related("user").active()
     serializer_class = GpsLogSerializer
     filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
     filterset_fields = ["is_success", "user"]
+    search_fields = ["user__full_name", "message"]
+    ordering_fields = ["created_at"]
+    ordering = ["-created_at"]
+    http_method_names = ["get", "head", "options"]
+    action_permissions = {
+        "list": "attendance_view_history_all",
+        "retrieve": "attendance_view_history_all",
+    }
+
+
+@extend_schema(tags=["Imzo Loglari"])
+class SignatureLogViewSet(BaseReadOnlyViewSet):
+    queryset = SignatureLog.objects.select_related("user").active()
+    serializer_class = SignatureLogSerializer
+    filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
+    filterset_fields = ["is_valid", "user"]
     search_fields = ["user__full_name", "message"]
     ordering_fields = ["created_at"]
     ordering = ["-created_at"]
