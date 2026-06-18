@@ -70,7 +70,11 @@ class KPIService:
         end_date = date(year, month, num_days)
         today = timezone.localtime().date()
         user_start_date = timezone.localtime(user.created_at).date()
-        user_end_date = timezone.localtime(user.fired_at).date() if user.is_fired and user.fired_at else today
+        user_end_date = (
+            timezone.localtime(user.fired_at).date()
+            if user.is_fired and user.fired_at
+            else today
+        )
 
         actual_start_date = max(start_date, user_start_date)
         actual_end_date = min(end_date, today, user_end_date)
@@ -177,7 +181,11 @@ class KPIService:
                     elif is_opt:
                         bonus_actions += 1
 
-        has_lunch = user.schedule and user.schedule.lunch_start_time and user.schedule.lunch_end_time
+        has_lunch = (
+            user.schedule
+            and user.schedule.lunch_start_time
+            and user.schedule.lunch_end_time
+        )
         actions_per_day = 4 if has_lunch else 2
         total_expected_actions = work_days * actions_per_day
 
@@ -201,7 +209,7 @@ class KPIService:
             monthly_kpi + attendance_kpi + (discipline_coefficient * 100)
         ) / 3
         total_score = round(total_score, 2)
-        
+
         attended_days = len(grouped.keys())
 
         if total_score >= 90:
@@ -235,10 +243,18 @@ class KPIService:
 
 class DashboardService:
     @staticmethod
-    def get_dashboard_stats(user, start_date=None, end_date=None, region_id=None, district_id=None, branch_id=None, widgets=None):
+    def get_dashboard_stats(
+        user,
+        start_date=None,
+        end_date=None,
+        region_id=None,
+        district_id=None,
+        branch_id=None,
+        widgets=None,
+    ):
         if widgets is None:
             widgets = ["summary", "weekly_dynamics", "today_status", "branch_ratings"]
-            
+
         today_date = timezone.localtime().date()
         if start_date is None or end_date is None:
             start_date = today_date
@@ -256,9 +272,17 @@ class DashboardService:
         )
 
         if not (user.is_superuser or user.has_permission("analytics_view_all")):
-            if user.has_permission("analytics_view_region") and user.branch and user.branch.region:
+            if (
+                user.has_permission("analytics_view_region")
+                and user.branch
+                and user.branch.region
+            ):
                 base_users = base_users.filter(branch__region=user.branch.region)
-            elif user.has_permission("analytics_view_district") and user.branch and user.branch.district:
+            elif (
+                user.has_permission("analytics_view_district")
+                and user.branch
+                and user.branch.district
+            ):
                 base_users = base_users.filter(branch__district=user.branch.district)
             elif user.has_permission("analytics_view_branch") and user.branch:
                 base_users = base_users.filter(branch=user.branch)
@@ -292,7 +316,9 @@ class DashboardService:
         if users_before_this_month <= 0:
             emp_trend_val = 100.0 if joined_this_month > 0 else 0.0
         else:
-            emp_trend_val = round((joined_this_month / users_before_this_month) * 100, 1)
+            emp_trend_val = round(
+                (joined_this_month / users_before_this_month) * 100, 1
+            )
 
         unique_schedules = set([u.schedule for u in base_users])
         start_of_week = end_date - timedelta(days=end_date.weekday())
@@ -331,46 +357,77 @@ class DashboardService:
                 sch_map = global_schedule_map.get(u.schedule)
                 if not sch_map:
                     continue
-                
+
                 user_start_date = timezone.localtime(u.created_at).date()
-                user_end_date = timezone.localtime(u.fired_at).date() if u.is_fired and u.fired_at else e_date
-                
+                user_end_date = (
+                    timezone.localtime(u.fired_at).date()
+                    if u.is_fired and u.fired_at
+                    else e_date
+                )
+
                 curr = max(s_date, user_start_date)
                 actual_e_date = min(e_date, user_end_date)
 
                 while curr <= actual_e_date:
                     u_atts = user_date_atts.get(u.id, {}).get(curr, [])
                     info = sch_map.get(curr)
-                    
+
                     if not info:
                         if u_atts:
-                            has_record = any(a.event_type in (Attendance.EventType.CHECK_IN, Attendance.EventType.CHECK_OUT) for a in u_atts)
+                            has_record = any(
+                                a.event_type
+                                in (
+                                    Attendance.EventType.CHECK_IN,
+                                    Attendance.EventType.CHECK_OUT,
+                                )
+                                for a in u_atts
+                            )
                             if has_record:
                                 expected += 1
                                 arrived += 1
                         curr += timedelta(days=1)
                         continue
-                        
+
                     is_mand = info["is_mandatory"]
                     if is_mand:
                         expected += 1
 
                     if u_atts:
-                        check_ins = [a for a in u_atts if a.event_type == Attendance.EventType.CHECK_IN]
-                        check_outs = [a for a in u_atts if a.event_type == Attendance.EventType.CHECK_OUT]
-                        
+                        check_ins = [
+                            a
+                            for a in u_atts
+                            if a.event_type == Attendance.EventType.CHECK_IN
+                        ]
+                        check_outs = [
+                            a
+                            for a in u_atts
+                            if a.event_type == Attendance.EventType.CHECK_OUT
+                        ]
+
                         if check_ins or check_outs:
-                            if info["is_optional"] or not (info["is_mandatory"] or info["is_optional"]):
+                            if info["is_optional"] or not (
+                                info["is_mandatory"] or info["is_optional"]
+                            ):
                                 expected += 1
                             arrived += 1
 
                         if check_ins:
-                            first_in = min([timezone.localtime(a.created_at).time() for a in check_ins])
+                            first_in = min(
+                                [
+                                    timezone.localtime(a.created_at).time()
+                                    for a in check_ins
+                                ]
+                            )
                             if first_in > info["start_time"]:
                                 lates += 1
 
                         if check_outs:
-                            last_out = max([timezone.localtime(a.created_at).time() for a in check_outs])
+                            last_out = max(
+                                [
+                                    timezone.localtime(a.created_at).time()
+                                    for a in check_outs
+                                ]
+                            )
                             if last_out < info["end_time"]:
                                 early_leaves += 1
                     curr += timedelta(days=1)
@@ -382,13 +439,13 @@ class DashboardService:
 
         cur_arrived, cur_lates, cur_early, cur_absent, cur_pct = 0, 0, 0, 0, 0
         prv_arrived, prv_lates, prv_early, prv_absent, prv_pct = 0, 0, 0, 0, 0
-        
+
         if "summary" in widgets:
-            cur_arrived, cur_lates, cur_early, cur_absent, cur_pct = get_stats_for_period(
-                start_date, end_date, base_users
+            cur_arrived, cur_lates, cur_early, cur_absent, cur_pct = (
+                get_stats_for_period(start_date, end_date, base_users)
             )
-            prv_arrived, prv_lates, prv_early, prv_absent, prv_pct = get_stats_for_period(
-                prev_start_date, prev_end_date, base_users
+            prv_arrived, prv_lates, prv_early, prv_absent, prv_pct = (
+                get_stats_for_period(prev_start_date, prev_end_date, base_users)
             )
 
         def calc_trend(cur, prv):
@@ -428,21 +485,19 @@ class DashboardService:
         branch_ratings = []
         if "branch_ratings" in widgets:
             from apps.analytics.reports import ReportService
+
             branch_report = ReportService.get_report_by_branch(
                 user, start_date, end_date, region_id, district_id, branch_id
             )
-            
+
             for b_data in branch_report["results"]:
                 kpi_str = str(b_data["discipline_kpi"]).replace("%", "")
                 try:
                     rating = float(kpi_str)
                 except ValueError:
                     rating = 0
-                branch_ratings.append({
-                    "name": b_data["branch"],
-                    "rating": rating
-                })
-                
+                branch_ratings.append({"name": b_data["branch"], "rating": rating})
+
             branch_ratings.sort(key=lambda x: x["rating"], reverse=True)
             branch_ratings = branch_ratings[:10]
 
