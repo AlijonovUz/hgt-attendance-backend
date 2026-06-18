@@ -69,7 +69,7 @@ class KPIService:
         _, num_days = calendar.monthrange(year, month)
         end_date = date(year, month, num_days)
         today = timezone.localtime().date()
-        user_start_date = timezone.localtime(user.created_at).date()
+        user_start_date = timezone.localtime(user.date_joined).date()
         user_end_date = (
             timezone.localtime(user.fired_at).date()
             if user.is_fired and user.fired_at
@@ -210,7 +210,7 @@ class KPIService:
         ) / 3
         total_score = round(total_score, 2)
 
-        attended_days = len(grouped.keys())
+        attended_days = sum(1 for d in grouped.keys() if d in schedule_map)
 
         if total_score >= 90:
             rating_category = KPIResult.RatingCategory.EXCELLENT
@@ -360,7 +360,7 @@ class DashboardService:
                 if not sch_map:
                     continue
 
-                user_start_date = timezone.localtime(u.created_at).date()
+                user_start_date = timezone.localtime(u.date_joined).date()
                 user_end_date = (
                     timezone.localtime(u.fired_at).date()
                     if u.is_fired and u.fired_at

@@ -84,7 +84,7 @@ class ReportService:
             absent = 0
             left_early = 0
 
-            user_join_date = timezone.localtime(user.created_at).date()
+            user_join_date = timezone.localtime(user.date_joined).date()
             actual_start_date = max(start_date, user_join_date)
 
             actual_end_date = min(end_date, today)
