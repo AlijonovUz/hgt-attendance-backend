@@ -234,6 +234,12 @@ class AttendanceCreateSerializer(serializers.ModelSerializer):
                 message=f"Siz ish vaqti tugamasdan oldin ketdingiz. (Belgilangan vaqt: {et.strftime('%H:%M')})",
                 extra_data={"event": "EARLY_CHECK_OUT"},
             )
+
+        # Avtomatik KPI hisoblash
+        from apps.analytics.tasks import update_kpi_for_user_task
+        dt = timezone.localtime(instance.created_at)
+        update_kpi_for_user_task.delay(user.id, dt.year, dt.month)
+
         return instance
 
 
