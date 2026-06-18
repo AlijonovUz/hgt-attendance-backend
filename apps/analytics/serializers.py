@@ -14,6 +14,7 @@ class KPIResultSerializer(serializers.ModelSerializer):
             "user_info",
             "month",
             "total_work_days",
+            "attended_days",
             "days_arrived_on_time",
             "days_left_on_time",
             "lates_count",

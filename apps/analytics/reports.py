@@ -55,9 +55,8 @@ class ReportService:
         )
         end_dt = timezone.make_aware(datetime.combine(end_date, datetime.max.time()))
 
-        users_ids = list(users.values_list("id", flat=True))
         attendances = Attendance.objects.filter(
-            user_id__in=users_ids, created_at__range=(start_dt, end_dt)
+            user_id__in=users.values("id"), created_at__range=(start_dt, end_dt)
         ).order_by("created_at")
 
         att_by_user_day = {}
@@ -73,7 +72,7 @@ class ReportService:
         user_stats = {}
         today = timezone.localtime().date()
 
-        for user in users:
+        for user in users.iterator(chunk_size=1000):
             schedule_map = ScheduleHelper.get_period_schedule(
                 user.schedule, start_date, end_date
             )
@@ -84,7 +83,10 @@ class ReportService:
             absent = 0
             left_early = 0
 
-            user_join_date = timezone.localtime(user.date_joined).date()
+            user_join_date = timezone.localtime(user.created_at).date()
+            u_atts_days = att_by_user_day.get(str(user.id), {}).keys()
+            if u_atts_days:
+                user_join_date = min(user_join_date, min(u_atts_days))
             actual_start_date = max(start_date, user_join_date)
 
             actual_end_date = min(end_date, today)

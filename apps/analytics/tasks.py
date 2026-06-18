@@ -19,5 +19,5 @@ def recalculate_all_kpis_daily_task():
     now = timezone.localtime()
     users = User.objects.filter(is_active=True, is_fired=False)
 
-    for user in users:
+    for user in users.iterator(chunk_size=1000):
         update_kpi_for_user_task.delay(user.id, now.year, now.month)

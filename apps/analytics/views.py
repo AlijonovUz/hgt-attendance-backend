@@ -1,6 +1,6 @@
 from django_filters.rest_framework import DjangoFilterBackend
 from drf_spectacular.utils import extend_schema, OpenApiParameter
-from rest_framework import filters, viewsets, status
+from rest_framework import filters, viewsets, status, permissions
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from django.utils import timezone
@@ -56,6 +56,7 @@ class KPIResultViewSet(viewsets.ReadOnlyModelViewSet):
         filters.SearchFilter,
         filters.OrderingFilter,
     ]
+    permission_classes = [permissions.IsAuthenticated]
     filterset_fields = ["user", "month", "rating_category"]
     search_fields = ["user__full_name", "user__jshshir"]
     ordering_fields = ["month", "total_score"]
@@ -93,7 +94,7 @@ class KPIResultViewSet(viewsets.ReadOnlyModelViewSet):
             )
 
         user_id = request.data.get("user_id")
-        year = request.data.get("year")
+        year = request.data.get("year") 
         month = request.data.get("month")
 
         if not all([user_id, year, month]):
@@ -119,6 +120,11 @@ class KPIResultViewSet(viewsets.ReadOnlyModelViewSet):
             )
         except Exception as e:
             return Response({"detail": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+
+@extend_schema(tags=["Dashboard"])
+class DashboardViewSet(viewsets.ViewSet):
+    permission_classes = [permissions.IsAuthenticated]
 
     def _get_dashboard_params(self, request):
         period = request.query_params.get("period")
@@ -169,7 +175,7 @@ class KPIResultViewSet(viewsets.ReadOnlyModelViewSet):
         summary="Dashboard: Asosiy ko'rsatkichlar",
         parameters=COMMON_ANALYTICS_PARAMS,
     )
-    @action(detail=False, methods=["get"], url_path="dashboard-summary")
+    @action(detail=False, methods=["get"], url_path="summary")
     def dashboard_summary(self, request):
         params = self._get_dashboard_params(request)
         stats = DashboardService.get_dashboard_stats(
@@ -185,7 +191,7 @@ class KPIResultViewSet(viewsets.ReadOnlyModelViewSet):
         summary="Dashboard: Haftalik dinamika",
         parameters=LOCATION_PARAMS,
     )
-    @action(detail=False, methods=["get"], url_path="dashboard-weekly-dynamics")
+    @action(detail=False, methods=["get"], url_path="weekly-dynamics")
     def dashboard_weekly_dynamics(self, request):
         params = self._get_dashboard_params(request)
         stats = DashboardService.get_dashboard_stats(
@@ -201,7 +207,7 @@ class KPIResultViewSet(viewsets.ReadOnlyModelViewSet):
         summary="Dashboard: Holat bo'yicha taqsimot",
         parameters=LOCATION_PARAMS,
     )
-    @action(detail=False, methods=["get"], url_path="dashboard-today-status")
+    @action(detail=False, methods=["get"], url_path="today-status")
     def dashboard_today_status(self, request):
         params = self._get_dashboard_params(request)
         stats = DashboardService.get_dashboard_stats(
@@ -217,7 +223,7 @@ class KPIResultViewSet(viewsets.ReadOnlyModelViewSet):
         summary="Dashboard: Intizom reytingi",
         parameters=COMMON_ANALYTICS_PARAMS,
     )
-    @action(detail=False, methods=["get"], url_path="dashboard-branch-ratings")
+    @action(detail=False, methods=["get"], url_path="branch-ratings")
     def dashboard_branch_ratings(self, request):
         params = self._get_dashboard_params(request)
         stats = DashboardService.get_dashboard_stats(
