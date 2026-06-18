@@ -1,6 +1,6 @@
 from django_filters.rest_framework import DjangoFilterBackend
-from drf_spectacular.utils import extend_schema, OpenApiParameter
-from rest_framework import filters, viewsets, status, permissions
+from drf_spectacular.utils import extend_schema, OpenApiParameter, inline_serializer
+from rest_framework import filters, viewsets, status, permissions, serializers
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from django.utils import timezone
@@ -72,16 +72,14 @@ class KPIResultViewSet(viewsets.ReadOnlyModelViewSet):
 
     @extend_schema(
         summary="Xodim uchun ma'lum bir oydagi KPI ni qayta hisoblash",
-        parameters=[
-            OpenApiParameter(
-                name="user_id", description="Xodim UUID", required=True, type=str
-            ),
-            OpenApiParameter(name="year", description="Yil", required=True, type=int),
-            OpenApiParameter(
-                name="month", description="Oy (1-12)", required=True, type=int
-            ),
-        ],
-        request=None,
+        request=inline_serializer(
+            name="CalculateKPIRequest",
+            fields={
+                "user_id": serializers.UUIDField(help_text="Xodim UUID"),
+                "year": serializers.IntegerField(help_text="Yil"),
+                "month": serializers.IntegerField(help_text="Oy (1-12)"),
+            },
+        ),
     )
     @action(detail=False, methods=["post"], url_path="calculate-kpi")
     def calculate_kpi(self, request):
