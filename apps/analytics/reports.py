@@ -7,7 +7,7 @@ from apps.attendance.models import Attendance
 class ReportService:
     @staticmethod
     def _get_users(request_user, region_id=None, district_id=None, branch_id=None):
-        users = User.objects.filter(branch__isnull=False)
+        users = User.objects.all()
         if not (
             request_user.is_superuser
             or request_user.has_permission("analytics_view_all")
@@ -118,6 +118,8 @@ class ReportService:
                     if is_mand:
                         if check_in or check_out or curr < today or (curr == today and timezone.localtime().time() > day_info["end_time"]):
                             total_expected += 1
+                    elif check_in or check_out:
+                        total_expected += 1
 
                     lunch_start = next(
                         (a for a in day_atts if a.event_type == Attendance.EventType.LUNCH_START),
@@ -138,7 +140,8 @@ class ReportService:
                             if is_mand:
                                 compliant_actions += 1
                         else:
-                            late += 1
+                            if is_mand:
+                                late += 1
 
                     if check_out:
                         check_out_time = timezone.localtime(check_out.created_at).time()
@@ -147,7 +150,8 @@ class ReportService:
                             if is_mand:
                                 compliant_actions += 1
                         else:
-                            left_early += 1
+                            if is_mand:
+                                left_early += 1
 
                     if not (check_in or check_out) and is_mand:
                         if curr < today:

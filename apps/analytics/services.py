@@ -121,7 +121,6 @@ class KPIService:
         days_left_on_time = 0
         lates_count = 0
         compliant_actions = 0
-        bonus_actions = 0
 
         for d, atts in grouped.items():
             if d not in schedule_map:
@@ -141,11 +140,9 @@ class KPIService:
                     [timezone.localtime(a.created_at).time() for a in check_ins]
                 )
                 if first_in <= info["start_time"]:
-                    if is_mand:
+                    if is_mand or is_opt:
                         days_arrived_on_time += 1
                         compliant_actions += 1
-                    elif is_opt:
-                        bonus_actions += 1
                 else:
                     if is_mand:
                         lates_count += 1
@@ -158,10 +155,8 @@ class KPIService:
                     [timezone.localtime(a.created_at).time() for a in lunch_starts]
                 )
                 if first_lunch_start >= info["lunch_start"]:
-                    if is_mand:
+                    if is_mand or is_opt:
                         compliant_actions += 1
-                    elif is_opt:
-                        bonus_actions += 1
 
             lunch_ends = [
                 a for a in atts if a.event_type == Attendance.EventType.LUNCH_END
@@ -171,10 +166,8 @@ class KPIService:
                     [timezone.localtime(a.created_at).time() for a in lunch_ends]
                 )
                 if first_lunch_end <= info["lunch_end"]:
-                    if is_mand:
+                    if is_mand or is_opt:
                         compliant_actions += 1
-                    elif is_opt:
-                        bonus_actions += 1
 
             check_outs = [
                 a for a in atts if a.event_type == Attendance.EventType.CHECK_OUT
@@ -184,11 +177,9 @@ class KPIService:
                     [timezone.localtime(a.created_at).time() for a in check_outs]
                 )
                 if last_out >= info["end_time"]:
-                    if is_mand:
+                    if is_mand or is_opt:
                         days_left_on_time += 1
                         compliant_actions += 1
-                    elif is_opt:
-                        bonus_actions += 1
 
         has_lunch = (
             user.schedule
@@ -424,9 +415,7 @@ class DashboardService:
                         ]
 
                         if check_ins or check_outs:
-                            if info["is_optional"] or not (
-                                info["is_mandatory"] or info["is_optional"]
-                            ):
+                            if not info["is_mandatory"]:
                                 expected += 1
                             arrived += 1
 
@@ -437,7 +426,7 @@ class DashboardService:
                                     for a in check_ins
                                 ]
                             )
-                            if first_in > info["start_time"]:
+                            if first_in > info["start_time"] and is_mand:
                                 lates += 1
 
                         if check_outs:
@@ -447,7 +436,7 @@ class DashboardService:
                                     for a in check_outs
                                 ]
                             )
-                            if last_out < info["end_time"]:
+                            if last_out < info["end_time"] and is_mand:
                                 early_leaves += 1
                     curr += timedelta(days=1)
 
