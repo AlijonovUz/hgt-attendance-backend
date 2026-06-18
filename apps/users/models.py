@@ -5,7 +5,7 @@ from django.contrib.auth.models import AbstractUser
 from django.db import models
 
 from apps.utils.models import BaseModel
-from apps.utils.validators import phone_validator
+from apps.utils.validators import phone_validator, FileSizeValidator
 
 from .managers import UserManager
 
@@ -185,7 +185,7 @@ class User(AbstractUser):
         verbose_name="Telefon",
     )
     face_image = models.ImageField(
-        upload_to="faces/", null=True, blank=True, verbose_name="Face ID rasm"
+        upload_to="faces/", null=True, blank=True, validators=[FileSizeValidator(max_size_mb=5)], verbose_name="Face ID rasm"
     )
 
     is_fired = models.BooleanField(default=False, verbose_name="Bo'shatilgan")
