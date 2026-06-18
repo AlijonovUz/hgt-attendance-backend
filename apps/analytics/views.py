@@ -15,13 +15,13 @@ from rest_framework.exceptions import ValidationError
 
 LOCATION_PARAMS = [
     OpenApiParameter(
-        name="region_id", description="Viloyat ID", required=False, type=str
+        name="region", description="Viloyat ID", required=False, type=str
     ),
     OpenApiParameter(
-        name="district_id", description="Tuman ID", required=False, type=str
+        name="district", description="Tuman ID", required=False, type=str
     ),
     OpenApiParameter(
-        name="branch_id", description="Filial ID", required=False, type=str
+        name="branch", description="Filial ID", required=False, type=str
     ),
 ]
 
@@ -124,9 +124,9 @@ class KPIResultViewSet(viewsets.ReadOnlyModelViewSet):
         period = request.query_params.get("period")
         start_date_str = request.query_params.get("start_date")
         end_date_str = request.query_params.get("end_date")
-        region_id = request.query_params.get("region_id")
-        district_id = request.query_params.get("district_id")
-        branch_id = request.query_params.get("branch_id")
+        region_id = request.query_params.get("region")
+        district_id = request.query_params.get("district")
+        branch_id = request.query_params.get("branch")
 
         if period and (start_date_str or end_date_str):
             raise ValidationError(
@@ -309,9 +309,9 @@ class ReportViewSet(viewsets.ViewSet):
             elif period == "yearly":
                 start_date = end_date.replace(month=1, day=1)
 
-        region_id = request.query_params.get("region_id")
-        district_id = request.query_params.get("district_id")
-        branch_id = request.query_params.get("branch_id")
+        region_id = request.query_params.get("region")
+        district_id = request.query_params.get("district")
+        branch_id = request.query_params.get("branch")
         status_filter = request.query_params.get("status")
 
         if report_type == "employee":
