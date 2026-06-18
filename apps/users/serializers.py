@@ -32,6 +32,33 @@ class PermissionSerializer(serializers.ModelSerializer):
         model = Permission
         fields = ["id", "name", "code", "created_at"]
 
+    @classmethod
+    def many_init(cls, *args, **kwargs):
+        class GroupedPermissionListSerializer(serializers.ListSerializer):
+            def to_representation(self, data):
+                iterable = data.all() if hasattr(data, "all") else data
+                grouped = {}
+                for item in iterable:
+                    perm = self.child.to_representation(item)
+                    code = perm.get("code", "")
+                    module = code.split('_')[0] if '_' in code else 'other'
+                    
+                    if module == 'attendance':
+                        module_key = 'attendances'
+                    elif module == 'analytics':
+                        module_key = 'analytics'
+                    elif not module.endswith('s') and module != 'other':
+                        module_key = module + 's'
+                    else:
+                        module_key = module
+                        
+                    if module_key not in grouped:
+                        grouped[module_key] = []
+                    grouped[module_key].append(perm)
+                return grouped
+        kwargs['child'] = cls()
+        return GroupedPermissionListSerializer(*args, **kwargs)
+
 
 class RoleShortSerializer(serializers.ModelSerializer):
     class Meta:
