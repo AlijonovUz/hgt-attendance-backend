@@ -165,6 +165,7 @@ class PermissionViewSet(viewsets.ReadOnlyModelViewSet):
     permission_classes = [permissions.IsAuthenticated]
     filter_backends = [filters.SearchFilter]
     search_fields = ["name", "code"]
+    pagination_class = None
 
 
 @extend_schema(tags=["Rollar"])
