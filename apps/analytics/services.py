@@ -398,7 +398,8 @@ class DashboardService:
 
                     is_mand = info["is_mandatory"]
                     if is_mand:
-                        expected += 1
+                        if u_atts or curr < today_date or (curr == today_date and timezone.localtime().time() > info["end_time"]):
+                            expected += 1
 
                     if u_atts:
                         check_ins = [
