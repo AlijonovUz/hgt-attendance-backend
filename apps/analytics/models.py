@@ -66,3 +66,33 @@ class KPIResult(BaseModel):
 
     def __str__(self):
         return f"{self.user.full_name} - {self.month.strftime('%Y-%m')} ({self.get_rating_category_display()})"
+
+
+class DailyAttendance(BaseModel):
+    user = models.ForeignKey(
+        User, on_delete=models.CASCADE, related_name="daily_attendances", verbose_name="Xodim"
+    )
+    date = models.DateField(verbose_name="Sana")
+
+    schedule_name = models.CharField(max_length=255, null=True, blank=True, verbose_name="Ish grafigi")
+    is_mandatory = models.BooleanField(default=True, verbose_name="Majburiy kunmi?")
+    is_holiday = models.BooleanField(default=False, verbose_name="Bayrammi?")
+
+    total_expected = models.PositiveIntegerField(default=0, verbose_name="Kutilgan jami")
+    present = models.PositiveIntegerField(default=0, verbose_name="Kelgan")
+    absent = models.PositiveIntegerField(default=0, verbose_name="Kelmagan")
+    late = models.PositiveIntegerField(default=0, verbose_name="Kechikkan")
+    left_early = models.PositiveIntegerField(default=0, verbose_name="Erta ketgan")
+
+    on_time_in = models.PositiveIntegerField(default=0)
+    on_time_out = models.PositiveIntegerField(default=0)
+    compliant_actions = models.PositiveIntegerField(default=0)
+    total_expected_actions = models.PositiveIntegerField(default=0)
+
+    class Meta(BaseModel.Meta):
+        verbose_name = "Kunlik Davomat"
+        verbose_name_plural = "Kunlik Davomatlar"
+        unique_together = ["user", "date"]
+
+    def __str__(self):
+        return f"{self.user.full_name} - {self.date}"
