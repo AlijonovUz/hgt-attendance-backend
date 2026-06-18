@@ -141,12 +141,6 @@ class KPIResultViewSet(viewsets.ReadOnlyModelViewSet):
                 start_date = end_date.replace(month=start_month, day=1)
             elif period == "yearly":
                 start_date = end_date.replace(month=1, day=1)
-            elif period == "1":
-                start_date = end_date - timedelta(days=30)
-            elif period == "3":
-                start_date = end_date - timedelta(days=90)
-            elif period == "6":
-                start_date = end_date - timedelta(days=180)
 
         return {
             "start_date": start_date,
@@ -292,37 +286,32 @@ class ReportViewSet(viewsets.ViewSet):
         if not has_access:
             return Response({"detail": "Ruxsat etilmagan."}, status=status.HTTP_403_FORBIDDEN)
             
-        period = request.query_params.get("period", "custom")
-        today = timezone.localtime().date()
+        period = request.query_params.get("period")
+        start_str = request.query_params.get("start_date")
+        end_str = request.query_params.get("end_date")
         
-        if period == "daily":
-            start_date = today
-            end_date = today
-        elif period == "weekly":
-            start_date = today - timedelta(days=today.weekday())
-            end_date = today
-        elif period == "monthly":
-            start_date = today.replace(day=1)
-            end_date = today
-        elif period == "quarterly":
-            start_month = 3 * ((today.month - 1) // 3) + 1
-            start_date = today.replace(month=start_month, day=1)
-            end_date = today
-        elif period == "yearly":
-            start_date = today.replace(month=1, day=1)
-            end_date = today
-        else:
-            start_str = request.query_params.get("start_date")
-            end_str = request.query_params.get("end_date")
-            
-            if not start_str or not end_str:
-                return Response({"detail": "Custom davr uchun start_date va end_date majburiy."}, status=status.HTTP_400_BAD_REQUEST)
-                
+        today = timezone.localtime().date()
+        end_date = today
+        start_date = today
+        
+        if start_str and end_str:
             try:
                 start_date = datetime.strptime(start_str, "%Y-%m-%d").date()
                 end_date = datetime.strptime(end_str, "%Y-%m-%d").date()
             except ValueError:
                 return Response({"detail": "Noto'g'ri sana formati."}, status=status.HTTP_400_BAD_REQUEST)
+        elif period:
+            if period == "daily":
+                start_date = end_date
+            elif period == "weekly":
+                start_date = end_date - timedelta(days=end_date.weekday())
+            elif period == "monthly":
+                start_date = end_date.replace(day=1)
+            elif period == "quarterly":
+                start_month = 3 * ((end_date.month - 1) // 3) + 1
+                start_date = end_date.replace(month=start_month, day=1)
+            elif period == "yearly":
+                start_date = end_date.replace(month=1, day=1)
             
         region_id = request.query_params.get("region_id")
         district_id = request.query_params.get("district_id")
