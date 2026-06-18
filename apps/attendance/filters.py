@@ -23,4 +23,10 @@ class AttendanceFilter(django_filters.FilterSet):
 class GeozoneFilter(django_filters.FilterSet):
     class Meta:
         model = Geozone
-        fields = ["branch", "zone_type"]
+        fields = [
+            "branch",
+            "branch__region",
+            "branch__district",
+            "zone_type",
+        ]
+
