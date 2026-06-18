@@ -310,6 +310,13 @@ class ProfileSerializer(serializers.ModelSerializer):
             return None
 
         return {
+            "total_work_days": kpi_result.total_work_days,
+            "attended_days": kpi_result.attended_days,
+            "days_arrived_on_time": kpi_result.days_arrived_on_time,
+            "days_left_on_time": kpi_result.days_left_on_time,
+            "lates_count": kpi_result.lates_count,
+            "total_actions_expected": kpi_result.total_actions_expected,
+            "compliant_actions": kpi_result.compliant_actions,
             "attendance_kpi": kpi_result.attendance_kpi,
             "monthly_kpi": kpi_result.monthly_kpi,
             "late_coefficient": kpi_result.late_coefficient,

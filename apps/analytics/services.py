@@ -69,7 +69,28 @@ class KPIService:
         _, num_days = calendar.monthrange(year, month)
         end_date = date(year, month, num_days)
         today = timezone.localtime().date()
-        user_start_date = timezone.localtime(user.date_joined).date()
+        start_dt = timezone.make_aware(
+            datetime(start_date.year, start_date.month, start_date.day)
+        )
+        end_dt = timezone.make_aware(
+            datetime(end_date.year, end_date.month, end_date.day, 23, 59, 59)
+        )
+
+        attendances = Attendance.objects.filter(
+            user=user, created_at__range=(start_dt, end_dt)
+        )
+
+        grouped = {}
+        for att in attendances:
+            d = timezone.localtime(att.created_at).date()
+            if d not in grouped:
+                grouped[d] = []
+            grouped[d].append(att)
+
+        user_start_date = timezone.localtime(user.created_at).date()
+        if grouped:
+            user_start_date = min(user_start_date, min(grouped.keys()))
+
         user_end_date = (
             timezone.localtime(user.fired_at).date()
             if user.is_fired and user.fired_at
@@ -90,29 +111,11 @@ class KPIService:
         if work_days == 0:
             return None
 
-        start_dt = timezone.make_aware(
-            datetime(start_date.year, start_date.month, start_date.day)
-        )
-        end_dt = timezone.make_aware(
-            datetime(end_date.year, end_date.month, end_date.day, 23, 59, 59)
-        )
-
-        attendances = Attendance.objects.filter(
-            user=user, created_at__range=(start_dt, end_dt)
-        )
-
         days_arrived_on_time = 0
         days_left_on_time = 0
         lates_count = 0
         compliant_actions = 0
         bonus_actions = 0
-
-        grouped = {}
-        for att in attendances:
-            d = timezone.localtime(att.created_at).date()
-            if d not in grouped:
-                grouped[d] = []
-            grouped[d].append(att)
 
         for d, atts in grouped.items():
             if d not in schedule_map:
@@ -355,12 +358,15 @@ class DashboardService:
             early_leaves = 0
             expected = 0
 
-            for u in users:
+            for u in users.iterator(chunk_size=1000):
                 sch_map = global_schedule_map.get(u.schedule)
                 if not sch_map:
                     continue
 
-                user_start_date = timezone.localtime(u.date_joined).date()
+                user_start_date = timezone.localtime(u.created_at).date()
+                u_atts_days = user_date_atts.get(u.id, {}).keys()
+                if u_atts_days:
+                    user_start_date = min(user_start_date, min(u_atts_days))
                 user_end_date = (
                     timezone.localtime(u.fired_at).date()
                     if u.is_fired and u.fired_at
