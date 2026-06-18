@@ -44,7 +44,7 @@ class FileSizeValidator:
 
     def __call__(self, file):
         if file.size > self.max_size_mb * 1024 * 1024:
-            raise ValidationError(f"Rasm hajmi juda katta. Maksimal hajm {self.max_size_mb} MB bo'lishi ruxsat etiladi.")
+            raise ValidationError(f"Fayl hajmi juda katta. Maksimal hajm {self.max_size_mb} MB bo'lishi ruxsat etiladi.")
 
     def __eq__(self, other):
         return (
