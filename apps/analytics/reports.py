@@ -108,49 +108,39 @@ class ReportService:
             curr = actual_start_date
             while curr <= actual_end_date:
                 day_info = schedule_map.get(curr)
-                if day_info and day_info["is_mandatory"]:
-                    total_expected += 1
+                if day_info:
+                    is_mand = day_info["is_mandatory"]
+                    if is_mand:
+                        total_expected += 1
+                        
                     day_atts = att_by_user_day.get(str(user.id), {}).get(curr, [])
 
                     check_in = next(
-                        (
-                            a
-                            for a in day_atts
-                            if a.event_type == Attendance.EventType.CHECK_IN
-                        ),
+                        (a for a in day_atts if a.event_type == Attendance.EventType.CHECK_IN),
                         None,
                     )
                     check_out = next(
-                        (
-                            a
-                            for a in day_atts
-                            if a.event_type == Attendance.EventType.CHECK_OUT
-                        ),
+                        (a for a in day_atts if a.event_type == Attendance.EventType.CHECK_OUT),
                         None,
                     )
                     lunch_start = next(
-                        (
-                            a
-                            for a in day_atts
-                            if a.event_type == Attendance.EventType.LUNCH_START
-                        ),
+                        (a for a in day_atts if a.event_type == Attendance.EventType.LUNCH_START),
                         None,
                     )
                     lunch_end = next(
-                        (
-                            a
-                            for a in day_atts
-                            if a.event_type == Attendance.EventType.LUNCH_END
-                        ),
+                        (a for a in day_atts if a.event_type == Attendance.EventType.LUNCH_END),
                         None,
                     )
 
-                    if check_in:
+                    if day_atts:
                         present += 1
+
+                    if check_in:
                         check_in_time = timezone.localtime(check_in.created_at).time()
                         if check_in_time <= day_info["start_time"]:
                             on_time_in += 1
-                            compliant_actions += 1
+                            if is_mand:
+                                compliant_actions += 1
                         else:
                             late += 1
 
@@ -158,29 +148,18 @@ class ReportService:
                         check_out_time = timezone.localtime(check_out.created_at).time()
                         if check_out_time >= day_info["end_time"]:
                             on_time_out += 1
-                            compliant_actions += 1
+                            if is_mand:
+                                compliant_actions += 1
                         else:
                             left_early += 1
 
-                    if not check_in:
+                    if not day_atts and is_mand:
                         absent += 1
 
-                    if (
-                        has_lunch
-                        and day_info.get("lunch_start")
-                        and day_info.get("lunch_end")
-                    ):
-                        if (
-                            lunch_start
-                            and timezone.localtime(lunch_start.created_at).time()
-                            >= day_info["lunch_start"]
-                        ):
+                    if is_mand and has_lunch and day_info.get("lunch_start") and day_info.get("lunch_end"):
+                        if lunch_start and timezone.localtime(lunch_start.created_at).time() >= day_info["lunch_start"]:
                             compliant_actions += 1
-                        if (
-                            lunch_end
-                            and timezone.localtime(lunch_end.created_at).time()
-                            <= day_info["lunch_end"]
-                        ):
+                        if lunch_end and timezone.localtime(lunch_end.created_at).time() <= day_info["lunch_end"]:
                             compliant_actions += 1
 
                 curr += timedelta(days=1)
