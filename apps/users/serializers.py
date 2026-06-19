@@ -254,6 +254,21 @@ class UserSerializer(serializers.ModelSerializer):
         ]
         extra_kwargs = {
             "password": {"write_only": True, "required": False},
+            "full_name": {
+                "error_messages": {
+                    "unique": "Bunday ism-familiyaga ega foydalanuvchi allaqachon mavjud."
+                }
+            },
+            "phone": {
+                "error_messages": {
+                    "unique": "Bu telefon raqam allaqachon ro'yxatdan o'tgan."
+                }
+            },
+            "jshshir": {
+                "error_messages": {
+                    "unique": "Bu JShShIR allaqachon ro'yxatdan o'tgan."
+                }
+            },
             "created_at": {"read_only": True},
             "updated_at": {"read_only": True},
             "is_fired": {"read_only": True},
@@ -276,10 +291,8 @@ class UserSerializer(serializers.ModelSerializer):
         return value
 
     def validate_password(self, value):
-        try:
-            validate_password(value)
-        except DjangoValidationError as e:
-            raise serializers.ValidationError(list(e.messages))
+        if len(value) < 8:
+            raise serializers.ValidationError("Parol kamida 8 ta belgidan iborat bo'lishi kerak.")
         return value
 
     def create(self, validated_data):
@@ -346,11 +359,8 @@ class ProfileSerializer(serializers.ModelSerializer):
         return {
             "total_work_days": kpi_result.total_work_days,
             "attended_days": kpi_result.attended_days,
-            "days_arrived_on_time": kpi_result.days_arrived_on_time,
-            "days_left_on_time": kpi_result.days_left_on_time,
+            "left_early_count": kpi_result.left_early_count,
             "lates_count": kpi_result.lates_count,
-            "total_actions_expected": kpi_result.total_actions_expected,
-            "compliant_actions": kpi_result.compliant_actions,
             "attendance_kpi": kpi_result.attendance_kpi,
             "monthly_kpi": kpi_result.monthly_kpi,
             "late_coefficient": kpi_result.late_coefficient,
@@ -393,11 +403,6 @@ class ChangePasswordSerializer(serializers.Serializer):
         new_password = attrs.get("new_password")
         confirm_new_password = attrs.get("confirm_new_password")
         old_password = attrs.get("old_password")
-
-        try:
-            validate_password(new_password, self.context["request"].user)
-        except DjangoValidationError as e:
-            raise serializers.ValidationError({"new_password": list(e.messages)})
 
         if new_password != confirm_new_password:
             raise serializers.ValidationError(
