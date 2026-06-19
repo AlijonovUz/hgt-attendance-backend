@@ -79,11 +79,8 @@ class KPIService:
             defaults={
                 "total_work_days": total_expected,
                 "attended_days": present,
-                "days_arrived_on_time": on_time_in,
-                "days_left_on_time": on_time_out,
                 "lates_count": lates_count,
-                "total_actions_expected": total_expected_actions,
-                "compliant_actions": compliant_actions,
+                "left_early_count": left_early,
                 "attendance_kpi": round(attendance_kpi, 2),
                 "monthly_kpi": round(monthly_kpi, 2),
                 "late_coefficient": round(late_coefficient, 2),
