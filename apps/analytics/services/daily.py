@@ -87,6 +87,8 @@ class DailyKPIService:
             if check_out_dt < shift_end_dt:
                 if is_mand:
                     left_early = 1
+        elif present and is_mand and timezone.now() > shift_end_dt:
+            left_early = 1
 
         if not (check_in or check_out) and is_mand:
             if timezone.now() > shift_end_dt:
