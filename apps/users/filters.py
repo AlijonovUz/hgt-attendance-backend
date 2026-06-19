@@ -4,11 +4,16 @@ from .models import Department, Position, User
 
 
 class UserFilter(django_filters.FilterSet):
+    region = django_filters.NumberFilter(field_name="branch__region")
+    district = django_filters.NumberFilter(field_name="branch__district")
+
     class Meta:
         model = User
         fields = [
             "is_active",
             "is_fired",
+            "region",
+            "district",
             "branch",
             "department",
             "position",
