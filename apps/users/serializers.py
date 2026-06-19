@@ -76,7 +76,7 @@ class RoleShortSerializer(serializers.ModelSerializer):
 class RegionSerializer(serializers.ModelSerializer):
     class Meta:
         model = Region
-        fields = ["id", "name", "created_at", "is_active"]
+        fields = ["id", "name", "created_at"]
 
 
 class DistrictSerializer(serializers.ModelSerializer):
@@ -84,7 +84,7 @@ class DistrictSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = District
-        fields = ["id", "name", "region", "region_info", "created_at", "is_active"]
+        fields = ["id", "name", "region", "region_info", "created_at"]
         extra_kwargs = {"region": {"write_only": True}}
 
 

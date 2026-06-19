@@ -237,7 +237,7 @@ class UserViewSet(BaseManageViewSet):
     search_fields = ["full_name", "jshshir", "phone"]
 
     action_permissions = {
-        "list": "employee_view_profile",
+        "list": "employee_view_all",
         "retrieve": "employee_view_profile",
         "create": "employee_add",
         "update": "employee_edit",
