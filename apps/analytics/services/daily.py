@@ -16,7 +16,6 @@ class DailyKPIService:
         if not day_info:
             return None
 
-        start_dt = timezone.make_aware(datetime.combine(target_date, datetime.min.time()))
         end_time = day_info["end_time"]
         start_time = day_info["start_time"]
         
@@ -25,6 +24,7 @@ class DailyKPIService:
         if end_time <= start_time:
             shift_end_dt += timedelta(days=1)
             
+        start_dt = shift_start_dt - timedelta(hours=6)
         end_dt = shift_end_dt + timedelta(hours=12)
 
         attendances = Attendance.objects.filter(
@@ -42,6 +42,10 @@ class DailyKPIService:
                 day_atts.append(att)
             elif att.event_type == Attendance.EventType.CHECK_OUT and loc_time <= end_dt:
                 day_atts.append(att)
+
+        if not day_atts and target_date < user.date_joined.date():
+            DailyAttendance.objects.filter(user=user, date=target_date).delete()
+            return None
 
         is_mand = day_info["is_mandatory"]
         is_opt = day_info["is_optional"]

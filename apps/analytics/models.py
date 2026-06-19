@@ -24,21 +24,11 @@ class KPIResult(BaseModel):
     attended_days = models.PositiveIntegerField(
         default=0, verbose_name="Ishga kelgan kunlari"
     )
-    days_arrived_on_time = models.PositiveIntegerField(
-        default=0, verbose_name="Vaqtida kelgan kunlar"
-    )
-    days_left_on_time = models.PositiveIntegerField(
-        default=0, verbose_name="Vaqtida ketgan kunlar"
-    )
     lates_count = models.PositiveIntegerField(
         default=0, verbose_name="Kechikishlar soni"
     )
-
-    total_actions_expected = models.PositiveIntegerField(
-        default=0, verbose_name="Umumiy kutilgan harakatlar"
-    )
-    compliant_actions = models.PositiveIntegerField(
-        default=0, verbose_name="Talabga muvofiq harakatlar"
+    left_early_count = models.PositiveIntegerField(
+        default=0, verbose_name="Erta ketgan kunlar"
     )
 
     attendance_kpi = models.FloatField(default=0.0, verbose_name="Davomat KPI (%)")
