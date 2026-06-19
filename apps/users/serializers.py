@@ -218,6 +218,14 @@ class WorkScheduleSerializer(serializers.ModelSerializer):
             "optional_days": {"write_only": True},
         }
 
+    def validate(self, attrs):
+        if "mandatory_days" in attrs:
+            mandatory_days = attrs["mandatory_days"]
+            mandatory_ids = [day.id for day in mandatory_days]
+            optional_days = WeekDay.objects.exclude(id__in=mandatory_ids)
+            attrs["optional_days"] = list(optional_days)
+        return attrs
+
 
 class UserSerializer(serializers.ModelSerializer):
     role_info = RoleShortSerializer(source="role", read_only=True)
