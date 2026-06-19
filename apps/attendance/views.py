@@ -79,8 +79,8 @@ class FaceLogViewSet(BaseReadOnlyViewSet):
     ordering = ["-created_at"]
     http_method_names = ["get", "head", "options"]
     action_permissions = {
-        "list": "attendance_view_history_all",
-        "retrieve": "attendance_view_history_all",
+        "list": "log_view_face",
+        "retrieve": "log_view_face",
     }
 
 
@@ -95,8 +95,8 @@ class GpsLogViewSet(BaseReadOnlyViewSet):
     ordering = ["-created_at"]
     http_method_names = ["get", "head", "options"]
     action_permissions = {
-        "list": "attendance_view_history_all",
-        "retrieve": "attendance_view_history_all",
+        "list": "log_view_gps",
+        "retrieve": "log_view_gps",
     }
 
 
@@ -111,6 +111,6 @@ class SignatureLogViewSet(BaseReadOnlyViewSet):
     ordering = ["-created_at"]
     http_method_names = ["get", "head", "options"]
     action_permissions = {
-        "list": "attendance_view_history_all",
-        "retrieve": "attendance_view_history_all",
+        "list": "log_view_signature",
+        "retrieve": "log_view_signature",
     }
