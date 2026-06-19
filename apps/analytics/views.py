@@ -285,15 +285,23 @@ class ReportViewSet(viewsets.ViewSet):
         return self._get_report(request, "branch")
 
     def _get_report(self, request, report_type):
+        if report_type == "employee" and not (request.user.is_superuser or request.user.has_permission("report_type_employee")):
+            return Response({"detail": "Xodimlar hisobotini ko'rishga ruxsat etilmagan."}, status=status.HTTP_403_FORBIDDEN)
+            
+        if report_type == "branch" and not (request.user.is_superuser or request.user.has_permission("report_type_branch")):
+            return Response({"detail": "Filiallar hisobotini ko'rishga ruxsat etilmagan."}, status=status.HTTP_403_FORBIDDEN)
+            
         has_access = (
             request.user.is_superuser
-            or request.user.has_permission("report_view_daily")
-            or request.user.has_permission("report_view_weekly")
-            or request.user.has_permission("report_view_monthly")
+            or request.user.has_permission("report_view_all")
+            or request.user.has_permission("report_view_region")
+            or request.user.has_permission("report_view_district")
+            or request.user.has_permission("report_view_branch")
+            or request.user.has_permission("report_view_dept")
         )
         if not has_access:
             return Response(
-                {"detail": "Ruxsat etilmagan."}, status=status.HTTP_403_FORBIDDEN
+                {"detail": "Hisobot hududiga ruxsat etilmagan."}, status=status.HTTP_403_FORBIDDEN
             )
 
         period = request.query_params.get("period")
