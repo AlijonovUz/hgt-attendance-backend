@@ -64,10 +64,11 @@ class ReportService:
         
         today = timezone.localtime().date()
         from apps.analytics.services.daily import DailyKPIService
+        
+        target_calc_date = min(end_date, today)
         for u in users:
-            DailyKPIService.calculate_daily_snapshot(u, end_date)
-            if end_date == today:
-                DailyKPIService.calculate_daily_snapshot(u, end_date - timedelta(days=1))
+            DailyKPIService.calculate_daily_snapshot(u, target_calc_date)
+            DailyKPIService.calculate_daily_snapshot(u, target_calc_date - timedelta(days=1))
 
         all_stats = DailyAttendance.objects.filter(
             user__in=users,
