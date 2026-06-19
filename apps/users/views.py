@@ -62,15 +62,6 @@ class RegionViewSet(BaseManageViewSet):
         "destroy": "region_delete",
     }
 
-    def get_queryset(self):
-        user = self.request.user
-        qs = super().get_queryset()
-        if user.is_superuser or user.has_permission("analytics_view_all"):
-            return qs
-        if user.branch and user.branch.region_id:
-            return qs.filter(id=user.branch.region_id)
-        return qs.none()
-
 
 @extend_schema(tags=["Tumanlar"])
 class DistrictViewSet(BaseManageViewSet):
@@ -86,17 +77,6 @@ class DistrictViewSet(BaseManageViewSet):
         "destroy": "district_delete",
     }
 
-    def get_queryset(self):
-        user = self.request.user
-        qs = super().get_queryset()
-        if user.is_superuser or user.has_permission("analytics_view_all"):
-            return qs
-        if user.has_permission("analytics_view_region") and user.branch and user.branch.region_id:
-            return qs.filter(region_id=user.branch.region_id)
-        if user.branch and user.branch.district_id:
-            return qs.filter(id=user.branch.district_id)
-        return qs.none()
-
 
 @extend_schema(tags=["Filiallar"])
 class BranchViewSet(BaseManageViewSet):
@@ -111,19 +91,6 @@ class BranchViewSet(BaseManageViewSet):
         "partial_update": "branch_edit",
         "destroy": "branch_delete",
     }
-
-    def get_queryset(self):
-        user = self.request.user
-        qs = super().get_queryset()
-        if user.is_superuser or user.has_permission("analytics_view_all"):
-            return qs
-        if user.has_permission("analytics_view_region") and user.branch and user.branch.region_id:
-            return qs.filter(region_id=user.branch.region_id)
-        if user.has_permission("analytics_view_district") and user.branch and user.branch.district_id:
-            return qs.filter(district_id=user.branch.district_id)
-        if user.branch_id:
-            return qs.filter(id=user.branch_id)
-        return qs.none()
 
 
 @extend_schema(tags=["Bo'limlar"])
