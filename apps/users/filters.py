@@ -4,8 +4,8 @@ from .models import Department, Position, User
 
 
 class UserFilter(django_filters.FilterSet):
-    region = django_filters.NumberFilter(field_name="branch__region")
-    district = django_filters.NumberFilter(field_name="branch__district")
+    region = django_filters.UUIDFilter(field_name="branch__region")
+    district = django_filters.UUIDFilter(field_name="branch__district")
 
     class Meta:
         model = User
