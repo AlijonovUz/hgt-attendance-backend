@@ -244,10 +244,13 @@ class ReportService:
         branch_stats = {}
         for user_id, stat in stats.items():
             branch = stat["user"].branch
-            branch_id = branch.id if branch else 0
-            branch_name = branch.name if branch else None
-            region_name = branch.region.name if branch and branch.region else None
-            district_name = branch.district.name if branch and branch.district else None
+            if not branch:
+                continue
+
+            branch_id = branch.id
+            branch_name = branch.name
+            region_name = branch.region.name if branch.region else None
+            district_name = branch.district.name if branch.district else None
 
             if branch_id not in branch_stats:
                 branch_stats[branch_id] = {
