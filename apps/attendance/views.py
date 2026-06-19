@@ -5,7 +5,13 @@ from rest_framework import filters
 
 from apps.utils.views import BaseManageViewSet, BaseReadOnlyViewSet
 
-from .filters import AttendanceFilter, GeozoneFilter
+from .filters import (
+    AttendanceFilter,
+    GeozoneFilter,
+    FaceLogFilter,
+    GpsLogFilter,
+    SignatureLogFilter,
+)
 from .models import Attendance, Geozone, FaceLog, GpsLog, SignatureLog
 from .serializers import (
     AttendanceCreateSerializer,
@@ -73,7 +79,7 @@ class FaceLogViewSet(BaseReadOnlyViewSet):
     queryset = FaceLog.objects.select_related("user").active()
     serializer_class = FaceLogSerializer
     filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
-    filterset_fields = ["is_success", "user"]
+    filterset_class = FaceLogFilter
     search_fields = ["user__full_name", "message"]
     ordering_fields = ["created_at"]
     ordering = ["-created_at"]
@@ -89,7 +95,7 @@ class GpsLogViewSet(BaseReadOnlyViewSet):
     queryset = GpsLog.objects.select_related("user").active()
     serializer_class = GpsLogSerializer
     filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
-    filterset_fields = ["is_success", "user"]
+    filterset_class = GpsLogFilter
     search_fields = ["user__full_name", "message"]
     ordering_fields = ["created_at"]
     ordering = ["-created_at"]
@@ -105,7 +111,7 @@ class SignatureLogViewSet(BaseReadOnlyViewSet):
     queryset = SignatureLog.objects.select_related("user").active()
     serializer_class = SignatureLogSerializer
     filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
-    filterset_fields = ["is_valid", "user"]
+    filterset_class = SignatureLogFilter
     search_fields = ["user__full_name", "message"]
     ordering_fields = ["created_at"]
     ordering = ["-created_at"]

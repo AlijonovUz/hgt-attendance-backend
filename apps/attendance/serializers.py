@@ -168,11 +168,10 @@ class AttendanceCreateSerializer(serializers.ModelSerializer):
         if not in_geozone:
             Notification.objects.create(
                 user=user,
-                title="Geozonadan tashqarida urunish",
-                message="Siz ish joyi geozonasidan tashqarida qayd etilishga urindingiz.",
+                title="Geozonadan tashqarida qayd etildi",
+                message="Siz ish joyi geozonasidan tashqarida davomat qayd etdingiz.",
                 extra_data={"event": "OUT_OF_ZONE"},
             )
-            raise serializers.ValidationError({"detail": "Siz ish joyida emassiz."})
 
         if not user.face_image or not user.face_image.name:
             raise serializers.ValidationError(
