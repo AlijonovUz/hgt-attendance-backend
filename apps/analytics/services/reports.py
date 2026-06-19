@@ -10,27 +10,27 @@ class ReportService:
         users = User.objects.all()
         if not (
             request_user.is_superuser
-            or request_user.has_permission("analytics_view_all")
+            or request_user.has_permission("report_view_all")
         ):
             if (
-                request_user.has_permission("analytics_view_region")
+                request_user.has_permission("report_view_region")
                 and request_user.branch
                 and request_user.branch.region
             ):
                 users = users.filter(branch__region=request_user.branch.region)
             elif (
-                request_user.has_permission("analytics_view_district")
+                request_user.has_permission("report_view_district")
                 and request_user.branch
                 and request_user.branch.district
             ):
                 users = users.filter(branch__district=request_user.branch.district)
             elif (
-                request_user.has_permission("analytics_view_branch")
+                request_user.has_permission("report_view_branch")
                 and request_user.branch
             ):
                 users = users.filter(branch=request_user.branch)
             elif (
-                request_user.has_permission("analytics_view_dept")
+                request_user.has_permission("report_view_dept")
                 and request_user.department
             ):
                 users = users.filter(department=request_user.department)
