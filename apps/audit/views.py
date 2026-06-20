@@ -11,7 +11,9 @@ from .serializers import AuditLogSerializer
 
 @extend_schema(tags=["Audit jurnallari"])
 class AuditLogViewSet(BaseReadOnlyViewSet):
-    queryset = AuditLog.objects.select_related("user").all()
+    queryset = AuditLog.objects.select_related(
+        "user", "user__branch", "user__branch__region", "user__branch__district"
+    ).all()
     serializer_class = AuditLogSerializer
     filter_backends = [DjangoFilterBackend, filters.SearchFilter]
     filterset_class = AuditLogFilter
@@ -25,6 +27,6 @@ class AuditLogViewSet(BaseReadOnlyViewSet):
     http_method_names = ["get", "head", "options"]
 
     action_permissions = {
-        "list": "audit_view",
-        "retrieve": "audit_view",
+        "list": "log_view_audit",
+        "retrieve": "log_view_audit",
     }
