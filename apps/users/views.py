@@ -2,8 +2,8 @@ import hashlib
 import logging
 from django.utils import timezone
 from django_filters.rest_framework import DjangoFilterBackend
-from drf_spectacular.utils import extend_schema
-from rest_framework import filters, generics, permissions, status, viewsets
+from drf_spectacular.utils import extend_schema, inline_serializer
+from rest_framework import filters, generics, permissions, status, viewsets, serializers
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -204,8 +204,6 @@ class UserViewSet(BaseManageViewSet):
     search_fields = ["full_name", "jshshir", "phone"]
 
     action_permissions = {
-        "list": "employee_view_all",
-        "retrieve": "employee_view_profile",
         "create": "employee_add",
         "update": "employee_edit",
         "partial_update": "employee_edit",
@@ -213,6 +211,36 @@ class UserViewSet(BaseManageViewSet):
         "block": "employee_block",
         "unblock": "employee_block",
     }
+
+    def get_queryset(self):
+        user = self.request.user
+        qs = super().get_queryset()
+        if user.is_superuser or user.has_permission("employee_view_all"):
+            return qs
+        if user.has_permission("employee_view_region") and user.branch and user.branch.region_id:
+            return qs.filter(branch__region_id=user.branch.region_id)
+        if user.has_permission("employee_view_district") and user.branch and user.branch.district_id:
+            return qs.filter(branch__district_id=user.branch.district_id)
+        if user.has_permission("employee_view_branch") and user.branch_id:
+            return qs.filter(branch_id=user.branch_id)
+        if user.has_permission("employee_view_dept") and user.department_id:
+            return qs.filter(department_id=user.department_id)
+        return qs.filter(id=user.id)
+
+    @extend_schema(
+        summary="Dropdown uchun barcha xodimlar ro'yxati (qamrovsiz)",
+        responses={200: inline_serializer(
+            name="UserDropdown",
+            fields={
+                "id": serializers.UUIDField(),
+                "full_name": serializers.CharField(),
+            }
+        )}
+    )
+    @action(detail=False, methods=["get"])
+    def dropdown(self, request):
+        qs = User.objects.filter(is_active=True).values("id", "full_name")
+        return Response(list(qs))
 
     def destroy(self, request, *args, **kwargs):
         return Response(

@@ -11,7 +11,7 @@ from apps.users.models import User
 from .models import KPIResult, DailyAttendance
 from .serializers import KPIResultSerializer, DailyAttendanceSerializer
 from .services import KPIService, ReportService, DashboardService
-
+from .filters import KPIResultFilter, DailyAttendanceFilter
 
 LOCATION_PARAMS = [
     OpenApiParameter(
@@ -57,18 +57,25 @@ class KPIResultViewSet(viewsets.ReadOnlyModelViewSet):
         filters.OrderingFilter,
     ]
     permission_classes = [permissions.IsAuthenticated]
-    filterset_fields = ["user", "month", "rating_category"]
+    filterset_class = KPIResultFilter
     search_fields = ["user__full_name", "user__jshshir"]
     ordering_fields = ["month", "total_score"]
     ordering = ["-month", "-total_score"]
 
     def get_queryset(self):
         user = self.request.user
-        if user.is_superuser or user.has_permission("analytics_view_all"):
-            return super().get_queryset()
-        if user.has_permission("analytics_view_dept") and user.department:
-            return super().get_queryset().filter(user__department=user.department)
-        return super().get_queryset().filter(user=user)
+        qs = super().get_queryset()
+        if user.is_superuser or user.has_permission("kpi_view_all"):
+            return qs
+        if user.has_permission("kpi_view_region") and user.branch and user.branch.region_id:
+            return qs.filter(user__branch__region_id=user.branch.region_id)
+        if user.has_permission("kpi_view_district") and user.branch and user.branch.district_id:
+            return qs.filter(user__branch__district_id=user.branch.district_id)
+        if user.has_permission("kpi_view_branch") and user.branch_id:
+            return qs.filter(user__branch_id=user.branch_id)
+        if user.has_permission("kpi_view_dept") and user.department_id:
+            return qs.filter(user__department_id=user.department_id)
+        return qs.filter(user=user)
 
     @extend_schema(
         summary="Xodim uchun ma'lum bir oydagi KPI ni qayta hisoblash",
@@ -130,18 +137,25 @@ class DailyAttendanceViewSet(viewsets.ReadOnlyModelViewSet):
         filters.OrderingFilter,
     ]
     permission_classes = [permissions.IsAuthenticated]
-    filterset_fields = ["user", "date", "schedule_name", "is_mandatory", "is_holiday"]
+    filterset_class = DailyAttendanceFilter
     search_fields = ["user__full_name", "user__jshshir"]
     ordering_fields = ["date", "user__full_name"]
     ordering = ["-date"]
 
     def get_queryset(self):
         user = self.request.user
-        if user.is_superuser or user.has_permission("analytics_view_all"):
-            return super().get_queryset()
-        if user.has_permission("analytics_view_dept") and user.department:
-            return super().get_queryset().filter(user__department=user.department)
-        return super().get_queryset().filter(user=user)
+        qs = super().get_queryset()
+        if user.is_superuser or user.has_permission("daily_attendance_view_all"):
+            return qs
+        if user.has_permission("daily_attendance_view_region") and user.branch and user.branch.region_id:
+            return qs.filter(user__branch__region_id=user.branch.region_id)
+        if user.has_permission("daily_attendance_view_district") and user.branch and user.branch.district_id:
+            return qs.filter(user__branch__district_id=user.branch.district_id)
+        if user.has_permission("daily_attendance_view_branch") and user.branch_id:
+            return qs.filter(user__branch_id=user.branch_id)
+        if user.has_permission("daily_attendance_view_dept") and user.department_id:
+            return qs.filter(user__department_id=user.department_id)
+        return qs.filter(user=user)
 
 
 @extend_schema(tags=["Dashboard"])
