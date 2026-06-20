@@ -1,14 +1,14 @@
-from django.db.models import Q, Sum
+from datetime import datetime
+from django.db.models import Q
 from django.utils import timezone
 from django_filters.rest_framework import DjangoFilterBackend
 from drf_spectacular.utils import extend_schema, OpenApiParameter, inline_serializer
 from rest_framework import filters, status, serializers
 from rest_framework.decorators import action
 from rest_framework.response import Response
-from collections import defaultdict
 
 from apps.utils.views import BaseManageViewSet, BaseReadOnlyViewSet
-from apps.analytics.models import DailyAttendance
+from apps.attendance.services import AttendanceService
 
 from .filters import (
     AttendanceFilter,
@@ -111,8 +111,6 @@ class AttendanceViewSet(BaseManageViewSet):
     )
     @action(detail=False, methods=["get"], url_path="personal-stats")
     def personal_stats(self, request):
-        from datetime import datetime
-
         user = request.user
 
         start_str = request.query_params.get("start_date")
@@ -145,8 +143,6 @@ class AttendanceViewSet(BaseManageViewSet):
                 {"detail": "start_date end_date dan katta bo'lishi mumkin emas."},
                 status=status.HTTP_400_BAD_REQUEST,
             )
-
-        from apps.attendance.services import AttendanceService
 
         data = AttendanceService.get_personal_stats(user, start_date, end_date)
         return Response(data)
