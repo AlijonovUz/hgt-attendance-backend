@@ -14,7 +14,7 @@ def get_user_and_cache_key(ticket):
 
     if user_id:
         try:
-            user = User.objects.only('id', 'full_name').get(pk=user_id)
+            user = User.objects.only("id", "full_name").get(pk=user_id)
             return user, cache_key
         except User.DoesNotExist:
             return AnonymousUser(), None
@@ -32,10 +32,10 @@ class TicketAuthMiddleware:
 
         if ticket:
             user, cache_key = await get_user_and_cache_key(ticket)
-            scope['user'] = user
-            scope['ws_cache_key'] = cache_key
+            scope["user"] = user
+            scope["ws_cache_key"] = cache_key
         else:
-            scope['user'] = AnonymousUser()
-            scope['ws_cache_key'] = None
+            scope["user"] = AnonymousUser()
+            scope["ws_cache_key"] = None
 
         return await self.app(scope, receive, send)

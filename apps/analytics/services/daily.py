@@ -8,31 +8,32 @@ from apps.analytics.services import ScheduleHelper
 
 logger = logging.getLogger(__name__)
 
+
 class DailyKPIService:
     @classmethod
     def calculate_daily_snapshot(cls, user, target_date: date):
-        schedule_map = ScheduleHelper.get_period_schedule(user.schedule, target_date, target_date)
+        schedule_map = ScheduleHelper.get_period_schedule(
+            user.schedule, target_date, target_date
+        )
         day_info = schedule_map.get(target_date)
         if not day_info:
             return None
 
         end_time = day_info["end_time"]
         start_time = day_info["start_time"]
-        
+
         shift_start_dt = timezone.make_aware(datetime.combine(target_date, start_time))
         shift_end_dt = timezone.make_aware(datetime.combine(target_date, end_time))
         if end_time <= start_time:
             shift_end_dt += timedelta(days=1)
-            
+
         start_dt = shift_start_dt - timedelta(hours=6)
         end_dt = shift_end_dt + timedelta(hours=12)
 
         attendances = Attendance.objects.filter(
-            user=user, 
-            created_at__gte=start_dt,
-            created_at__lte=end_dt
+            user=user, created_at__gte=start_dt, created_at__lte=end_dt
         )
-        
+
         day_atts = []
         for att in attendances:
             loc_time = timezone.localtime(att.created_at)
@@ -40,7 +41,9 @@ class DailyKPIService:
                 day_atts.append(att)
             elif loc_time <= shift_end_dt:
                 day_atts.append(att)
-            elif att.event_type == Attendance.EventType.CHECK_OUT and loc_time <= end_dt:
+            elif (
+                att.event_type == Attendance.EventType.CHECK_OUT and loc_time <= end_dt
+            ):
                 day_atts.append(att)
 
         if not day_atts and target_date < user.date_joined.date():
@@ -51,9 +54,16 @@ class DailyKPIService:
         is_opt = day_info["is_optional"]
         schedule_name = user.schedule.name if user.schedule else "Standard"
 
-        check_in = next((a for a in day_atts if a.event_type == Attendance.EventType.CHECK_IN), None)
+        check_in = next(
+            (a for a in day_atts if a.event_type == Attendance.EventType.CHECK_IN), None
+        )
         check_out = next(
-            (a for a in reversed(day_atts) if a.event_type == Attendance.EventType.CHECK_OUT), None
+            (
+                a
+                for a in reversed(day_atts)
+                if a.event_type == Attendance.EventType.CHECK_OUT
+            ),
+            None,
         )
 
         total_expected = 0
@@ -61,7 +71,10 @@ class DailyKPIService:
         absent = 0
         late = 0
         left_early = 0
-        has_lunch = day_info.get("lunch_start") is not None and day_info.get("lunch_end") is not None
+        has_lunch = (
+            day_info.get("lunch_start") is not None
+            and day_info.get("lunch_end") is not None
+        )
         actions_per_day = 4 if has_lunch else 2
 
         if is_mand:
@@ -70,8 +83,14 @@ class DailyKPIService:
         elif check_in or check_out:
             total_expected = 1
 
-        lunch_start = next((a for a in day_atts if a.event_type == Attendance.EventType.LUNCH_START), None)
-        lunch_end = next((a for a in day_atts if a.event_type == Attendance.EventType.LUNCH_END), None)
+        lunch_start = next(
+            (a for a in day_atts if a.event_type == Attendance.EventType.LUNCH_START),
+            None,
+        )
+        lunch_end = next(
+            (a for a in day_atts if a.event_type == Attendance.EventType.LUNCH_END),
+            None,
+        )
 
         if check_in or check_out:
             present = 1
@@ -94,8 +113,6 @@ class DailyKPIService:
             if timezone.now() > shift_end_dt:
                 absent = 1
 
-
-
         snapshot, _ = DailyAttendance.objects.update_or_create(
             user=user,
             date=target_date,
@@ -108,6 +125,6 @@ class DailyKPIService:
                 "absent": absent,
                 "late": late,
                 "left_early": left_early,
-            }
+            },
         )
         return snapshot

@@ -1,7 +1,13 @@
 from django.urls import include, path
 from rest_framework.routers import DefaultRouter
 
-from .views import AttendanceViewSet, GeozoneViewSet, FaceLogViewSet, GpsLogViewSet, SignatureLogViewSet
+from .views import (
+    AttendanceViewSet,
+    GeozoneViewSet,
+    FaceLogViewSet,
+    GpsLogViewSet,
+    SignatureLogViewSet,
+)
 
 router = DefaultRouter()
 router.register(r"geozones", GeozoneViewSet, basename="geozone")

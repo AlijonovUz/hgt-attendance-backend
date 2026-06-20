@@ -3,6 +3,8 @@ from datetime import time, timedelta
 from apps.users.models import Holiday
 
 logger = logging.getLogger(__name__)
+
+
 class ScheduleHelper:
     @staticmethod
     def get_period_schedule(schedule, start_date, end_date):
@@ -53,5 +55,3 @@ class ScheduleHelper:
             curr += timedelta(days=1)
 
         return schedule_map
-
-
