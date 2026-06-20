@@ -46,7 +46,7 @@ def auto_create_permissions_and_roles(sender, **kwargs):
         ("log_view_face", "Yuzni aniqlash loglarini ko'rish"),
         ("log_view_gps", "GPS loglarini ko'rish"),
         ("log_view_signature", "Imzo loglarini ko'rish"),
-        ("audit_view", "Audit loglarni ko'rish"),
+        ("log_view_audit", "Audit loglarni ko'rish"),
         ("kpi_view_self", "O'zining KPI ni ko'rish"),
         ("kpi_view_dept", "Bo'lim KPI ni ko'rish"),
         ("kpi_view_branch", "Filial KPI ni ko'rish"),
