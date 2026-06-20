@@ -69,7 +69,7 @@ class DailyAttendance(BaseModel):
         max_length=255, null=True, blank=True, verbose_name="Ish grafigi"
     )
     is_mandatory = models.BooleanField(default=True, verbose_name="Majburiy kunmi?")
-    is_holiday = models.BooleanField(default=False, verbose_name="Bayrammi?")
+    is_holiday = models.BooleanField(default=False, verbose_name="Dam olish kunimi?")
 
     total_expected = models.PositiveIntegerField(
         default=0, verbose_name="Kutilgan jami"
