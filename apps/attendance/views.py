@@ -1,9 +1,14 @@
-from django.db.models import Q
+from django.db.models import Q, Sum
+from django.utils import timezone
 from django_filters.rest_framework import DjangoFilterBackend
-from drf_spectacular.utils import extend_schema
-from rest_framework import filters
+from drf_spectacular.utils import extend_schema, OpenApiParameter, inline_serializer
+from rest_framework import filters, status, serializers
+from rest_framework.decorators import action
+from rest_framework.response import Response
+from collections import defaultdict
 
 from apps.utils.views import BaseManageViewSet, BaseReadOnlyViewSet
+from apps.analytics.models import DailyAttendance
 
 from .filters import (
     AttendanceFilter,
@@ -75,6 +80,45 @@ class AttendanceViewSet(BaseManageViewSet):
         if self.action == "create":
             return AttendanceCreateSerializer
         return AttendanceListSerializer
+
+    @extend_schema(
+        summary="Shaxsiy davomat statistikasi",
+        parameters=[
+            OpenApiParameter("year", type=int, required=False, description="Yil"),
+            OpenApiParameter("month", type=int, required=False, description="Oy"),
+        ],
+        responses={
+            200: inline_serializer(
+                name="PersonalStats",
+                fields={
+                    "present_days": serializers.IntegerField(),
+                    "late_days": serializers.IntegerField(),
+                    "avg_check_in": serializers.CharField(),
+                    "total_worked_hours": serializers.IntegerField(),
+                },
+            )
+        },
+    )
+    @action(detail=False, methods=["get"], url_path="personal-stats")
+    def personal_stats(self, request):
+        user = request.user
+        year_str = request.query_params.get("year")
+        month_str = request.query_params.get("month")
+
+        today = timezone.localtime().date()
+        try:
+            year = int(year_str) if year_str else today.year
+            month = int(month_str) if month_str else today.month
+        except ValueError:
+            return Response(
+                {"detail": "Yil yoki oy noto'g'ri formatda."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        from apps.attendance.services import AttendanceService
+
+        data = AttendanceService.get_personal_stats(user, year, month)
+        return Response(data)
 
 
 @extend_schema(tags=["Face Logs"])
