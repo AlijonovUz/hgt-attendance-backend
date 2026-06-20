@@ -302,6 +302,12 @@ class ReportViewSet(viewsets.ViewSet):
                 required=False,
                 type=str,
             ),
+            OpenApiParameter(
+                name="position",
+                description="Lavozim ID",
+                required=False,
+                type=str,
+            ),
         ],
     )
     @action(detail=False, methods=["get"], url_path="by-employee")
@@ -398,6 +404,7 @@ class ReportViewSet(viewsets.ViewSet):
         district_id = request.query_params.get("district")
         branch_id = request.query_params.get("branch")
         status_filter = request.query_params.get("status")
+        position_id = request.query_params.get("position")
 
         if report_type == "employee":
             data = ReportService.get_report_by_employee(
@@ -407,6 +414,7 @@ class ReportViewSet(viewsets.ViewSet):
                 region_id=region_id,
                 district_id=district_id,
                 branch_id=branch_id,
+                position_id=position_id,
                 status=status_filter,
             )
         else:

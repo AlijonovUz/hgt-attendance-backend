@@ -6,7 +6,9 @@ from apps.attendance.models import Attendance
 
 class ReportService:
     @staticmethod
-    def _get_users(request_user, region_id=None, district_id=None, branch_id=None):
+    def _get_users(
+        request_user, region_id=None, district_id=None, branch_id=None, position_id=None
+    ):
         users = User.objects.all()
         if not (
             request_user.is_superuser or request_user.has_permission("report_view_all")
@@ -42,6 +44,8 @@ class ReportService:
             users = users.filter(branch__district_id=district_id)
         if branch_id:
             users = users.filter(branch_id=branch_id)
+        if position_id:
+            users = users.filter(position_id=position_id)
 
         return users
 
@@ -145,10 +149,11 @@ class ReportService:
         region_id=None,
         district_id=None,
         branch_id=None,
+        position_id=None,
         status=None,
     ):
         users = ReportService._get_users(
-            request_user, region_id, district_id, branch_id
+            request_user, region_id, district_id, branch_id, position_id
         ).select_related(
             "department", "position", "branch", "branch__region", "branch__district"
         )
