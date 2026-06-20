@@ -113,6 +113,14 @@ class GpsLog(BaseModel):
     user = models.ForeignKey(
         User, on_delete=models.PROTECT, related_name="gps_logs", verbose_name="Xodim"
     )
+    geozone = models.ForeignKey(
+        Geozone,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="gps_logs",
+        verbose_name="Geozona",
+    )
     is_success = models.BooleanField(default=False, verbose_name="Muvaffaqiyatli")
     latitude = models.DecimalField(
         max_digits=10, decimal_places=7, verbose_name="Kenglik (Latitude)"

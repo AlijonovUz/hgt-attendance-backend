@@ -173,7 +173,11 @@ class FaceLogViewSet(BaseReadOnlyViewSet):
 @extend_schema(tags=["GPS Logs"])
 class GpsLogViewSet(BaseReadOnlyViewSet):
     queryset = GpsLog.objects.select_related(
-        "user", "user__branch", "user__branch__region", "user__branch__district"
+        "user",
+        "user__branch",
+        "user__branch__region",
+        "user__branch__district",
+        "geozone",
     ).active()
     serializer_class = GpsLogSerializer
     filter_backends = [
