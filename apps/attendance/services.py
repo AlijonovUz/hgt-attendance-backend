@@ -11,9 +11,9 @@ logger = logging.getLogger(__name__)
 
 class AttendanceService:
     @staticmethod
-    def get_personal_stats(user, year: int, month: int) -> dict:
+    def get_personal_stats(user, start_date, end_date) -> dict:
         stats = DailyAttendance.objects.filter(
-            user=user, date__year=year, date__month=month
+            user=user, date__gte=start_date, date__lte=end_date
         ).aggregate(
             present=Sum("present"),
             late=Sum("late"),
@@ -21,8 +21,13 @@ class AttendanceService:
         present_days = stats["present"] or 0
         late_days = stats["late"] or 0
 
+        from datetime import datetime, time
+
+        end_date_time = timezone.make_aware(datetime.combine(end_date, time.max))
+        start_date_time = timezone.make_aware(datetime.combine(start_date, time.min))
+
         attendances = Attendance.objects.filter(
-            user=user, created_at__year=year, created_at__month=month
+            user=user, created_at__gte=start_date_time, created_at__lte=end_date_time
         ).order_by("created_at")
 
         daily_logs = defaultdict(list)
