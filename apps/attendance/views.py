@@ -150,7 +150,9 @@ class AttendanceViewSet(BaseManageViewSet):
 
 @extend_schema(tags=["Face Logs"])
 class FaceLogViewSet(BaseReadOnlyViewSet):
-    queryset = FaceLog.objects.select_related("user").active()
+    queryset = FaceLog.objects.select_related(
+        "user", "user__branch", "user__branch__region", "user__branch__district"
+    ).active()
     serializer_class = FaceLogSerializer
     filter_backends = [
         DjangoFilterBackend,
@@ -170,7 +172,9 @@ class FaceLogViewSet(BaseReadOnlyViewSet):
 
 @extend_schema(tags=["GPS Logs"])
 class GpsLogViewSet(BaseReadOnlyViewSet):
-    queryset = GpsLog.objects.select_related("user").active()
+    queryset = GpsLog.objects.select_related(
+        "user", "user__branch", "user__branch__region", "user__branch__district"
+    ).active()
     serializer_class = GpsLogSerializer
     filter_backends = [
         DjangoFilterBackend,
@@ -190,7 +194,9 @@ class GpsLogViewSet(BaseReadOnlyViewSet):
 
 @extend_schema(tags=["Imzo Loglari"])
 class SignatureLogViewSet(BaseReadOnlyViewSet):
-    queryset = SignatureLog.objects.select_related("user").active()
+    queryset = SignatureLog.objects.select_related(
+        "user", "user__branch", "user__branch__region", "user__branch__district"
+    ).active()
     serializer_class = SignatureLogSerializer
     filter_backends = [
         DjangoFilterBackend,
