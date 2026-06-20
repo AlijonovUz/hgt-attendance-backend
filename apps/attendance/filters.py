@@ -4,10 +4,12 @@ from .models import Attendance, Geozone, FaceLog, GpsLog, SignatureLog
 
 
 class AttendanceFilter(django_filters.FilterSet):
-    start_date = django_filters.DateTimeFilter(
-        field_name="created_at", lookup_expr="gte"
+    start_date = django_filters.DateFilter(
+        field_name="created_at", lookup_expr="date__gte"
     )
-    end_date = django_filters.DateTimeFilter(field_name="created_at", lookup_expr="lte")
+    end_date = django_filters.DateFilter(
+        field_name="created_at", lookup_expr="date__lte"
+    )
     department = django_filters.CharFilter(field_name="user__department")
     branch = django_filters.CharFilter(field_name="user__branch")
 
