@@ -29,7 +29,7 @@ def auto_create_permissions_and_roles(sender, **kwargs):
         ("employee_view_all", "Barcha xodimlarni ko'rish"),
         ("employee_view_profile", "Xodim profilini ko'rish"),
 
-                ("employee_view_dept", "Bo'lim xodimlarini ko'rish"),
+        ("employee_view_dept", "Bo'lim xodimlarini ko'rish"),
         ("employee_view_branch", "Filial xodimlarini ko'rish"),
         ("employee_view_district", "Tuman xodimlarini ko'rish"),
         ("employee_view_region", "Viloyat xodimlarini ko'rish"),
