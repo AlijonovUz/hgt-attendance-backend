@@ -102,7 +102,10 @@ def verify_face_image(uploaded_file):
                 )
 
             if REQUIRE_ANTISPOOFING and not faces[0].get("is_real", False):
-                return False, "Tiriklikni tasdiqlab bo'lmadi. Iltimos, yorug' joyda kameraga to'g'ri qarab qaytadan urinib ko'ring."
+                return (
+                    False,
+                    "Tiriklikni tasdiqlab bo'lmadi. Iltimos, yorug' joyda kameraga to'g'ri qarab qaytadan urinib ko'ring.",
+                )
 
             return True, "Yuz muvaffaqiyatli aniqlandi."
 

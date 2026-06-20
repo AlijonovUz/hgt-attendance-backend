@@ -44,7 +44,14 @@ class FaceLogAdmin(ModelAdmin):
 
 @admin.register(GpsLog)
 class GpsLogAdmin(ModelAdmin):
-    list_display = ["user", "is_success", "distance_meters", "message", "created_at", "is_active"]
+    list_display = [
+        "user",
+        "is_success",
+        "distance_meters",
+        "message",
+        "created_at",
+        "is_active",
+    ]
     search_fields = ["user__full_name", "message"]
     list_filter = ["is_success", "created_at"]
     readonly_fields = ["created_at", "updated_at"]

@@ -61,7 +61,11 @@ def audit_log_save(sender, instance, created, **kwargs):
         if not dirty:
             return
 
-        if "is_active" in dirty and dirty["is_active"]["old"] == "True" and dirty["is_active"]["new"] == "False":
+        if (
+            "is_active" in dirty
+            and dirty["is_active"]["old"] == "True"
+            and dirty["is_active"]["new"] == "False"
+        ):
             action = AuditLog.ActionType.DELETE
 
         old_values = {k: v["old"] for k, v in dirty.items()}
@@ -80,8 +84,14 @@ def audit_log_save(sender, instance, created, **kwargs):
         new_values=new_values,
         ip_address=ip,
     )
-    
-    logger.debug("AuditLog saqlandi: Harakat=%s, Model=%s, ID=%s, User=%s", action, sender._meta.verbose_name, instance.pk, getattr(user, "full_name", "Anonim"))
+
+    logger.debug(
+        "AuditLog saqlandi: Harakat=%s, Model=%s, ID=%s, User=%s",
+        action,
+        sender._meta.verbose_name,
+        instance.pk,
+        getattr(user, "full_name", "Anonim"),
+    )
 
 
 @receiver(post_delete)
@@ -109,4 +119,9 @@ def audit_log_delete(sender, instance, **kwargs):
         ip_address=ip,
     )
 
-    logger.warning("Ma'lumot O'CHIRILDI: Model=%s, ID=%s, User=%s", sender._meta.verbose_name, instance.pk, getattr(user, "full_name", "Anonim"))
+    logger.warning(
+        "Ma'lumot O'CHIRILDI: Model=%s, ID=%s, User=%s",
+        sender._meta.verbose_name,
+        instance.pk,
+        getattr(user, "full_name", "Anonim"),
+    )

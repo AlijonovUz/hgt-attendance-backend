@@ -24,6 +24,7 @@ class GeozoneSerializer(serializers.ModelSerializer):
     def get_workers_count(self, obj):
         if obj.branch:
             from apps.users.models import User
+
             return User.objects.filter(branch=obj.branch, is_active=True).count()
         return 0
 
@@ -55,7 +56,14 @@ class AttendanceCreateSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Attendance
-        fields = ["event_type", "gps_latitude", "gps_longitude", "image", "created_at", "signature"]
+        fields = [
+            "event_type",
+            "gps_latitude",
+            "gps_longitude",
+            "image",
+            "created_at",
+            "signature",
+        ]
 
     def validate(self, attrs):
         user = self.context["request"].user
@@ -69,37 +77,74 @@ class AttendanceCreateSerializer(serializers.ModelSerializer):
 
         if provided_created_at:
             if not signature:
-                raise serializers.ValidationError({"signature": "Vaqtni tasdiqlash uchun imzo (signature) kiritilishi shart."})
-            
-            secret_key = hashlib.sha256(user.password.encode('utf-8')).hexdigest()
+                raise serializers.ValidationError(
+                    {
+                        "signature": "Vaqtni tasdiqlash uchun imzo (signature) kiritilishi shart."
+                    }
+                )
+
+            secret_key = hashlib.sha256(user.password.encode("utf-8")).hexdigest()
             time_str = self.initial_data.get("created_at")
-            
+
             expected_signature = hmac.new(
-                secret_key.encode('utf-8'),
-                str(time_str).encode('utf-8'),
-                hashlib.sha256
+                secret_key.encode("utf-8"),
+                str(time_str).encode("utf-8"),
+                hashlib.sha256,
             ).hexdigest()
-            
+
             if not hmac.compare_digest(expected_signature, signature):
-                SignatureLog.objects.create(user=user, is_valid=False, provided_time=provided_created_at, message="Vaqt imzosi yaroqsiz.")
-                raise serializers.ValidationError({"signature": "Vaqt imzosi yaroqsiz."})
+                SignatureLog.objects.create(
+                    user=user,
+                    is_valid=False,
+                    provided_time=provided_created_at,
+                    message="Vaqt imzosi yaroqsiz.",
+                )
+                raise serializers.ValidationError(
+                    {"signature": "Vaqt imzosi yaroqsiz."}
+                )
 
         if provided_created_at:
             if provided_created_at > timezone.now():
-                SignatureLog.objects.create(user=user, is_valid=False, provided_time=provided_created_at, message="Kelajakdagi vaqt.")
-                raise serializers.ValidationError({"created_at": "Vaqt kelajakda bo'lishi mumkin emas."})
-                
-            from datetime import timedelta
-            if provided_created_at < timezone.now() - timedelta(hours=24):
-                SignatureLog.objects.create(user=user, is_valid=False, provided_time=provided_created_at, message="24 soatdan eskirgan vaqt.")
-                raise serializers.ValidationError({"created_at": "Davomat vaqti 24 soatdan eskirgan. Qabul qilinmaydi."})
+                SignatureLog.objects.create(
+                    user=user,
+                    is_valid=False,
+                    provided_time=provided_created_at,
+                    message="Kelajakdagi vaqt.",
+                )
+                raise serializers.ValidationError(
+                    {"created_at": "Vaqt kelajakda bo'lishi mumkin emas."}
+                )
 
-            SignatureLog.objects.create(user=user, is_valid=True, provided_time=provided_created_at, message="Imzo muvaffaqiyatli tasdiqlandi.")
-                
-        today = provided_created_at.date() if provided_created_at else timezone.now().date()
-        todays_events = Attendance.objects.active().filter(
-            user=user, created_at__date=today
-        ).values_list("event_type", flat=True)
+            from datetime import timedelta
+
+            if provided_created_at < timezone.now() - timedelta(hours=24):
+                SignatureLog.objects.create(
+                    user=user,
+                    is_valid=False,
+                    provided_time=provided_created_at,
+                    message="24 soatdan eskirgan vaqt.",
+                )
+                raise serializers.ValidationError(
+                    {
+                        "created_at": "Davomat vaqti 24 soatdan eskirgan. Qabul qilinmaydi."
+                    }
+                )
+
+            SignatureLog.objects.create(
+                user=user,
+                is_valid=True,
+                provided_time=provided_created_at,
+                message="Imzo muvaffaqiyatli tasdiqlandi.",
+            )
+
+        today = (
+            provided_created_at.date() if provided_created_at else timezone.now().date()
+        )
+        todays_events = (
+            Attendance.objects.active()
+            .filter(user=user, created_at__date=today)
+            .values_list("event_type", flat=True)
+        )
 
         if event_type in todays_events:
             event_name = dict(Attendance.EventType.choices).get(event_type, event_type)
@@ -219,7 +264,11 @@ class AttendanceCreateSerializer(serializers.ModelSerializer):
                 message=f"Siz bugun ishga kechikib keldingiz. (Belgilangan vaqt: {st.strftime('%H:%M')})",
                 extra_data={"event": "LATE_CHECK_IN"},
             )
-        elif event == Attendance.EventType.LUNCH_END and let is not None and current_time > let:
+        elif (
+            event == Attendance.EventType.LUNCH_END
+            and let is not None
+            and current_time > let
+        ):
             Notification.objects.create(
                 user=user,
                 title="Tushlikdan kechikish",
@@ -235,6 +284,7 @@ class AttendanceCreateSerializer(serializers.ModelSerializer):
             )
 
         from apps.analytics.tasks import update_kpi_for_user_task
+
         dt = timezone.localtime(instance.created_at)
         update_kpi_for_user_task.delay(user.id, dt.year, dt.month)
 
@@ -254,7 +304,17 @@ class GpsLogSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = GpsLog
-        fields = ["id", "user", "user_info", "is_success", "latitude", "longitude", "distance_meters", "message", "created_at"]
+        fields = [
+            "id",
+            "user",
+            "user_info",
+            "is_success",
+            "latitude",
+            "longitude",
+            "distance_meters",
+            "message",
+            "created_at",
+        ]
 
 
 class SignatureLogSerializer(serializers.ModelSerializer):
@@ -262,5 +322,12 @@ class SignatureLogSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = SignatureLog
-        fields = ["id", "user", "user_info", "is_valid", "provided_time", "message", "created_at"]
-
+        fields = [
+            "id",
+            "user",
+            "user_info",
+            "is_valid",
+            "provided_time",
+            "message",
+            "created_at",
+        ]

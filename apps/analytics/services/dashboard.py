@@ -7,6 +7,7 @@ from apps.analytics.services.reports import ReportService
 
 logger = logging.getLogger(__name__)
 
+
 class DashboardService:
     @staticmethod
     def get_dashboard_stats(
@@ -104,21 +105,20 @@ class DashboardService:
             from apps.analytics.models import DailyAttendance
 
             stats = DailyAttendance.objects.filter(
-                user__in=users,
-                date__range=(s_date, e_date)
+                user__in=users, date__range=(s_date, e_date)
             ).aggregate(
-                arrived=Sum('present'),
-                lates=Sum('late'),
-                early_leaves=Sum('left_early'),
-                expected=Sum('total_expected'),
-                absent=Sum('absent')
+                arrived=Sum("present"),
+                lates=Sum("late"),
+                early_leaves=Sum("left_early"),
+                expected=Sum("total_expected"),
+                absent=Sum("absent"),
             )
 
-            expected = stats['expected'] or 0
-            arrived = stats['arrived'] or 0
-            lates = stats['lates'] or 0
-            early_leaves = stats['early_leaves'] or 0
-            absent = stats['absent'] or 0
+            expected = stats["expected"] or 0
+            arrived = stats["arrived"] or 0
+            lates = stats["lates"] or 0
+            early_leaves = stats["early_leaves"] or 0
+            absent = stats["absent"] or 0
 
             pct = (arrived / expected * 100) if expected > 0 else 0
             return arrived, lates, early_leaves, absent, pct

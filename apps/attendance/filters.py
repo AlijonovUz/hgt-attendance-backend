@@ -37,7 +37,9 @@ class GeozoneFilter(django_filters.FilterSet):
 
 
 class BaseLogFilter(django_filters.FilterSet):
-    start_date = django_filters.DateTimeFilter(field_name="created_at", lookup_expr="gte")
+    start_date = django_filters.DateTimeFilter(
+        field_name="created_at", lookup_expr="gte"
+    )
     end_date = django_filters.DateTimeFilter(field_name="created_at", lookup_expr="lte")
     region = django_filters.CharFilter(field_name="user__branch__region")
     district = django_filters.CharFilter(field_name="user__branch__district")

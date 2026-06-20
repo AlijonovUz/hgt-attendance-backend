@@ -6,6 +6,7 @@ from apps.utils.models import BaseModel
 
 from django.core.validators import MinValueValidator, MaxValueValidator
 
+
 class Geozone(BaseModel):
     class ZoneType(models.TextChoices):
         MAIN_OFFICE = "main_office", "Markaziy apparat"
@@ -103,7 +104,9 @@ class FaceLog(BaseModel):
         verbose_name_plural = "Face ID Loglari"
 
     def __str__(self):
-        return f"{self.user.full_name} - {'Muvaffaqiyatli' if self.is_success else 'Xato'}"
+        return (
+            f"{self.user.full_name} - {'Muvaffaqiyatli' if self.is_success else 'Xato'}"
+        )
 
 
 class GpsLog(BaseModel):
@@ -129,15 +132,22 @@ class GpsLog(BaseModel):
         verbose_name_plural = "GPS Loglari"
 
     def __str__(self):
-        return f"{self.user.full_name} - {'Ichida' if self.is_success else 'Tashqarida'}"
+        return (
+            f"{self.user.full_name} - {'Ichida' if self.is_success else 'Tashqarida'}"
+        )
 
 
 class SignatureLog(BaseModel):
     user = models.ForeignKey(
-        User, on_delete=models.PROTECT, related_name="signature_logs", verbose_name="Xodim"
+        User,
+        on_delete=models.PROTECT,
+        related_name="signature_logs",
+        verbose_name="Xodim",
     )
     is_valid = models.BooleanField(default=False, verbose_name="Muvaffaqiyatli")
-    provided_time = models.DateTimeField(null=True, blank=True, verbose_name="Yuborilgan vaqt")
+    provided_time = models.DateTimeField(
+        null=True, blank=True, verbose_name="Yuborilgan vaqt"
+    )
     message = models.CharField(
         max_length=255, null=True, blank=True, verbose_name="Xabar"
     )
@@ -147,4 +157,6 @@ class SignatureLog(BaseModel):
         verbose_name_plural = "Imzo Loglari"
 
     def __str__(self):
-        return f"{self.user.full_name} - {'Muvaffaqiyatli' if self.is_valid else 'Xato'}"
+        return (
+            f"{self.user.full_name} - {'Muvaffaqiyatli' if self.is_valid else 'Xato'}"
+        )

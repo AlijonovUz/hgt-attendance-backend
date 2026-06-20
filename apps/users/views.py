@@ -217,9 +217,17 @@ class UserViewSet(BaseManageViewSet):
         qs = super().get_queryset()
         if user.is_superuser or user.has_permission("employee_view_all"):
             return qs
-        if user.has_permission("employee_view_region") and user.branch and user.branch.region_id:
+        if (
+            user.has_permission("employee_view_region")
+            and user.branch
+            and user.branch.region_id
+        ):
             return qs.filter(branch__region_id=user.branch.region_id)
-        if user.has_permission("employee_view_district") and user.branch and user.branch.district_id:
+        if (
+            user.has_permission("employee_view_district")
+            and user.branch
+            and user.branch.district_id
+        ):
             return qs.filter(branch__district_id=user.branch.district_id)
         if user.has_permission("employee_view_branch") and user.branch_id:
             return qs.filter(branch_id=user.branch_id)
@@ -229,13 +237,15 @@ class UserViewSet(BaseManageViewSet):
 
     @extend_schema(
         summary="Dropdown uchun barcha xodimlar ro'yxati (qamrovsiz)",
-        responses={200: inline_serializer(
-            name="UserDropdown",
-            fields={
-                "id": serializers.UUIDField(),
-                "full_name": serializers.CharField(),
-            }
-        )}
+        responses={
+            200: inline_serializer(
+                name="UserDropdown",
+                fields={
+                    "id": serializers.UUIDField(),
+                    "full_name": serializers.CharField(),
+                },
+            )
+        },
     )
     @action(detail=False, methods=["get"])
     def dropdown(self, request):
@@ -356,13 +366,15 @@ class ChangePasswordView(generics.UpdateAPIView):
         if serializer.is_valid():
             serializer.save()
             logger.info("Foydalanuvchi parolini o'zgartirdi: ID=%s", request.user.id)
-            
-            offline_secret = hashlib.sha256(request.user.password.encode('utf-8')).hexdigest()
-            
+
+            offline_secret = hashlib.sha256(
+                request.user.password.encode("utf-8")
+            ).hexdigest()
+
             return Response(
                 {
                     "message": "Parol muvaffaqiyatli o'zgartirildi.",
-                    "offline_secret": offline_secret
+                    "offline_secret": offline_secret,
                 },
                 status=status.HTTP_200_OK,
             )

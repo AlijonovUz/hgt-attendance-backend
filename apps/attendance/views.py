@@ -66,7 +66,10 @@ class AttendanceViewSet(BaseManageViewSet):
         if user.has_permission("attendance_view_history_dept") and user.department:
             return qs.filter(Q(user=user) | Q(user__department=user.department))
 
-        return qs.filter(user=user)
+        if user.has_permission("attendance_view_history_self"):
+            return qs.filter(user=user)
+
+        return qs.none()
 
     def get_serializer_class(self):
         if self.action == "create":
@@ -78,7 +81,11 @@ class AttendanceViewSet(BaseManageViewSet):
 class FaceLogViewSet(BaseReadOnlyViewSet):
     queryset = FaceLog.objects.select_related("user").active()
     serializer_class = FaceLogSerializer
-    filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
+    filter_backends = [
+        DjangoFilterBackend,
+        filters.SearchFilter,
+        filters.OrderingFilter,
+    ]
     filterset_class = FaceLogFilter
     search_fields = ["user__full_name", "message"]
     ordering_fields = ["created_at"]
@@ -94,7 +101,11 @@ class FaceLogViewSet(BaseReadOnlyViewSet):
 class GpsLogViewSet(BaseReadOnlyViewSet):
     queryset = GpsLog.objects.select_related("user").active()
     serializer_class = GpsLogSerializer
-    filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
+    filter_backends = [
+        DjangoFilterBackend,
+        filters.SearchFilter,
+        filters.OrderingFilter,
+    ]
     filterset_class = GpsLogFilter
     search_fields = ["user__full_name", "message"]
     ordering_fields = ["created_at"]
@@ -110,7 +121,11 @@ class GpsLogViewSet(BaseReadOnlyViewSet):
 class SignatureLogViewSet(BaseReadOnlyViewSet):
     queryset = SignatureLog.objects.select_related("user").active()
     serializer_class = SignatureLogSerializer
-    filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
+    filter_backends = [
+        DjangoFilterBackend,
+        filters.SearchFilter,
+        filters.OrderingFilter,
+    ]
     filterset_class = SignatureLogFilter
     search_fields = ["user__full_name", "message"]
     ordering_fields = ["created_at"]

@@ -28,52 +28,43 @@ def auto_create_permissions_and_roles(sender, **kwargs):
         ("employee_block", "Xodimni bloklash"),
         ("employee_view_all", "Barcha xodimlarni ko'rish"),
         ("employee_view_profile", "Xodim profilini ko'rish"),
-
         ("employee_view_dept", "Bo'lim xodimlarini ko'rish"),
         ("employee_view_branch", "Filial xodimlarini ko'rish"),
         ("employee_view_district", "Tuman xodimlarini ko'rish"),
         ("employee_view_region", "Viloyat xodimlarini ko'rish"),
-
         ("attendance_check_in", "Ishga kelishni qayd qilish"),
         ("attendance_lunch_out", "Tushlikka chiqish"),
         ("attendance_lunch_in", "Tushlikdan qaytish"),
         ("attendance_check_out", "Ishdan ketish"),
-
         ("attendance_view_history_self", "O'zining davomat tarixini ko'rish"),
         ("attendance_view_history_dept", "Bo'limining davomat tarixini ko'rish"),
         ("attendance_view_history_all", "Barcha davomat tarixini ko'rish"),
-
         ("geozone_create", "Geozona yaratish"),
         ("geozone_edit", "Geozona tahrirlash"),
         ("geozone_delete", "Geozona o'chirish"),
         ("geozone_view", "Geozonalarni ko'rish"),
-
         ("log_view_face", "Yuzni aniqlash loglarini ko'rish"),
         ("log_view_gps", "GPS loglarini ko'rish"),
         ("log_view_signature", "Imzo loglarini ko'rish"),
         ("audit_view", "Audit loglarni ko'rish"),
-
         ("kpi_view_self", "O'zining KPI ni ko'rish"),
         ("kpi_view_dept", "Bo'lim KPI ni ko'rish"),
         ("kpi_view_branch", "Filial KPI ni ko'rish"),
         ("kpi_view_district", "Tuman KPI ni ko'rish"),
         ("kpi_view_region", "Viloyat KPI ni ko'rish"),
         ("kpi_view_all", "Barcha KPI ni ko'rish"),
-        
         ("daily_attendance_view_self", "O'zining kunlik davomatini ko'rish"),
         ("daily_attendance_view_dept", "Bo'lim kunlik davomatini ko'rish"),
         ("daily_attendance_view_branch", "Filial kunlik davomatini ko'rish"),
         ("daily_attendance_view_district", "Tuman kunlik davomatini ko'rish"),
         ("daily_attendance_view_region", "Viloyat kunlik davomatini ko'rish"),
         ("daily_attendance_view_all", "Barcha kunlik davomatlarni ko'rish"),
-
         ("analytics_view_dept", "Bo'lim analitikasini ko'rish"),
         ("analytics_view_branch", "Filial analitikasini ko'rish"),
         ("analytics_view_district", "Tuman analitikasini ko'rish"),
         ("analytics_view_region", "Viloyat analitikasini ko'rish"),
         ("analytics_view_all", "Barcha analitikani ko'rish"),
         ("analytics_calculate", "KPI ni qayta hisoblash"),
-
         ("report_type_employee", "Xodimlar hisobotini ko'rish"),
         ("report_type_branch", "Filiallar hisobotini ko'rish"),
         ("report_view_dept", "Bo'lim hisobotini ko'rish"),
@@ -81,37 +72,29 @@ def auto_create_permissions_and_roles(sender, **kwargs):
         ("report_view_district", "Tuman hisobotini ko'rish"),
         ("report_view_region", "Viloyat hisobotini ko'rish"),
         ("report_view_all", "Barcha hisobotlarni ko'rish"),
-
         ("region_create", "Viloyat qo'shish"),
         ("region_edit", "Viloyat tahrirlash"),
         ("region_delete", "Viloyat o'chirish"),
-        
         ("district_create", "Tuman qo'shish"),
         ("district_edit", "Tuman tahrirlash"),
         ("district_delete", "Tuman o'chirish"),
-
         ("branch_create", "Filial qo'shish"),
         ("branch_edit", "Filial tahrirlash"),
         ("branch_delete", "Filial o'chirish"),
-
         ("department_create", "Bo'lim qo'shish"),
         ("department_edit", "Bo'lim tahrirlash"),
         ("department_delete", "Bo'lim o'chirish"),
-
         ("position_create", "Lavozim qo'shish"),
         ("position_edit", "Lavozim tahrirlash"),
         ("position_delete", "Lavozim o'chirish"),
-
         ("schedule_create", "Ish grafigini qo'shish"),
         ("schedule_edit", "Ish grafigini tahrirlash"),
         ("schedule_delete", "Ish grafigini o'chirish"),
         ("schedule_view", "Ish grafiklarini ko'rish"),
-
         ("holiday_create", "Bayram qo'shish"),
         ("holiday_edit", "Bayram tahrirlash"),
         ("holiday_delete", "Bayram o'chirish"),
         ("holiday_view", "Bayramlarni ko'rish"),
-
         ("role_create", "Rol qo'shish"),
         ("role_edit", "Rol tahrirlash"),
         ("role_delete", "Rol o'chirish"),
