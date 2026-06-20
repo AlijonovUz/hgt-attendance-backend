@@ -5,7 +5,9 @@ from .models import KPIResult, DailyAttendance
 
 class KPIResultSerializer(serializers.ModelSerializer):
     user_info = UserShortInfoSerializer(source="user", read_only=True)
-    rating_display = serializers.CharField(source="get_rating_category_display", read_only=True)
+    rating_display = serializers.CharField(
+        source="get_rating_category_display", read_only=True
+    )
 
     class Meta:
         model = KPIResult

@@ -6,6 +6,7 @@ from apps.analytics.models import KPIResult
 
 logger = logging.getLogger(__name__)
 
+
 class KPIService:
     @classmethod
     def calculate_user_kpi(cls, user, year, month):
@@ -24,25 +25,25 @@ class KPIService:
         stats = DailyAttendance.objects.filter(
             user=user, date__range=(start_date, end_date)
         ).aggregate(
-            total_expected=Sum('total_expected'),
-            present=Sum('present'),
-            absent=Sum('absent'),
-            late=Sum('late'),
-            left_early=Sum('left_early'),
+            total_expected=Sum("total_expected"),
+            present=Sum("present"),
+            absent=Sum("absent"),
+            late=Sum("late"),
+            left_early=Sum("left_early"),
         )
 
-        total_expected = stats['total_expected'] or 0
+        total_expected = stats["total_expected"] or 0
         if total_expected == 0:
             return None
 
-        lates_count = stats['late'] or 0
-        left_early = stats['left_early'] or 0
-        absent = stats['absent'] or 0
-        present = stats['present'] or 0
+        lates_count = stats["late"] or 0
+        left_early = stats["left_early"] or 0
+        absent = stats["absent"] or 0
+        present = stats["present"] or 0
 
         on_time_in = max(0, present - lates_count)
         on_time_out = max(0, present - left_early)
-        
+
         compliant_actions = on_time_in + on_time_out
         total_expected_actions = total_expected * 2
 
@@ -90,5 +91,3 @@ class KPIService:
             },
         )
         return kpi_result
-
-

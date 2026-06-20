@@ -9,8 +9,7 @@ class ReportService:
     def _get_users(request_user, region_id=None, district_id=None, branch_id=None):
         users = User.objects.all()
         if not (
-            request_user.is_superuser
-            or request_user.has_permission("report_view_all")
+            request_user.is_superuser or request_user.has_permission("report_view_all")
         ):
             if (
                 request_user.has_permission("report_view_region")
@@ -61,37 +60,42 @@ class ReportService:
 
         from django.db.models import Sum
         from apps.analytics.models import DailyAttendance
-        
+
         today = timezone.localtime().date()
         from apps.analytics.services.daily import DailyKPIService
-        
+
         target_calc_date = min(end_date, today)
         for u in users:
             DailyKPIService.calculate_daily_snapshot(u, target_calc_date)
-            DailyKPIService.calculate_daily_snapshot(u, target_calc_date - timedelta(days=1))
+            DailyKPIService.calculate_daily_snapshot(
+                u, target_calc_date - timedelta(days=1)
+            )
 
-        all_stats = DailyAttendance.objects.filter(
-            user__in=users,
-            date__range=(start_date, end_date)
-        ).values('user').annotate(
-            total_expected=Sum('total_expected'),
-            present=Sum('present'),
-            absent=Sum('absent'),
-            late=Sum('late'),
-            left_early=Sum('left_early'),
+        all_stats = (
+            DailyAttendance.objects.filter(
+                user__in=users, date__range=(start_date, end_date)
+            )
+            .values("user")
+            .annotate(
+                total_expected=Sum("total_expected"),
+                present=Sum("present"),
+                absent=Sum("absent"),
+                late=Sum("late"),
+                left_early=Sum("left_early"),
+            )
         )
 
-        stats_map = {item['user']: item for item in all_stats}
+        stats_map = {item["user"]: item for item in all_stats}
         user_stats = {}
 
         for user in users:
             user_stat = stats_map.get(user.id, {})
-            
-            total_expected = user_stat.get('total_expected') or 0
-            present = user_stat.get('present') or 0
-            late = user_stat.get('late') or 0
-            absent = user_stat.get('absent') or 0
-            left_early = user_stat.get('left_early') or 0
+
+            total_expected = user_stat.get("total_expected") or 0
+            present = user_stat.get("present") or 0
+            late = user_stat.get("late") or 0
+            absent = user_stat.get("absent") or 0
+            left_early = user_stat.get("left_early") or 0
 
             on_time_in = max(0, present - late)
             on_time_out = max(0, present - left_early)

@@ -41,17 +41,17 @@ class PermissionSerializer(serializers.ModelSerializer):
                 for item in iterable:
                     perm = self.child.to_representation(item)
                     code = perm.get("code", "")
-                    module = code.split('_')[0] if '_' in code else 'other'
-                    
-                    if module == 'attendance':
-                        module_key = 'attendances'
-                    elif module == 'analytics':
-                        module_key = 'analytics'
-                    elif not module.endswith('s') and module != 'other':
-                        module_key = module + 's'
+                    module = code.split("_")[0] if "_" in code else "other"
+
+                    if module == "attendance":
+                        module_key = "attendances"
+                    elif module == "analytics":
+                        module_key = "analytics"
+                    elif not module.endswith("s") and module != "other":
+                        module_key = module + "s"
                     else:
                         module_key = module
-                        
+
                     if module_key not in grouped:
                         grouped[module_key] = []
                     grouped[module_key].append(perm)
@@ -61,9 +61,10 @@ class PermissionSerializer(serializers.ModelSerializer):
             def data(self):
                 ret = super(serializers.ListSerializer, self).data
                 from rest_framework.utils.serializer_helpers import ReturnDict
+
                 return ReturnDict(ret, serializer=self)
-                
-        kwargs['child'] = cls()
+
+        kwargs["child"] = cls()
         return GroupedPermissionListSerializer(*args, **kwargs)
 
 
@@ -273,9 +274,7 @@ class UserSerializer(serializers.ModelSerializer):
                 }
             },
             "jshshir": {
-                "error_messages": {
-                    "unique": "Bu JShShIR allaqachon ro'yxatdan o'tgan."
-                }
+                "error_messages": {"unique": "Bu JShShIR allaqachon ro'yxatdan o'tgan."}
             },
             "created_at": {"read_only": True},
             "updated_at": {"read_only": True},
@@ -300,7 +299,9 @@ class UserSerializer(serializers.ModelSerializer):
 
     def validate_password(self, value):
         if len(value) < 8:
-            raise serializers.ValidationError("Parol kamida 8 ta belgidan iborat bo'lishi kerak.")
+            raise serializers.ValidationError(
+                "Parol kamida 8 ta belgidan iborat bo'lishi kerak."
+            )
         return value
 
     def create(self, validated_data):
@@ -374,9 +375,11 @@ class ProfileSerializer(serializers.ModelSerializer):
             "late_coefficient": kpi_result.late_coefficient,
             "discipline_coefficient": kpi_result.discipline_coefficient,
             "total_score": kpi_result.total_score,
-            "rating_category": kpi_result.get_rating_category_display()
-            if kpi_result.rating_category
-            else "Aniqlanmagan",
+            "rating_category": (
+                kpi_result.get_rating_category_display()
+                if kpi_result.rating_category
+                else "Aniqlanmagan"
+            ),
             "monthly_attendance": f"{kpi_result.attended_days}/{kpi_result.total_work_days}",
         }
 
@@ -450,7 +453,7 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
         data: dict = super().validate(attrs)
         user = self.user
 
-        offline_secret = hashlib.sha256(user.password.encode('utf-8')).hexdigest()
+        offline_secret = hashlib.sha256(user.password.encode("utf-8")).hexdigest()
 
         data["user"] = {
             "id": user.id,

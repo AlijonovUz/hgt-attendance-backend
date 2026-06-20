@@ -11,18 +11,12 @@ from apps.users.models import User
 from .models import KPIResult, DailyAttendance
 from .serializers import KPIResultSerializer, DailyAttendanceSerializer
 from .services import KPIService, ReportService, DashboardService
-
+from .filters import KPIResultFilter, DailyAttendanceFilter
 
 LOCATION_PARAMS = [
-    OpenApiParameter(
-        name="region", description="Viloyat ID", required=False, type=str
-    ),
-    OpenApiParameter(
-        name="district", description="Tuman ID", required=False, type=str
-    ),
-    OpenApiParameter(
-        name="branch", description="Filial ID", required=False, type=str
-    ),
+    OpenApiParameter(name="region", description="Viloyat ID", required=False, type=str),
+    OpenApiParameter(name="district", description="Tuman ID", required=False, type=str),
+    OpenApiParameter(name="branch", description="Filial ID", required=False, type=str),
 ]
 
 COMMON_ANALYTICS_PARAMS = [
@@ -57,18 +51,37 @@ class KPIResultViewSet(viewsets.ReadOnlyModelViewSet):
         filters.OrderingFilter,
     ]
     permission_classes = [permissions.IsAuthenticated]
-    filterset_fields = ["user", "month", "rating_category"]
+    filterset_class = KPIResultFilter
     search_fields = ["user__full_name", "user__jshshir"]
     ordering_fields = ["month", "total_score"]
     ordering = ["-month", "-total_score"]
 
     def get_queryset(self):
         user = self.request.user
-        if user.is_superuser or user.has_permission("analytics_view_all"):
-            return super().get_queryset()
-        if user.has_permission("analytics_view_dept") and user.department:
-            return super().get_queryset().filter(user__department=user.department)
-        return super().get_queryset().filter(user=user)
+        qs = super().get_queryset()
+        if user.is_superuser or user.has_permission("kpi_view_all"):
+            return qs
+        if (
+            user.has_permission("kpi_view_region")
+            and user.branch
+            and user.branch.region_id
+        ):
+            return qs.filter(user__branch__region_id=user.branch.region_id)
+        if (
+            user.has_permission("kpi_view_district")
+            and user.branch
+            and user.branch.district_id
+        ):
+            return qs.filter(user__branch__district_id=user.branch.district_id)
+        if user.has_permission("kpi_view_branch") and user.branch_id:
+            return qs.filter(user__branch_id=user.branch_id)
+        if user.has_permission("kpi_view_dept") and user.department_id:
+            return qs.filter(user__department_id=user.department_id)
+
+        if user.has_permission("kpi_view_self"):
+            return qs.filter(user=user)
+
+        return qs.none()
 
     @extend_schema(
         summary="Xodim uchun ma'lum bir oydagi KPI ni qayta hisoblash",
@@ -92,7 +105,7 @@ class KPIResultViewSet(viewsets.ReadOnlyModelViewSet):
             )
 
         user_id = request.data.get("user_id")
-        year = request.data.get("year") 
+        year = request.data.get("year")
         month = request.data.get("month")
 
         if not all([user_id, year, month]):
@@ -130,18 +143,35 @@ class DailyAttendanceViewSet(viewsets.ReadOnlyModelViewSet):
         filters.OrderingFilter,
     ]
     permission_classes = [permissions.IsAuthenticated]
-    filterset_fields = ["user", "date", "schedule_name", "is_mandatory", "is_holiday"]
+    filterset_class = DailyAttendanceFilter
     search_fields = ["user__full_name", "user__jshshir"]
     ordering_fields = ["date", "user__full_name"]
     ordering = ["-date"]
 
     def get_queryset(self):
         user = self.request.user
-        if user.is_superuser or user.has_permission("analytics_view_all"):
-            return super().get_queryset()
-        if user.has_permission("analytics_view_dept") and user.department:
-            return super().get_queryset().filter(user__department=user.department)
-        return super().get_queryset().filter(user=user)
+        qs = super().get_queryset()
+        if user.is_superuser or user.has_permission("daily_attendance_view_all"):
+            return qs
+        if (
+            user.has_permission("daily_attendance_view_region")
+            and user.branch
+            and user.branch.region_id
+        ):
+            return qs.filter(user__branch__region_id=user.branch.region_id)
+        if (
+            user.has_permission("daily_attendance_view_district")
+            and user.branch
+            and user.branch.district_id
+        ):
+            return qs.filter(user__branch__district_id=user.branch.district_id)
+        if user.has_permission("daily_attendance_view_branch") and user.branch_id:
+            return qs.filter(user__branch_id=user.branch_id)
+        if user.has_permission("daily_attendance_view_dept") and user.department_id:
+            return qs.filter(user__department_id=user.department_id)
+        if user.has_permission("daily_attendance_view_self"):
+            return qs.filter(user=user)
+        return qs.none()
 
 
 @extend_schema(tags=["Dashboard"])
@@ -171,7 +201,9 @@ class DashboardViewSet(viewsets.ViewSet):
             except ValueError:
                 raise ValidationError(detail="Noto'g'ri sana formati.")
         elif start_date_str or end_date_str:
-            raise ValidationError(detail="start_date va end_date parametrlari birgalikda ishlatilishi shart.")
+            raise ValidationError(
+                detail="start_date va end_date parametrlari birgalikda ishlatilishi shart."
+            )
         elif period:
             if period == "daily":
                 start_date = end_date
@@ -285,12 +317,24 @@ class ReportViewSet(viewsets.ViewSet):
         return self._get_report(request, "branch")
 
     def _get_report(self, request, report_type):
-        if report_type == "employee" and not (request.user.is_superuser or request.user.has_permission("report_type_employee")):
-            return Response({"detail": "Xodimlar hisobotini ko'rishga ruxsat etilmagan."}, status=status.HTTP_403_FORBIDDEN)
-            
-        if report_type == "branch" and not (request.user.is_superuser or request.user.has_permission("report_type_branch")):
-            return Response({"detail": "Filiallar hisobotini ko'rishga ruxsat etilmagan."}, status=status.HTTP_403_FORBIDDEN)
-            
+        if report_type == "employee" and not (
+            request.user.is_superuser
+            or request.user.has_permission("report_type_employee")
+        ):
+            return Response(
+                {"detail": "Xodimlar hisobotini ko'rishga ruxsat etilmagan."},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+
+        if report_type == "branch" and not (
+            request.user.is_superuser
+            or request.user.has_permission("report_type_branch")
+        ):
+            return Response(
+                {"detail": "Filiallar hisobotini ko'rishga ruxsat etilmagan."},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+
         has_access = (
             request.user.is_superuser
             or request.user.has_permission("report_view_all")
@@ -301,7 +345,8 @@ class ReportViewSet(viewsets.ViewSet):
         )
         if not has_access:
             return Response(
-                {"detail": "Hisobot hududiga ruxsat etilmagan."}, status=status.HTTP_403_FORBIDDEN
+                {"detail": "Hisobot hududiga ruxsat etilmagan."},
+                status=status.HTTP_403_FORBIDDEN,
             )
 
         period = request.query_params.get("period")
@@ -310,7 +355,9 @@ class ReportViewSet(viewsets.ViewSet):
 
         if period and (start_str or end_str):
             return Response(
-                {"detail": "period parametri start_date va end_date bilan birga ishlatilishi mumkin emas."},
+                {
+                    "detail": "period parametri start_date va end_date bilan birga ishlatilishi mumkin emas."
+                },
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
@@ -329,7 +376,9 @@ class ReportViewSet(viewsets.ViewSet):
                 )
         elif start_str or end_str:
             return Response(
-                {"detail": "start_date va end_date parametrlari birgalikda ishlatilishi shart."},
+                {
+                    "detail": "start_date va end_date parametrlari birgalikda ishlatilishi shart."
+                },
                 status=status.HTTP_400_BAD_REQUEST,
             )
         elif period:

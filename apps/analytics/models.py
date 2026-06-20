@@ -14,9 +14,7 @@ class KPIResult(BaseModel):
     user = models.ForeignKey(
         User, on_delete=models.PROTECT, related_name="kpi_results", verbose_name="Xodim"
     )
-    month = models.DateField(
-        verbose_name="Hisobot oyi"
-    )
+    month = models.DateField(verbose_name="Hisobot oyi")
 
     total_work_days = models.PositiveIntegerField(
         default=0, verbose_name="Umumiy ish kunlari"
@@ -60,15 +58,22 @@ class KPIResult(BaseModel):
 
 class DailyAttendance(BaseModel):
     user = models.ForeignKey(
-        User, on_delete=models.CASCADE, related_name="daily_attendances", verbose_name="Xodim"
+        User,
+        on_delete=models.CASCADE,
+        related_name="daily_attendances",
+        verbose_name="Xodim",
     )
     date = models.DateField(verbose_name="Sana")
 
-    schedule_name = models.CharField(max_length=255, null=True, blank=True, verbose_name="Ish grafigi")
+    schedule_name = models.CharField(
+        max_length=255, null=True, blank=True, verbose_name="Ish grafigi"
+    )
     is_mandatory = models.BooleanField(default=True, verbose_name="Majburiy kunmi?")
     is_holiday = models.BooleanField(default=False, verbose_name="Bayrammi?")
 
-    total_expected = models.PositiveIntegerField(default=0, verbose_name="Kutilgan jami")
+    total_expected = models.PositiveIntegerField(
+        default=0, verbose_name="Kutilgan jami"
+    )
     present = models.PositiveIntegerField(default=0, verbose_name="Kelgan")
     absent = models.PositiveIntegerField(default=0, verbose_name="Kelmagan")
     late = models.PositiveIntegerField(default=0, verbose_name="Kechikkan")

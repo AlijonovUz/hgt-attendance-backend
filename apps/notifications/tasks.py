@@ -48,7 +48,11 @@ def mass_notification_sender(raw_list):
     valid, skipped = [], 0
     for raw in raw_list:
         try:
-            valid.append(send_single_notification_task.s(NotificationPayload.from_dict(raw).to_dict()))
+            valid.append(
+                send_single_notification_task.s(
+                    NotificationPayload.from_dict(raw).to_dict()
+                )
+            )
         except Exception as e:
             logger.warning("Noto'g'ri payload o'tkazib yuborildi: %s | %s", raw, e)
             skipped += 1
@@ -57,10 +61,18 @@ def mass_notification_sender(raw_list):
         return "Barcha yozuvlar noto'g'ri."
 
     group(valid).apply_async()
-    return f"{len(valid)} ta yuborildi" + (f", {skipped} ta o'tkazib yuborildi." if skipped else ".")
+    return f"{len(valid)} ta yuborildi" + (
+        f", {skipped} ta o'tkazib yuborildi." if skipped else "."
+    )
 
 
-@shared_task(bind=True, autoretry_for=(Exception,), retry_backoff=True, retry_backoff_max=600, max_retries=3)
+@shared_task(
+    bind=True,
+    autoretry_for=(Exception,),
+    retry_backoff=True,
+    retry_backoff_max=600,
+    max_retries=3,
+)
 def send_single_notification_task(self, raw):
     try:
         p = NotificationPayload.from_dict(raw)
@@ -74,7 +86,13 @@ def send_single_notification_task(self, raw):
     return f"User {p.user_id} uchun tasklar yuborildi."
 
 
-@shared_task(bind=True, autoretry_for=(Exception,), retry_backoff=True, retry_backoff_max=60, max_retries=3)
+@shared_task(
+    bind=True,
+    autoretry_for=(Exception,),
+    retry_backoff=True,
+    retry_backoff_max=60,
+    max_retries=3,
+)
 def send_websocket_notification(self, data):
     channel_layer = get_channel_layer()
     if not channel_layer:
@@ -82,15 +100,20 @@ def send_websocket_notification(self, data):
 
     async_to_sync(channel_layer.group_send)(
         f"user_{data['user_id']}_notifications",
-        {"type": "send_notification", "message": data}
+        {"type": "send_notification", "message": data},
     )
 
 
-@shared_task(bind=True, autoretry_for=(Exception,), retry_backoff=True, retry_backoff_max=600, max_retries=3)
+@shared_task(
+    bind=True,
+    autoretry_for=(Exception,),
+    retry_backoff=True,
+    retry_backoff_max=600,
+    max_retries=3,
+)
 def send_push_notification_task(self, user_id, title, message, extra_data=None):
     tokens = list(
-        UserDevice.objects
-        .filter(user_id=user_id)
+        UserDevice.objects.filter(user_id=user_id)
         .exclude(fcm_token__isnull=True)
         .exclude(fcm_token="")
         .values_list("fcm_token", flat=True)
@@ -104,7 +127,7 @@ def send_push_notification_task(self, user_id, title, message, extra_data=None):
     invalid_tokens = []
 
     for i in range(0, len(tokens), FCM_BATCH_SIZE):
-        batch = tokens[i:i + FCM_BATCH_SIZE]
+        batch = tokens[i : i + FCM_BATCH_SIZE]
         response = messaging.send_multicast(
             messaging.MulticastMessage(
                 notification=messaging.Notification(title=title, body=message),
@@ -114,11 +137,15 @@ def send_push_notification_task(self, user_id, title, message, extra_data=None):
         )
         success += response.success_count
         failure += response.failure_count
-        invalid_tokens += [batch[j] for j, r in enumerate(response.responses) if not r.success]
+        invalid_tokens += [
+            batch[j] for j, r in enumerate(response.responses) if not r.success
+        ]
 
     if invalid_tokens:
         deleted, _ = UserDevice.objects.filter(fcm_token__in=invalid_tokens).delete()
-        logger.warning("FCM: %d ta eskirgan token o'chirildi | user=%s", deleted, user_id)
+        logger.warning(
+            "FCM: %d ta eskirgan token o'chirildi | user=%s", deleted, user_id
+        )
 
     logger.info("FCM: user=%s | ok=%d | fail=%d", user_id, success, failure)
     return f"FCM: {success} muvaffaqiyatli, {failure} muvaffaqiyatsiz"
