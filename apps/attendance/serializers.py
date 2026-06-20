@@ -29,6 +29,12 @@ class GeozoneSerializer(serializers.ModelSerializer):
         return 0
 
 
+class GeozoneShortSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Geozone
+        fields = ["id", "name", "zone_type", "latitude", "longitude", "radius"]
+
+
 class AttendanceListSerializer(serializers.ModelSerializer):
     user_info = UserShortInfoSerializer(source="user", read_only=True)
 
@@ -191,18 +197,22 @@ class AttendanceCreateSerializer(serializers.ModelSerializer):
 
         in_geozone = False
         min_distance = float("inf")
+        closest_geozone = None
         for gz in user_geozones:
             distance = haversine(
                 float(lat), float(lon), float(gz.latitude), float(gz.longitude)
             )
             if distance < min_distance:
                 min_distance = distance
+                closest_geozone = gz
             if distance <= float(gz.radius):
                 in_geozone = True
+                closest_geozone = gz
                 break
 
         GpsLog.objects.create(
             user=user,
+            geozone=closest_geozone,
             is_success=in_geozone,
             latitude=lat,
             longitude=lon,
@@ -338,6 +348,7 @@ class FaceLogSerializer(RegionDistrictBranchMixin, serializers.ModelSerializer):
 
 class GpsLogSerializer(RegionDistrictBranchMixin, serializers.ModelSerializer):
     user_info = UserShortInfoSerializer(source="user", read_only=True)
+    geozone_info = GeozoneShortSerializer(source="geozone", read_only=True)
 
     class Meta:
         model = GpsLog
@@ -348,6 +359,7 @@ class GpsLogSerializer(RegionDistrictBranchMixin, serializers.ModelSerializer):
             "region",
             "district",
             "branch",
+            "geozone_info",
             "is_success",
             "latitude",
             "longitude",
