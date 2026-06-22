@@ -13,7 +13,7 @@ urlpatterns = [
     path("", NotificationListView.as_view(), name="notifications"),
     path("count/", NotificationCountView.as_view(), name="notifications-count"),
     path(
-        "<int:pk>/read/", MarkNotificationReadView.as_view(), name="read-notifications"
+        "<uuid:pk>/read/", MarkNotificationReadView.as_view(), name="read-notifications"
     ),
     path(
         "read-all/",
