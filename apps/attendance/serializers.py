@@ -11,6 +11,8 @@ from apps.notifications.models import Notification
 from datetime import time
 
 from .models import Attendance, Geozone, FaceLog, GpsLog, SignatureLog
+from apps.users.models import User
+from django.db.models import Q
 
 
 class GeozoneSerializer(serializers.ModelSerializer):
@@ -231,9 +233,6 @@ class AttendanceCreateSerializer(serializers.ModelSerializer):
                 message_ru="Вы отметили посещаемость вне геозоны вашего рабочего места.",
                 extra_data={"event": "OUT_OF_ZONE"},
             )
-
-            from apps.users.models import User
-            from django.db.models import Q
 
             q_filters = Q()
             if getattr(user, "branch", None):
