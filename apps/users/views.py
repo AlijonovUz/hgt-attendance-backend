@@ -95,7 +95,9 @@ class BranchViewSet(BaseManageViewSet):
 
 @extend_schema(tags=["Bo'limlar"])
 class DepartmentViewSet(BaseManageViewSet):
-    queryset = Department.objects.select_related("branch").active()
+    queryset = Department.objects.select_related(
+        "branch", "branch__region", "branch__district"
+    ).active()
     serializer_class = DepartmentSerializer
     filter_backends = [DjangoFilterBackend, filters.SearchFilter]
     filterset_class = DepartmentFilter

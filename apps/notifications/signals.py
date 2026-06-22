@@ -12,8 +12,12 @@ def post_save_handler(sender, instance, created, **kwargs):
         message_data = {
             "user_id": instance.user.id,
             "id": instance.id,
-            "title": instance.title,
-            "message": instance.message,
+            "title_uz_latn": instance.title_uz_latn,
+            "title_uz_cyrl": instance.title_uz_cyrl,
+            "title_ru": instance.title_ru,
+            "message_uz_latn": instance.message_uz_latn,
+            "message_uz_cyrl": instance.message_uz_cyrl,
+            "message_ru": instance.message_ru,
             "extra_data": instance.extra_data,
             "created_at": instance.created_at.isoformat(),
         }
