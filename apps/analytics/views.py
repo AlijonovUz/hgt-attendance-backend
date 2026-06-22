@@ -298,7 +298,7 @@ class ReportViewSet(viewsets.ViewSet):
         + [
             OpenApiParameter(
                 name="status",
-                description="Holati (present, absent, late)",
+                description="Holati (present, absent, late, left_early)",
                 required=False,
                 type=str,
             ),
