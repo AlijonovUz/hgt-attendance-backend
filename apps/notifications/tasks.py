@@ -18,12 +18,20 @@ FCM_BATCH_SIZE = 500
 @dataclass(frozen=True, slots=True)
 class NotificationPayload:
     user_id: int
-    title: str
-    message: str
+    title_uz_latn: str
+    title_uz_cyrl: str
+    title_ru: str
+    message_uz_latn: str
+    message_uz_cyrl: str
+    message_ru: str
     extra_data: dict[str, Any] = field(default_factory=dict)
 
     def __post_init__(self):
-        missing = [f for f in ("user_id", "title", "message") if not getattr(self, f)]
+        missing = [
+            f
+            for f in ("user_id", "title_uz_latn", "message_uz_latn")
+            if not getattr(self, f)
+        ]
         if missing:
             raise ValueError(f"Majburiy maydonlar yo'q: {missing}")
 
@@ -34,8 +42,12 @@ class NotificationPayload:
     def from_dict(cls, data):
         return cls(
             user_id=data["user_id"],
-            title=data["title"],
-            message=data["message"],
+            title_uz_latn=data.get("title_uz_latn"),
+            title_uz_cyrl=data.get("title_uz_cyrl"),
+            title_ru=data.get("title_ru"),
+            message_uz_latn=data.get("message_uz_latn"),
+            message_uz_cyrl=data.get("message_uz_cyrl"),
+            message_ru=data.get("message_ru"),
             extra_data=data.get("extra_data") or {},
         )
 
@@ -81,7 +93,16 @@ def send_single_notification_task(self, raw):
 
     group(
         send_websocket_notification.s(raw),
-        send_push_notification_task.s(p.user_id, p.title, p.message, p.extra_data),
+        send_push_notification_task.s(
+            p.user_id,
+            p.title_uz_latn,
+            p.title_uz_cyrl,
+            p.title_ru,
+            p.message_uz_latn,
+            p.message_uz_cyrl,
+            p.message_ru,
+            p.extra_data,
+        ),
     ).apply_async()
     return f"User {p.user_id} uchun tasklar yuborildi."
 
@@ -111,7 +132,17 @@ def send_websocket_notification(self, data):
     retry_backoff_max=600,
     max_retries=3,
 )
-def send_push_notification_task(self, user_id, title, message, extra_data=None):
+def send_push_notification_task(
+    self,
+    user_id,
+    title_uz_latn,
+    title_uz_cyrl,
+    title_ru,
+    message_uz_latn,
+    message_uz_cyrl,
+    message_ru,
+    extra_data=None,
+):
     tokens = list(
         UserDevice.objects.filter(user_id=user_id)
         .exclude(fcm_token__isnull=True)
@@ -122,7 +153,15 @@ def send_push_notification_task(self, user_id, title, message, extra_data=None):
     if not tokens:
         return f"User {user_id} uchun tokenlar yo'q."
 
-    fcm_data = {"payload": json.dumps(extra_data or {})}
+    fcm_data = {
+        "payload": json.dumps(extra_data or {}),
+        "title_uz_latn": title_uz_latn or "",
+        "title_uz_cyrl": title_uz_cyrl or "",
+        "title_ru": title_ru or "",
+        "message_uz_latn": message_uz_latn or "",
+        "message_uz_cyrl": message_uz_cyrl or "",
+        "message_ru": message_ru or "",
+    }
     success = failure = 0
     invalid_tokens = []
 
@@ -130,7 +169,10 @@ def send_push_notification_task(self, user_id, title, message, extra_data=None):
         batch = tokens[i : i + FCM_BATCH_SIZE]
         response = messaging.send_multicast(
             messaging.MulticastMessage(
-                notification=messaging.Notification(title=title, body=message),
+                notification=messaging.Notification(
+                    title=title_uz_latn or "Xabarnoma",
+                    body=message_uz_latn or "",
+                ),
                 data=fcm_data,
                 tokens=batch,
             )

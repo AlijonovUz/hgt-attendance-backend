@@ -22,12 +22,19 @@ class UserFilter(django_filters.FilterSet):
 
 
 class DepartmentFilter(django_filters.FilterSet):
+    region = django_filters.UUIDFilter(field_name="branch__region")
+    district = django_filters.UUIDFilter(field_name="branch__district")
+
     class Meta:
         model = Department
-        fields = ["branch"]
+        fields = ["branch", "region", "district"]
 
 
 class PositionFilter(django_filters.FilterSet):
+    region = django_filters.UUIDFilter(field_name="department__branch__region")
+    district = django_filters.UUIDFilter(field_name="department__branch__district")
+    branch = django_filters.UUIDFilter(field_name="department__branch")
+
     class Meta:
         model = Position
-        fields = ["department", "department__branch"]
+        fields = ["department", "branch", "region", "district"]
