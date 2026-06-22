@@ -2,17 +2,17 @@ import hmac
 import hashlib
 from django.utils import timezone
 from django.conf import settings
+from django.db.models import Q
 from rest_framework import serializers
 
 from apps.utils.face import hash_compare
 from apps.utils.geo import haversine
 from apps.users.serializers import UserShortInfoSerializer
+from apps.users.models import User
 from apps.notifications.models import Notification
 from datetime import time
 
 from .models import Attendance, Geozone, FaceLog, GpsLog, SignatureLog
-from apps.users.models import User
-from django.db.models import Q
 
 
 class GeozoneSerializer(serializers.ModelSerializer):
@@ -236,10 +236,10 @@ class AttendanceCreateSerializer(serializers.ModelSerializer):
 
             q_filters = Q()
             if getattr(user, "branch", None):
-                q_filters |= Q(branch=user.branch, role__name="Kadrlar")
+                q_filters |= Q(branch=user.branch, role__permissions__code="employee_view_all")
             if getattr(user, "department", None):
                 q_filters |= Q(
-                    department=user.department, role__name="Bo'lim boshlig'i"
+                    department=user.department, role__permissions__code="employee_view_dept"
                 )
 
             if q_filters:
