@@ -178,6 +178,8 @@ class ReportService:
                 continue
             if status == "late" and stat["late"] == 0:
                 continue
+            if status == "left_early" and stat["left_early"] == 0:
+                continue
 
             user = stat["user"]
             branch_name = user.branch.name if user.branch else None
