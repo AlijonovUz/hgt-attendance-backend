@@ -235,11 +235,11 @@ class AttendanceCreateSerializer(serializers.ModelSerializer):
             )
 
             q_filters = Q()
-            if getattr(user, "branch", None):
-                q_filters |= Q(branch=user.branch, role__permissions__code="employee_view_all")
-            if getattr(user, "department", None):
+            if user.branch_id:
+                q_filters |= Q(branch_id=user.branch_id, role__permissions__code="employee_view_all")
+            if user.department_id:
                 q_filters |= Q(
-                    department=user.department, role__permissions__code="employee_view_dept"
+                    department_id=user.department_id, role__permissions__code="employee_view_dept"
                 )
 
             if q_filters:
