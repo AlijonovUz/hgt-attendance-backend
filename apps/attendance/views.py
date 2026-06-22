@@ -68,8 +68,25 @@ class AttendanceViewSet(BaseManageViewSet):
         if user.is_superuser or user.has_permission("attendance_view_history_all"):
             return qs
 
-        if user.has_permission("attendance_view_history_dept") and user.department:
-            return qs.filter(Q(user=user) | Q(user__department=user.department))
+        if (
+            user.has_permission("attendance_view_history_region")
+            and user.branch
+            and user.branch.region_id
+        ):
+            return qs.filter(user__branch__region_id=user.branch.region_id)
+
+        if (
+            user.has_permission("attendance_view_history_district")
+            and user.branch
+            and user.branch.district_id
+        ):
+            return qs.filter(user__branch__district_id=user.branch.district_id)
+
+        if user.has_permission("attendance_view_history_branch") and user.branch_id:
+            return qs.filter(user__branch_id=user.branch_id)
+
+        if user.has_permission("attendance_view_history_dept") and user.department_id:
+            return qs.filter(Q(user=user) | Q(user__department_id=user.department_id))
 
         if user.has_permission("attendance_view_history_self"):
             return qs.filter(user=user)
