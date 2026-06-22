@@ -59,6 +59,7 @@ class AttendanceViewSet(BaseManageViewSet):
     http_method_names = ["get", "post", "head", "options"]
     action_permissions = {
         "create": "attendance_check_in",
+        "personal_stats": "attendance_view_history_self",
     }
 
     def get_queryset(self):
