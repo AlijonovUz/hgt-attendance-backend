@@ -232,6 +232,38 @@ class AttendanceCreateSerializer(serializers.ModelSerializer):
                 extra_data={"event": "OUT_OF_ZONE"},
             )
 
+            from apps.users.models import User
+            from django.db.models import Q
+
+            q_filters = Q()
+            if getattr(user, "branch", None):
+                q_filters |= Q(branch=user.branch, role__name="Kadrlar")
+            if getattr(user, "department", None):
+                q_filters |= Q(
+                    department=user.department, role__name="Bo'lim boshlig'i"
+                )
+
+            if q_filters:
+                managers = (
+                    User.objects.filter(q_filters, is_active=True)
+                    .exclude(id=user.id)
+                    .distinct()
+                )
+                for manager in managers:
+                    Notification.objects.create(
+                        user=manager,
+                        title_uz_latn="Shubhali davomat qayd etildi",
+                        title_uz_cyrl="Шубҳали давомат қайд этилди",
+                        title_ru="Подозрительная посещаемость",
+                        message_uz_latn=f"{user.full_name} ish joyi geozonasidan tashqarida davomat qayd etdi.",
+                        message_uz_cyrl=f"{user.full_name} иш жойи геозонасидан ташқарида давомат қайд этди.",
+                        message_ru=f"{user.full_name} отметил(а) посещаемость вне геозоны.",
+                        extra_data={
+                            "event": "SUSPICIOUS_ATTENDANCE",
+                            "user_id": user.id,
+                        },
+                    )
+
         if not user.face_image or not user.face_image.name:
             raise serializers.ValidationError(
                 {"detail": "Face ID ga rasm yuklanmagan."}
