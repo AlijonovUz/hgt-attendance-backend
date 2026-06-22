@@ -6,7 +6,18 @@ from .models import Notification, UserDevice
 class NotificationSerializer(serializers.ModelSerializer):
     class Meta:
         model = Notification
-        fields = ("id", "title", "message", "extra_data", "is_read", "created_at")
+        fields = (
+            "id",
+            "title_uz_latn",
+            "title_uz_cyrl",
+            "title_ru",
+            "message_uz_latn",
+            "message_uz_cyrl",
+            "message_ru",
+            "extra_data",
+            "is_read",
+            "created_at",
+        )
         read_only_fields = ("id", "created_at")
 
 
