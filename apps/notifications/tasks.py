@@ -167,7 +167,7 @@ def send_push_notification_task(
 
     for i in range(0, len(tokens), FCM_BATCH_SIZE):
         batch = tokens[i : i + FCM_BATCH_SIZE]
-        response = messaging.send_multicast(
+        response = messaging.send_each_for_multicast(
             messaging.MulticastMessage(
                 notification=messaging.Notification(
                     title=title_uz_latn or "Xabarnoma",
