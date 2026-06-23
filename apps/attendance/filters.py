@@ -12,6 +12,8 @@ class AttendanceFilter(django_filters.FilterSet):
     )
     department = django_filters.CharFilter(field_name="user__department")
     branch = django_filters.CharFilter(field_name="user__branch")
+    region = django_filters.CharFilter(field_name="user__branch__region")
+    district = django_filters.CharFilter(field_name="user__branch__district")
 
     class Meta:
         model = Attendance
@@ -21,6 +23,8 @@ class AttendanceFilter(django_filters.FilterSet):
             "face_verify",
             "department",
             "branch",
+            "region",
+            "district",
         ]
 
 
