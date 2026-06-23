@@ -1,9 +1,10 @@
 from rest_framework import serializers
 from apps.users.serializers import UserShortInfoSerializer
 from .models import KPIResult, DailyAttendance
+from apps.utils.serializers import RegionDistrictBranchMixin
 
 
-class KPIResultSerializer(serializers.ModelSerializer):
+class KPIResultSerializer(RegionDistrictBranchMixin, serializers.ModelSerializer):
     user_info = UserShortInfoSerializer(source="user", read_only=True)
     rating_display = serializers.CharField(
         source="get_rating_category_display", read_only=True
@@ -15,6 +16,9 @@ class KPIResultSerializer(serializers.ModelSerializer):
             "id",
             "user",
             "user_info",
+            "region",
+            "district",
+            "branch",
             "month",
             "total_work_days",
             "attended_days",
@@ -32,7 +36,7 @@ class KPIResultSerializer(serializers.ModelSerializer):
         ]
 
 
-class DailyAttendanceSerializer(serializers.ModelSerializer):
+class DailyAttendanceSerializer(RegionDistrictBranchMixin, serializers.ModelSerializer):
     user_info = UserShortInfoSerializer(source="user", read_only=True)
 
     class Meta:
@@ -41,6 +45,9 @@ class DailyAttendanceSerializer(serializers.ModelSerializer):
             "id",
             "user",
             "user_info",
+            "region",
+            "district",
+            "branch",
             "date",
             "schedule_name",
             "is_mandatory",
