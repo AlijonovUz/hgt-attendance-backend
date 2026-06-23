@@ -183,9 +183,9 @@ def send_push_notification_task(
             batch[j]
             for j, r in enumerate(response.responses)
             if not r.success
-            and r.exception
-            and hasattr(r.exception, "code")
-            and r.exception.code in ("UNREGISTERED", "INVALID_ARGUMENT", "NOT_FOUND")
+            and isinstance(
+                r.exception, (messaging.UnregisteredError, messaging.SenderIdMismatchError)
+            )
         ]
 
     if invalid_tokens:
