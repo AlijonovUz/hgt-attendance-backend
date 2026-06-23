@@ -6,16 +6,12 @@ from django.core.cache import cache
 class NotificationConsumer(AsyncWebsocketConsumer):
     async def connect(self):
         user = self.scope.get("user")
-        cache_key = self.scope.get("ws_cache_key")
 
         if not user or user.is_anonymous:
             await self.close(code=4003)
             return
 
         await self.accept()
-
-        if cache_key:
-            cache.delete(cache_key)
 
         self.group_name = f"user_{user.id}_notifications"
         await self.channel_layer.group_add(
