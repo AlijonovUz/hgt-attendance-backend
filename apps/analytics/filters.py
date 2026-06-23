@@ -7,6 +7,12 @@ class KPIResultFilter(django_filters.FilterSet):
     district = django_filters.CharFilter(field_name="user__branch__district")
     branch = django_filters.CharFilter(field_name="user__branch")
     department = django_filters.CharFilter(field_name="user__department")
+    start_date = django_filters.DateFilter(
+        field_name="month", lookup_expr="gte"
+    )
+    end_date = django_filters.DateFilter(
+        field_name="month", lookup_expr="lte"
+    )
 
     class Meta:
         model = KPIResult
@@ -18,6 +24,12 @@ class DailyAttendanceFilter(django_filters.FilterSet):
     district = django_filters.CharFilter(field_name="user__branch__district")
     branch = django_filters.CharFilter(field_name="user__branch")
     department = django_filters.CharFilter(field_name="user__department")
+    start_date = django_filters.DateFilter(
+        field_name="date", lookup_expr="gte"
+    )
+    end_date = django_filters.DateFilter(
+        field_name="date", lookup_expr="lte"
+    )
 
     class Meta:
         model = DailyAttendance
