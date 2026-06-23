@@ -2,6 +2,7 @@ import uuid
 
 from django.core.cache import cache
 from django.db.models import Count, Q
+from django.db import IntegrityError, transaction
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import generics, status, permissions
@@ -106,16 +107,21 @@ class UserDeviceRegisterView(APIView):
         device_id = serializer.validated_data["device_id"]
         device_type = serializer.validated_data["device_type"]
 
-        UserDevice.objects.filter(fcm_token=token).exclude(device_id=device_id).delete()
+        try:
+            with transaction.atomic():
+                UserDevice.objects.filter(fcm_token=token).exclude(device_id=device_id).delete()
 
-        device, created = UserDevice.objects.update_or_create(
-            device_id=device_id,
-            defaults={
-                "user": request.user,
-                "fcm_token": token,
-                "device_type": device_type,
-            },
-        )
+                device, created = UserDevice.objects.update_or_create(
+                    device_id=device_id,
+                    defaults={
+                        "user": request.user,
+                        "fcm_token": token,
+                        "device_type": device_type,
+                    },
+                )
+        except IntegrityError:
+            # Token concurrent request or already assigned in another transaction
+            created = False
 
         return Response(
             {
