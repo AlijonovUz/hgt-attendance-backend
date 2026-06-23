@@ -261,8 +261,8 @@ AWS_S3_ENDPOINT_URL = env.str('AWS_S3_ENDPOINT_URL')
 AWS_S3_ADDRESSING_STYLE = env.str('AWS_S3_ADDRESSING_STYLE', default='path')
 
 # Celery Configuration
-CELERY_BROKER_URL = env.str('CELERY_BROKER_URL', default='redis://localhost:6379/0')
-CELERY_RESULT_BACKEND = env.str('CELERY_RESULT_BACKEND', default='redis://localhost:6379/0')
+CELERY_BROKER_URL = env.str('CELERY_BROKER_URL', default='redis://localhost:6379/2')
+CELERY_RESULT_BACKEND = env.str('CELERY_RESULT_BACKEND', default='redis://localhost:6379/2')
 CELERY_TIMEZONE = TIME_ZONE
 CELERY_ACCEPT_CONTENT = ['application/json']
 CELERY_RESULT_SERIALIZER = 'json'
