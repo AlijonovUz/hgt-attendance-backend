@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Notification
+from .models import Notification, UserDevice
 
 from apps.utils.admin import BaseModelAdmin as ModelAdmin
 
@@ -52,3 +52,24 @@ class NotificationAdmin(ModelAdmin):
             },
         ),
     )
+
+
+@admin.register(UserDevice)
+class UserDeviceAdmin(ModelAdmin):
+    list_display = (
+        "id",
+        "user",
+        "device_type",
+        "device_id",
+        "created_at",
+        "is_active",
+    )
+    list_display_links = ("id", "user")
+    list_filter = ("device_type", "created_at", "is_active")
+    search_fields = (
+        "user__full_name",
+        "device_id",
+        "fcm_token",
+    )
+    autocomplete_fields = ("user",)
+    readonly_fields = ("created_at",)

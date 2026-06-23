@@ -25,4 +25,8 @@ class UserDeviceSerializer(serializers.ModelSerializer):
     class Meta:
         model = UserDevice
         fields = ("id", "user", "fcm_token", "device_type", "device_id", "created_at")
-        read_only_fields = ("id",)
+        read_only_fields = ("id", "user", "created_at")
+        extra_kwargs = {
+            "fcm_token": {"validators": []},
+            "device_id": {"validators": []},
+        }
