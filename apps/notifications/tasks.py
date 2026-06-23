@@ -17,7 +17,7 @@ FCM_BATCH_SIZE = 500
 
 @dataclass(frozen=True, slots=True)
 class NotificationPayload:
-    user_id: int
+    user_id: str
     title_uz_latn: str
     title_uz_cyrl: str
     title_ru: str
@@ -180,7 +180,12 @@ def send_push_notification_task(
         success += response.success_count
         failure += response.failure_count
         invalid_tokens += [
-            batch[j] for j, r in enumerate(response.responses) if not r.success
+            batch[j]
+            for j, r in enumerate(response.responses)
+            if not r.success
+            and r.exception
+            and hasattr(r.exception, "code")
+            and r.exception.code in ("UNREGISTERED", "INVALID_ARGUMENT", "NOT_FOUND")
         ]
 
     if invalid_tokens:
