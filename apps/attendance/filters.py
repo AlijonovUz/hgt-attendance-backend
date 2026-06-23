@@ -50,21 +50,22 @@ class BaseLogFilter(django_filters.FilterSet):
     region = django_filters.CharFilter(field_name="user__branch__region")
     district = django_filters.CharFilter(field_name="user__branch__district")
     branch = django_filters.CharFilter(field_name="user__branch")
+    department = django_filters.CharFilter(field_name="user__department")
 
 
 class FaceLogFilter(BaseLogFilter):
     class Meta:
         model = FaceLog
-        fields = ["user", "is_success", "region", "district", "branch"]
+        fields = ["user", "is_success", "region", "district", "branch", "department"]
 
 
 class GpsLogFilter(BaseLogFilter):
     class Meta:
         model = GpsLog
-        fields = ["user", "is_success", "region", "district", "branch"]
+        fields = ["user", "is_success", "region", "district", "branch", "department"]
 
 
 class SignatureLogFilter(BaseLogFilter):
     class Meta:
         model = SignatureLog
-        fields = ["user", "is_valid", "region", "district", "branch"]
+        fields = ["user", "is_valid", "region", "district", "branch", "department"]

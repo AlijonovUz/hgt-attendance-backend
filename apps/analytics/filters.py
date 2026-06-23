@@ -6,16 +6,18 @@ class KPIResultFilter(django_filters.FilterSet):
     region = django_filters.CharFilter(field_name="user__branch__region")
     district = django_filters.CharFilter(field_name="user__branch__district")
     branch = django_filters.CharFilter(field_name="user__branch")
+    department = django_filters.CharFilter(field_name="user__department")
 
     class Meta:
         model = KPIResult
-        fields = ["user", "month", "rating_category", "region", "district", "branch"]
+        fields = ["user", "month", "rating_category", "region", "district", "branch", "department"]
 
 
 class DailyAttendanceFilter(django_filters.FilterSet):
     region = django_filters.CharFilter(field_name="user__branch__region")
     district = django_filters.CharFilter(field_name="user__branch__district")
     branch = django_filters.CharFilter(field_name="user__branch")
+    department = django_filters.CharFilter(field_name="user__department")
 
     class Meta:
         model = DailyAttendance
@@ -28,4 +30,5 @@ class DailyAttendanceFilter(django_filters.FilterSet):
             "region",
             "district",
             "branch",
+            "department",
         ]
