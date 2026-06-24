@@ -229,6 +229,18 @@ class AttendanceCreateSerializer(serializers.ModelSerializer):
             message="Ichida" if in_geozone else "Tashqarida",
         )
 
+        if not user.face_image or not user.face_image.name:
+            raise serializers.ValidationError(
+                {"detail": "Face ID ga rasm yuklanmagan."}
+            )
+
+        is_verified, msg = hash_compare(user, image)
+
+        FaceLog.objects.create(user=user, is_success=is_verified, message=msg)
+
+        if not is_verified:
+            raise serializers.ValidationError({"detail": msg})
+
         if not in_geozone:
             Notification.objects.create(
                 user=user,
@@ -268,18 +280,6 @@ class AttendanceCreateSerializer(serializers.ModelSerializer):
                             "event": "SUSPICIOUS_ATTENDANCE",
                         },
                     )
-
-        if not user.face_image or not user.face_image.name:
-            raise serializers.ValidationError(
-                {"detail": "Face ID ga rasm yuklanmagan."}
-            )
-
-        is_verified, msg = hash_compare(user, image)
-
-        FaceLog.objects.create(user=user, is_success=is_verified, message=msg)
-
-        if not is_verified:
-            raise serializers.ValidationError({"detail": msg})
 
         attrs["face_verify"] = True
         return attrs
