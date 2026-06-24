@@ -104,9 +104,11 @@ class DashboardService:
             from django.db.models import Sum
             from apps.analytics.models import DailyAttendance
 
-            stats = DailyAttendance.objects.filter(
+            qs = DailyAttendance.objects.filter(
                 user__in=users, date__range=(s_date, e_date)
-            ).aggregate(
+            )
+            
+            stats = qs.aggregate(
                 arrived=Sum("present"),
                 lates=Sum("late"),
                 early_leaves=Sum("left_early"),
@@ -121,6 +123,14 @@ class DashboardService:
             absent = stats["absent"] or 0
 
             pct = (arrived / expected * 100) if expected > 0 else 0
+
+            work_days_count = qs.filter(total_expected__gt=0).values("date").distinct().count()
+            if work_days_count > 1:
+                arrived = int(round(arrived / work_days_count))
+                lates = int(round(lates / work_days_count))
+                early_leaves = int(round(early_leaves / work_days_count))
+                absent = int(round(absent / work_days_count))
+
             return arrived, lates, early_leaves, absent, pct
 
         cur_arrived, cur_lates, cur_early, cur_absent, cur_pct = 0, 0, 0, 0, 0
