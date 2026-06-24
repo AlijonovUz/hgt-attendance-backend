@@ -266,7 +266,7 @@ class AttendanceCreateSerializer(serializers.ModelSerializer):
                         message_ru=f"{user.full_name} отметил(а) посещаемость вне геозоны.",
                         extra_data={
                             "event": "SUSPICIOUS_ATTENDANCE",
-                            "user_id": user.id,
+                            "user_id": str(user.id),
                         },
                     )
 
