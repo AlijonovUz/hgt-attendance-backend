@@ -78,8 +78,7 @@ class DailyKPIService:
         actions_per_day = 4 if has_lunch else 2
 
         if is_mand:
-            if check_in or check_out or timezone.now() > shift_end_dt:
-                total_expected = 1
+            total_expected = 1
         elif check_in or check_out:
             total_expected = 1
 
@@ -110,7 +109,7 @@ class DailyKPIService:
             left_early = 1
 
         if not (check_in or check_out) and is_mand:
-            if timezone.now() > shift_end_dt:
+            if timezone.now() > shift_start_dt:
                 absent = 1
 
         snapshot, _ = DailyAttendance.objects.update_or_create(
