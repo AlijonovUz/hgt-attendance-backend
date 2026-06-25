@@ -41,6 +41,7 @@ jobs:
             sudo systemctl restart hgt-attendance-backend_daphne
             sudo systemctl restart hgt-attendance-backend_worker
             sudo systemctl restart hgt-attendance-backend_beat
+            sudo systemctl restart hgt-attendance-backend_bot
             
             sudo systemctl reload nginx
             
