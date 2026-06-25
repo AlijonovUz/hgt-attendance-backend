@@ -110,8 +110,10 @@ class UserAdmin(ModelAdmin):
         "schedule",
         "is_active",
         "is_fired",
+        "telegram_id",
+        "language",
     ]
-    search_fields = ["full_name", "jshshir", "phone"]
+    search_fields = ["full_name", "jshshir", "phone", "telegram_id"]
     list_filter = [
         "is_active",
         "is_fired",
@@ -132,6 +134,15 @@ class UserAdmin(ModelAdmin):
                     "jshshir",
                     "phone",
                     "face_image",
+                )
+            },
+        ),
+        (
+            "Telegram sozlamalari",
+            {
+                "fields": (
+                    "telegram_id",
+                    "language",
                 )
             },
         ),
