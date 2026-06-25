@@ -4,7 +4,13 @@ from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.conf import settings
 from aiogram import Bot, Dispatcher, types, F
-from aiogram.types import Update, InlineKeyboardMarkup, InlineKeyboardButton, BotCommand, BotCommandScopeChat
+from aiogram.types import (
+    Update,
+    InlineKeyboardMarkup,
+    InlineKeyboardButton,
+    BotCommand,
+    BotCommandScopeChat,
+)
 from aiogram.filters import CommandStart, Command
 from asgiref.sync import sync_to_async
 
@@ -32,7 +38,22 @@ def get_language_keyboard(uuid_str):
 
 def get_connect_keyboard(uuid_str):
     buttons = [
-        [InlineKeyboardButton(text="✅ Telegramga ulanish", callback_data=f"connect:{uuid_str}")]
+        [
+            InlineKeyboardButton(
+                text="✅ Telegramga ulanish", callback_data=f"connect:{uuid_str}"
+            )
+        ]
+    ]
+    return InlineKeyboardMarkup(inline_keyboard=buttons)
+
+
+def get_disconnect_keyboard(uuid_str):
+    buttons = [
+        [
+            InlineKeyboardButton(
+                text="❌ Telegramdan uzish", callback_data=f"disconnect:{uuid_str}"
+            )
+        ]
     ]
     return InlineKeyboardMarkup(inline_keyboard=buttons)
 
@@ -46,13 +67,22 @@ async def start_command_handler(message: types.Message):
 
         try:
             user = await sync_to_async(User.objects.get)(id=uuid_str)
-            await message.answer(
-                "🇺🇿 <b>Iltimos, o'zingizga qulay tilni tanlang:</b>\n"
-                "🇺🇿 <b>Илтимос, ўзингизга қулай тилни танланг:</b>\n"
-                "🇷🇺 <b>Пожалуйста, выберите удобный для вас язык:</b>",
-                reply_markup=get_language_keyboard(uuid_str),
-                parse_mode="HTML",
-            )
+
+            if user.telegram_id:
+                await message.answer(
+                    "✅ <b>Profilingiz allaqachon Telegramga ulangan!</b>\n\n"
+                    "Agar profilni Telegramdan uzmoqchi bo'lsangiz, quyidagi tugmani bosing:",
+                    reply_markup=get_disconnect_keyboard(uuid_str),
+                    parse_mode="HTML",
+                )
+            else:
+                await message.answer(
+                    "🇺🇿 <b>Iltimos, o'zingizga qulay tilni tanlang:</b>\n"
+                    "🇺🇿 <b>Илтимос, ўзингизга қулай тилни танланг:</b>\n"
+                    "🇷🇺 <b>Пожалуйста, выберите удобный для вас язык:</b>",
+                    reply_markup=get_language_keyboard(uuid_str),
+                    parse_mode="HTML",
+                )
         except User.DoesNotExist:
             await message.answer(
                 "❌ <b>Foydalanuvchi topilmadi!</b>\n\nIltimos, tizim orqali qayta urinib ko'ring.",
@@ -102,26 +132,53 @@ async def connect_selection_handler(callback_query: types.CallbackQuery):
         await sync_to_async(user.save)(update_fields=["telegram_id"])
 
         await callback_query.message.delete()
-        
+
         lang = user.language or "uz_latn"
         if lang == "uz_latn":
-            text = (
-                f"✅ <b>Profilingiz muvaffaqiyatli ulandi!</b>\n\nEndi barcha bildirishnomalarni aynan shu yerda qabul qilib borasiz."
-            )
+            text = f"✅ <b>Profilingiz muvaffaqiyatli ulandi!</b>\n\nEndi barcha bildirishnomalarni aynan shu yerda qabul qilib borasiz."
         elif lang == "uz_cyrl":
-            text = (
-                f"✅ <b>Профилингиз муваффақиятли уланди!</b>\n\nЭнди барча билдиришномаларни айнан шу ерда қабул қилиб борасиз."
-            )
+            text = f"✅ <b>Профилингиз муваффақиятли уланди!</b>\n\nЭнди барча билдиришномаларни айнан шу ерда қабул қилиб борасиз."
         else:
-            text = (
-                f"✅ <b>Ваш профиль успешно привязан!</b>\n\nТеперь вы будете получать уведомления прямо здесь."
-            )
+            text = f"✅ <b>Ваш профиль успешно привязан!</b>\n\nТеперь вы будете получать уведомления прямо здесь."
 
         await callback_query.message.answer(text, parse_mode="HTML")
     except User.DoesNotExist:
         await callback_query.answer("Foydalanuvchi topilmadi!", show_alert=True)
     except Exception as e:
         logger.error(f"Error in connect selection: {e}")
+        await callback_query.answer("Xatolik yuz berdi!", show_alert=True)
+
+
+@dp.callback_query(F.data.startswith("disconnect:"))
+async def disconnect_selection_handler(callback_query: types.CallbackQuery):
+    _, uuid_str = callback_query.data.split(":")
+    from apps.users.models import User
+
+    try:
+        user = await sync_to_async(User.objects.get)(id=uuid_str)
+        user.telegram_id = None
+        await sync_to_async(user.save)(update_fields=["telegram_id"])
+
+        await callback_query.message.delete()
+
+        lang = user.language or "uz_latn"
+        if lang == "uz_latn":
+            text = "❌ <b>Profilingiz Telegramdan uzildi.</b>"
+        elif lang == "uz_cyrl":
+            text = "❌ <b>Профилингиз Telegram дан узилди.</b>"
+        else:
+            text = "❌ <b>Ваш профиль отключен от Telegram.</b>"
+
+        await callback_query.message.answer(text, parse_mode="HTML")
+
+        await callback_query.bot.delete_my_commands(
+            scope=BotCommandScopeChat(chat_id=callback_query.from_user.id)
+        )
+
+    except User.DoesNotExist:
+        await callback_query.answer("Foydalanuvchi topilmadi!", show_alert=True)
+    except Exception as e:
+        logger.error(f"Error in disconnect selection: {e}")
         await callback_query.answer("Xatolik yuz berdi!", show_alert=True)
 
 
@@ -137,7 +194,7 @@ async def language_selection_handler(callback_query: types.CallbackQuery):
         await sync_to_async(user.save)(update_fields=["language"])
 
         await callback_query.message.delete()
-        
+
         if not user.telegram_id:
             if lang == "uz_latn":
                 text = f"✅ <b>Til tanlandi.</b>\n\nEndi profilingizni Telegramga ulash uchun pastdagi tugmani bosing."
@@ -145,11 +202,9 @@ async def language_selection_handler(callback_query: types.CallbackQuery):
                 text = f"✅ <b>Тил танланди.</b>\n\nЭнди профилингизни Telegram га улаш учун пастдаги тугмани босинг."
             else:
                 text = f"✅ <b>Язык выбран.</b>\n\nТеперь нажмите кнопку ниже, чтобы привязать ваш профиль к Telegram."
-                
+
             await callback_query.message.answer(
-                text, 
-                reply_markup=get_connect_keyboard(uuid_str), 
-                parse_mode="HTML"
+                text, reply_markup=get_connect_keyboard(uuid_str), parse_mode="HTML"
             )
         else:
             if lang == "uz_latn":
@@ -158,10 +213,9 @@ async def language_selection_handler(callback_query: types.CallbackQuery):
                 text = f"✅ <b>Тил муваффақиятли танланди.</b>\n\nЭнди барча билдиришномаларни ўзбек тилида қабул қилиб борасиз."
             else:
                 text = f"✅ <b>Язык успешно выбран.</b>\n\nТеперь вы будете получать все уведомления на русском языке."
-            
+
             await callback_query.message.answer(text, parse_mode="HTML")
-        
-        # O'sha foydalanuvchiga moslab komandalar menyusini yangilash
+
         commands = []
         if lang == "uz_latn":
             commands = [
@@ -178,12 +232,12 @@ async def language_selection_handler(callback_query: types.CallbackQuery):
                 BotCommand(command="start", description="Перезапустить бота"),
                 BotCommand(command="language", description="Изменить язык"),
             ]
-            
+
         await callback_query.bot.set_my_commands(
             commands=commands,
-            scope=BotCommandScopeChat(chat_id=callback_query.from_user.id)
+            scope=BotCommandScopeChat(chat_id=callback_query.from_user.id),
         )
-        
+
     except User.DoesNotExist:
         await callback_query.answer("Foydalanuvchi topilmadi!", show_alert=True)
     except Exception as e:
