@@ -36,22 +36,34 @@ def get_language_keyboard(uuid_str):
     return InlineKeyboardMarkup(inline_keyboard=buttons)
 
 
-def get_connect_keyboard(uuid_str):
+def get_connect_keyboard(uuid_str, lang="uz_latn"):
+    if lang == "uz_latn":
+        text = "✅ Telegramga ulanish"
+    elif lang == "uz_cyrl":
+        text = "✅ Telegram га уланиш"
+    else:
+        text = "✅ Привязать к Telegram"
     buttons = [
         [
             InlineKeyboardButton(
-                text="✅ Telegramga ulanish", callback_data=f"connect:{uuid_str}"
+                text=text, callback_data=f"connect:{uuid_str}"
             )
         ]
     ]
     return InlineKeyboardMarkup(inline_keyboard=buttons)
 
 
-def get_disconnect_keyboard(uuid_str):
+def get_disconnect_keyboard(uuid_str, lang="uz_latn"):
+    if lang == "uz_latn":
+        text = "❌ Telegramdan uzish"
+    elif lang == "uz_cyrl":
+        text = "❌ Telegram дан узиш"
+    else:
+        text = "❌ Отключить от Telegram"
     buttons = [
         [
             InlineKeyboardButton(
-                text="❌ Telegramdan uzish", callback_data=f"disconnect:{uuid_str}"
+                text=text, callback_data=f"disconnect:{uuid_str}"
             )
         ]
     ]
@@ -69,10 +81,17 @@ async def start_command_handler(message: types.Message):
             user = await sync_to_async(User.objects.get)(id=uuid_str)
 
             if user.telegram_id:
+                lang = user.language or "uz_latn"
+                if lang == "uz_latn":
+                    text = "✅ <b>Profilingiz allaqachon Telegramga ulangan!</b>\n\nAgar profilni Telegramdan uzmoqchi bo'lsangiz, quyidagi tugmani bosing:"
+                elif lang == "uz_cyrl":
+                    text = "✅ <b>Профилингиз аллақачон Telegram га уланган!</b>\n\nАгар профилни Telegram дан узмоқчи бўлсангиз, қуйидаги тугмани босинг:"
+                else:
+                    text = "✅ <b>Ваш профиль уже привязан к Telegram!</b>\n\nЕсли вы хотите отключить профиль от Telegram, нажмите кнопку ниже:"
+                
                 await message.answer(
-                    "✅ <b>Profilingiz allaqachon Telegramga ulangan!</b>\n\n"
-                    "Agar profilni Telegramdan uzmoqchi bo'lsangiz, quyidagi tugmani bosing:",
-                    reply_markup=get_disconnect_keyboard(uuid_str),
+                    text,
+                    reply_markup=get_disconnect_keyboard(uuid_str, lang),
                     parse_mode="HTML",
                 )
             else:
@@ -95,10 +114,28 @@ async def start_command_handler(message: types.Message):
                 parse_mode="HTML",
             )
     else:
-        await message.answer(
-            "👋 <b>Assalomu alaykum!</b>\n\nBotdan foydalanish uchun iltimos, dastur (sayt) orqali <b>Telegramga ulanish</b> tugmasini bosing.",
-            parse_mode="HTML",
-        )
+        from apps.users.models import User
+        
+        try:
+            user = await sync_to_async(User.objects.get)(telegram_id=message.from_user.id)
+            lang = user.language or "uz_latn"
+            if lang == "uz_latn":
+                text = "✅ <b>Profilingiz allaqachon Telegramga ulangan!</b>\n\nAgar profilni Telegramdan uzmoqchi bo'lsangiz, quyidagi tugmani bosing:"
+            elif lang == "uz_cyrl":
+                text = "✅ <b>Профилингиз аллақачон Telegram га уланган!</b>\n\nАгар профилни Telegram дан узмоқчи бўлсангиз, қуйидаги тугмани босинг:"
+            else:
+                text = "✅ <b>Ваш профиль уже привязан к Telegram!</b>\n\nЕсли вы хотите отключить профиль от Telegram, нажмите кнопку ниже:"
+
+            await message.answer(
+                text,
+                reply_markup=get_disconnect_keyboard(user.id, lang),
+                parse_mode="HTML",
+            )
+        except User.DoesNotExist:
+            await message.answer(
+                "👋 <b>Assalomu alaykum!</b>\n\nBotdan foydalanish uchun iltimos, dastur (sayt) orqali <b>Telegramga ulanish</b> tugmasini bosing.",
+                parse_mode="HTML",
+            )
 
 
 @dp.message(Command("language"))
@@ -204,7 +241,7 @@ async def language_selection_handler(callback_query: types.CallbackQuery):
                 text = f"✅ <b>Язык выбран.</b>\n\nТеперь нажмите кнопку ниже, чтобы привязать ваш профиль к Telegram."
 
             await callback_query.message.answer(
-                text, reply_markup=get_connect_keyboard(uuid_str), parse_mode="HTML"
+                text, reply_markup=get_connect_keyboard(uuid_str, lang), parse_mode="HTML"
             )
         else:
             if lang == "uz_latn":
