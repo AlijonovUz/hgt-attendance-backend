@@ -95,10 +95,21 @@ async def start_command_handler(message: types.Message):
                 parse_mode="HTML",
             )
     else:
-        await message.answer(
-            "👋 <b>Assalomu alaykum!</b>\n\nBotdan foydalanish uchun iltimos, dastur (sayt) orqali <b>Telegramga ulanish</b> tugmasini bosing.",
-            parse_mode="HTML",
-        )
+        from apps.users.models import User
+        
+        try:
+            user = await sync_to_async(User.objects.get)(telegram_id=message.from_user.id)
+            await message.answer(
+                "✅ <b>Profilingiz allaqachon Telegramga ulangan!</b>\n\n"
+                "Agar profilni Telegramdan uzmoqchi bo'lsangiz, quyidagi tugmani bosing:",
+                reply_markup=get_disconnect_keyboard(user.id),
+                parse_mode="HTML",
+            )
+        except User.DoesNotExist:
+            await message.answer(
+                "👋 <b>Assalomu alaykum!</b>\n\nBotdan foydalanish uchun iltimos, dastur (sayt) orqali <b>Telegramga ulanish</b> tugmasini bosing.",
+                parse_mode="HTML",
+            )
 
 
 @dp.message(Command("language"))
