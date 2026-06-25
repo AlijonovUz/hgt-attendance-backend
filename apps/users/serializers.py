@@ -351,7 +351,6 @@ class ProfileSerializer(serializers.ModelSerializer):
             "full_name",
             "jshshir",
             "current_month_kpi",
-            "telegram_id",
             "telegram_url",
             "is_password_changed",
             "created_at",
