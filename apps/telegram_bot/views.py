@@ -280,27 +280,3 @@ async def language_selection_handler(callback_query: types.CallbackQuery):
     except Exception as e:
         logger.error(f"Error in language selection: {e}")
         await callback_query.answer("Xatolik yuz berdi!", show_alert=True)
-
-
-@csrf_exempt
-async def telegram_webhook_view(request):
-    if request.method == "POST":
-        try:
-            if not settings.TELEGRAM_BOT_TOKEN:
-                return JsonResponse(
-                    {"status": "error", "message": "Bot token is missing"}
-                )
-
-            bot = Bot(token=settings.TELEGRAM_BOT_TOKEN)
-            update_data = json.loads(request.body)
-            update = Update(**update_data)
-
-            await dp.feed_update(bot=bot, update=update)
-
-            await bot.session.close()
-
-            return JsonResponse({"status": "ok"})
-        except Exception as e:
-            logger.error(f"Telegram webhook error: {e}")
-            return JsonResponse({"status": "error", "message": str(e)})
-    return JsonResponse({"status": "ok"})
