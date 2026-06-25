@@ -15,4 +15,4 @@ class Command(BaseCommand):
         except Exception as e:
             logger.warning(f"Failed to delete webhook: {e}")
 
-        bot.infinity_polling()
+        bot.infinity_polling(timeout=90, long_polling_timeout=90)
