@@ -136,9 +136,7 @@ def send_websocket_notification(self, data):
 def send_telegram_notification_task(self, raw):
     from apps.users.models import User
     from django.conf import settings
-    from aiogram import Bot
-    from aiogram.exceptions import TelegramAPIError
-    import asyncio
+    import telebot
 
     if not settings.TELEGRAM_BOT_TOKEN:
         return "Telegram bot token is not configured."
@@ -163,21 +161,9 @@ def send_telegram_notification_task(self, raw):
 
         full_message = f"🔔 <b>{title}</b>\n\n{message}"
 
-        async def _send():
-            import socket
-            from aiogram.client.session.aiohttp import AiohttpSession
-            session = AiohttpSession()
-            session._connector_init['family'] = socket.AF_INET
-            
-            bot = Bot(token=settings.TELEGRAM_BOT_TOKEN, session=session)
-            try:
-                await bot.send_message(
-                    chat_id=user.telegram_id, text=full_message, parse_mode="HTML"
-                )
-            finally:
-                await bot.session.close()
+        bot = telebot.TeleBot(settings.TELEGRAM_BOT_TOKEN)
+        bot.send_message(user.telegram_id, full_message, parse_mode="HTML")
 
-        asyncio.run(_send())
         return f"Telegram orqali yuborildi: {user.id}"
     except User.DoesNotExist:
         return "User not found."
