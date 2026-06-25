@@ -1,16 +1,21 @@
 import asyncio
 import logging
+import socket
 from django.core.management.base import BaseCommand
 from django.conf import settings
 from aiogram import Bot
+from aiogram.client.session.aiohttp import AiohttpSession
 
 from apps.telegram_bot.views import dp
 
 logger = logging.getLogger(__name__)
 
 async def start_bot():
-    bot = Bot(token=settings.TELEGRAM_BOT_TOKEN)
-    logger.info("Bot is running in Polling mode...")
+    session = AiohttpSession()
+    session._connector_init['family'] = socket.AF_INET
+    
+    bot = Bot(token=settings.TELEGRAM_BOT_TOKEN, session=session)
+    logger.info("Bot is running in Polling mode (IPv4 only)...")
     try:
         await bot.delete_webhook(drop_pending_updates=True)
     except Exception as e:
