@@ -6,4 +6,5 @@ urlpatterns = [
     path("audit/", include("apps.audit.urls")),
     path("analytics/", include("apps.analytics.urls")),
     path("notifications/", include("apps.notifications.urls")),
+    path("telegram/", include("apps.telegram_bot.urls")),
 ]

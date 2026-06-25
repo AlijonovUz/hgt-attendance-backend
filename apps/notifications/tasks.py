@@ -103,6 +103,7 @@ def send_single_notification_task(self, raw):
             p.message_ru,
             p.extra_data,
         ),
+        send_telegram_notification_task.s(raw),
     ).apply_async()
     return f"User {p.user_id} uchun tasklar yuborildi."
 
@@ -123,6 +124,61 @@ def send_websocket_notification(self, data):
         f"user_{data['user_id']}_notifications",
         {"type": "send_notification", "message": data},
     )
+
+
+@shared_task(
+    bind=True,
+    autoretry_for=(Exception,),
+    retry_backoff=True,
+    retry_backoff_max=60,
+    max_retries=3,
+)
+def send_telegram_notification_task(self, raw):
+    from apps.users.models import User
+    from django.conf import settings
+    from aiogram import Bot
+    from aiogram.exceptions import TelegramAPIError
+    import asyncio
+
+    if not settings.TELEGRAM_BOT_TOKEN:
+        return "Telegram bot token is not configured."
+
+    user_id = raw.get("user_id")
+    try:
+        user = User.objects.get(id=user_id)
+        if not user.telegram_id:
+            return "Foydalanuvchi Telegram ga ulanmagan."
+
+        lang = user.language or "uz_latn"
+
+        if lang == "uz_latn":
+            title = raw.get("title_uz_latn")
+            message = raw.get("message_uz_latn")
+        elif lang == "uz_cyrl":
+            title = raw.get("title_uz_cyrl")
+            message = raw.get("message_uz_cyrl")
+        else:
+            title = raw.get("title_ru")
+            message = raw.get("message_ru")
+
+        full_message = f"🔔 <b>{title}</b>\n\n{message}"
+
+        async def _send():
+            bot = Bot(token=settings.TELEGRAM_BOT_TOKEN)
+            try:
+                await bot.send_message(
+                    chat_id=user.telegram_id, text=full_message, parse_mode="HTML"
+                )
+            finally:
+                await bot.session.close()
+
+        asyncio.run(_send())
+        return f"Telegram orqali yuborildi: {user.id}"
+    except User.DoesNotExist:
+        return "User not found."
+    except Exception as e:
+        logger.error(f"Telegram notification error: {e}")
+        raise self.retry(exc=e, max_retries=3)
 
 
 @shared_task(
@@ -184,7 +240,8 @@ def send_push_notification_task(
             for j, r in enumerate(response.responses)
             if not r.success
             and isinstance(
-                r.exception, (messaging.UnregisteredError, messaging.SenderIdMismatchError)
+                r.exception,
+                (messaging.UnregisteredError, messaging.SenderIdMismatchError),
             )
         ]
 

@@ -319,6 +319,7 @@ class UserSerializer(serializers.ModelSerializer):
 
 class ProfileSerializer(serializers.ModelSerializer):
     current_month_kpi = serializers.SerializerMethodField()
+    telegram_url = serializers.SerializerMethodField()
     role_info = RoleShortSerializer(source="role", read_only=True)
     branch_info = BranchSerializer(source="branch", read_only=True)
     department_info = DepartmentShortSerializer(source="department", read_only=True)
@@ -339,6 +340,8 @@ class ProfileSerializer(serializers.ModelSerializer):
             "role_info",
             "schedule_info",
             "current_month_kpi",
+            "telegram_id",
+            "telegram_url",
             "is_password_changed",
             "created_at",
             "updated_at",
@@ -348,10 +351,20 @@ class ProfileSerializer(serializers.ModelSerializer):
             "full_name",
             "jshshir",
             "current_month_kpi",
+            "telegram_id",
+            "telegram_url",
             "is_password_changed",
             "created_at",
             "updated_at",
         ]
+
+    def get_telegram_url(self, obj):
+        from django.conf import settings
+
+        bot_username = getattr(settings, "TELEGRAM_BOT_USERNAME", None)
+        if not bot_username:
+            return None
+        return f"https://t.me/{bot_username}?start={obj.id}"
 
     def get_current_month_kpi(self, obj):
         now = timezone.localtime()
