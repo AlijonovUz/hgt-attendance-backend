@@ -155,16 +155,21 @@ def send_telegram_notification_task(self, raw):
             title = raw.get("title_uz_latn")
             message = raw.get("message_uz_latn")
         elif lang == "uz_cyrl":
-            title = raw.get("title_uz_cyrl")
-            message = raw.get("message_uz_cyrl")
+            title = raw.get("title_uz_cyrl") or raw.get("title_uz_latn")
+            message = raw.get("message_uz_cyrl") or raw.get("message_uz_latn")
         else:
-            title = raw.get("title_ru")
-            message = raw.get("message_ru")
+            title = raw.get("title_ru") or raw.get("title_uz_latn")
+            message = raw.get("message_ru") or raw.get("message_uz_latn")
 
         full_message = f"🔔 <b>{title}</b>\n\n{message}"
 
         async def _send():
-            bot = Bot(token=settings.TELEGRAM_BOT_TOKEN)
+            import socket
+            from aiogram.client.session.aiohttp import AiohttpSession
+            session = AiohttpSession()
+            session._connector_init['family'] = socket.AF_INET
+            
+            bot = Bot(token=settings.TELEGRAM_BOT_TOKEN, session=session)
             try:
                 await bot.send_message(
                     chat_id=user.telegram_id, text=full_message, parse_mode="HTML"
@@ -218,6 +223,7 @@ def send_push_notification_task(
         "message_uz_cyrl": message_uz_cyrl or "",
         "message_ru": message_ru or "",
     }
+
     success = failure = 0
     invalid_tokens = []
 
