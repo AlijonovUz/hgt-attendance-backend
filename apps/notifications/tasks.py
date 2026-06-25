@@ -245,9 +245,9 @@ def send_push_notification_task(
         ]
 
     if invalid_tokens:
-        deleted, _ = UserDevice.objects.filter(fcm_token__in=invalid_tokens).delete()
+        UserDevice.objects.filter(fcm_token__in=invalid_tokens).delete()
         logger.warning(
-            "FCM: %d ta eskirgan token o'chirildi | user=%s", deleted, user_id
+            "FCM: eskirgan token o'chirildi | user=%s", user_id
         )
 
     logger.info("FCM: user=%s | ok=%d | fail=%d", user_id, success, failure)
