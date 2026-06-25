@@ -205,6 +205,20 @@ class User(AbstractUser):
         verbose_name="Face ID rasm",
     )
 
+    telegram_id = models.BigIntegerField(
+        unique=True, null=True, blank=True, verbose_name="Telegram ID"
+    )
+    language = models.CharField(
+        max_length=10,
+        choices=[
+            ("uz_latn", "Uzbek (Lotin)"),
+            ("uz_cyrl", "Ўзбек (Кирил)"),
+            ("ru", "Русский"),
+        ],
+        default="uz_latn",
+        verbose_name="Tizim Tili",
+    )
+
     is_fired = models.BooleanField(default=False, verbose_name="Bo'shatilgan")
     fired_at = models.DateTimeField(
         null=True, blank=True, verbose_name="Bo'shatilgan sana"
