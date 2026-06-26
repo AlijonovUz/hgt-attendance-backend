@@ -140,6 +140,16 @@ class HolidaySerializer(serializers.ModelSerializer):
         model = Holiday
         fields = ["id", "title", "start_date", "end_date"]
 
+    def validate(self, attrs):
+        start_date = attrs.get("start_date", getattr(self.instance, "start_date", None))
+        end_date = attrs.get("end_date", getattr(self.instance, "end_date", None))
+
+        if start_date and end_date and start_date > end_date:
+            raise serializers.ValidationError(
+                {"start_date": "Boshlanish sanasi tugash sanasidan katta bo'lishi mumkin emas."}
+            )
+        return attrs
+
 
 class WorkScheduleShortSerializer(serializers.ModelSerializer):
     mandatory_days_info = WeekDaySerializer(
