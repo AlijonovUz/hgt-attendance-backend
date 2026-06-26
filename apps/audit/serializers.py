@@ -4,6 +4,10 @@ from .models import AuditLog
 
 
 class AuditLogSerializer(serializers.ModelSerializer):
+    """
+    Kiritilgan, o'zgartirilgan ma'lumotlar tarixi va aynan shu harakatni kim (user, branch, region) 
+    qilganligi haqida JSON hisobotini chiqaruvchi serializator.
+    """
     user_full_name = serializers.CharField(source="user.full_name", read_only=True)
     action_display = serializers.CharField(source="get_action_display", read_only=True)
     region = serializers.SerializerMethodField()

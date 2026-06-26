@@ -15,6 +15,10 @@ from .models import Notification, UserDevice
 
 @extend_schema(tags=["Bildirishnomalar"])
 class WebSocketTicketView(APIView):
+    """
+    Xodimning WebSocket orqali ulanishida uning shaxsini tasdiqlovchi bir martalik 
+    Ticket (chipta) generatsiya qilib beradigan API.
+    """
     permission_classes = [permissions.IsAuthenticated]
 
     def post(self, request):
@@ -26,6 +30,10 @@ class WebSocketTicketView(APIView):
 
 @extend_schema(tags=["Bildirishnomalar"])
 class NotificationListView(generics.ListAPIView):
+    """
+    Xodimning barcha shaxsiy bildirishnomalari tarixini ro'yxat qilib qaytaradi.
+    Paginatsiya va 'is_read' bo'yicha filtrlash imkoni bor.
+    """
     queryset = Notification.objects.active()
     serializer_class = NotificationSerializer
     permission_classes = [permissions.IsAuthenticated]
@@ -38,6 +46,10 @@ class NotificationListView(generics.ListAPIView):
 
 @extend_schema(tags=["Bildirishnomalar"])
 class NotificationCountView(APIView):
+    """
+    Profil menyusida ko'rsatish uchun xodimning hali o'qilmagan (unread)
+    va o'qilgan bildirishnomalar sonini tezkor sanab beradi.
+    """
     permission_classes = [permissions.IsAuthenticated]
 
     def get(self, request, *args, **kwargs):
@@ -60,6 +72,9 @@ class NotificationCountView(APIView):
 
 @extend_schema(tags=["Bildirishnomalar"])
 class MarkNotificationReadView(APIView):
+    """
+    Alohida bitta bildirishnomani "O'qilgan" deb belgilash API'si.
+    """
     permission_classes = [permissions.IsAuthenticated]
 
     def patch(self, request, pk):
@@ -80,6 +95,10 @@ class MarkNotificationReadView(APIView):
 
 @extend_schema(tags=["Bildirishnomalar"])
 class MarkAllNotificationsAsReadView(APIView):
+    """
+    Barcha yangi bildirishnomalarni bitta tugma orqali "Barchasini o'qilgan deb belgilash" 
+    API'si.
+    """
     permission_classes = [permissions.IsAuthenticated]
 
     def post(self, request):
@@ -96,6 +115,10 @@ class MarkAllNotificationsAsReadView(APIView):
 
 @extend_schema(tags=["Qurilmani ro'yxatdan o'tkazish"], request=UserDeviceSerializer)
 class UserDeviceRegisterView(APIView):
+    """
+    Mobil ilova birinchi marta ochilganda uning Firebase Cloud Messaging (FCM) tokenini 
+    bazaga saqlab qoluvchi API. Tizim Push Notification yuborish uchun shundan foydalanadi.
+    """
     permission_classes = [permissions.IsAuthenticated]
     serializer_class = UserDeviceSerializer
 

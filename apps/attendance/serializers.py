@@ -16,6 +16,10 @@ from .models import Attendance, Geozone, FaceLog, GpsLog, SignatureLog
 
 
 class GeozoneSerializer(serializers.ModelSerializer):
+    """
+    Geozonalar (ish joyi hududlari) to'liq ma'lumotlarini qaytaruvchi serializer.
+    Qo'shimcha ravishda ushbu geozonaga biriktirilgan faol xodimlar sonini (workers_count) hisoblaydi.
+    """
     workers_count = serializers.SerializerMethodField()
 
     class Meta:
@@ -24,6 +28,7 @@ class GeozoneSerializer(serializers.ModelSerializer):
         read_only_fields = ["id", "created_at", "updated_at"]
 
     def get_workers_count(self, obj):
+        """Ushbu geozonaga (filialga) tegishli faol xodimlar sonini hisoblaydi."""
         if obj.branch:
             from apps.users.models import User
 
@@ -32,6 +37,10 @@ class GeozoneSerializer(serializers.ModelSerializer):
 
 
 class GeozoneShortSerializer(serializers.ModelSerializer):
+    """
+    Boshqa modellar ichida (nested) geozonaning qisqacha ma'lumotlarini
+    ko'rsatish uchun mo'ljallangan yengillashtirilgan serializer.
+    """
     class Meta:
         model = Geozone
         fields = ["id", "name", "zone_type", "latitude", "longitude", "radius"]
@@ -41,6 +50,11 @@ from apps.utils.serializers import RegionDistrictBranchMixin
 
 
 class AttendanceListSerializer(RegionDistrictBranchMixin, serializers.ModelSerializer):
+    """
+    Xodimlarning barcha davomat (kelish/ketish) tarixlarini o'qish va
+    ro'yxat shaklida qaytarish uchun mo'ljallangan serializer.
+    Xodimning qisqacha ma'lumotlarini (user_info) o'z ichiga oladi.
+    """
     user_info = UserShortInfoSerializer(source="user", read_only=True)
 
     class Meta:
@@ -63,6 +77,14 @@ class AttendanceListSerializer(RegionDistrictBranchMixin, serializers.ModelSeria
 
 
 class AttendanceCreateSerializer(serializers.ModelSerializer):
+    """
+    Davomatni qayd etish (Kelish, Tushlik, Ketish) uchun asosiy serializer.
+    Quyidagi muhim funksiyalarni bajaradi:
+    - GPS geozona tekshiruvi.
+    - DeepFace orqali yuzni (Face ID) tasdiqlash.
+    - Oflayn davomatlar uchun vaqt imzosini (signature) tekshirish.
+    - Takroriy yozuvlarning (bir kunda ikki marta kelish va h.k.) oldini olish.
+    """
     image = serializers.ImageField(
         write_only=True, required=True, label="Yuzni tekshirish uchun rasm"
     )
@@ -81,6 +103,14 @@ class AttendanceCreateSerializer(serializers.ModelSerializer):
         ]
 
     def validate(self, attrs):
+        """
+        Kirib kelayotgan barcha ma'lumotlarni kompleks tekshiruvdan o'tkazadi:
+        1. Oflayn vaqt imzosi yaroqliligini (hash/hmac) tekshiradi.
+        2. Kiritilgan vaqt kelajakda emasligini yoki 24 soatdan eskirib ketmaganligini tasdiqlaydi.
+        3. Bugun avval qayd etilgan holatlar bilan mantiqiy solishtiradi (M: Ketishdan oldin Kelish bo'lganmi).
+        4. GPS koordinatalar asosida xodim qaysi geozonadaligini aniqlaydi.
+        5. Yuborilgan rasm orqali foydalanuvchi yuzini (Face ID) tekshiradi.
+        """
         user = self.context["request"].user
         lat = attrs.get("gps_latitude")
         lon = attrs.get("gps_longitude")
@@ -285,6 +315,12 @@ class AttendanceCreateSerializer(serializers.ModelSerializer):
         return attrs
 
     def create(self, validated_data):
+        """
+        Muvaffaqiyatli tekshiruvdan so'ng bazaga davomatni yozadi.
+        Shuningdek:
+        - Kechikish va erta ketish xabarnomalarini (Push/Telegram) yuboradi.
+        - Asinxron ravishda Celery orqali KPI (total_score, monthly_kpi) ni qayta hisoblashga buyruq beradi.
+        """
         provided_created_at = validated_data.pop("created_at", None)
         validated_data.pop("signature", None)
         validated_data.pop("image", None)
@@ -364,6 +400,10 @@ class AttendanceCreateSerializer(serializers.ModelSerializer):
 
 
 class FaceLogSerializer(RegionDistrictBranchMixin, serializers.ModelSerializer):
+    """
+    Foydalanuvchilarning tizimga yuz orqali kirishga urinishlar tarixi
+    (muvaffaqiyatli va xato urinishlar) hamda xatolik sabablarini qaytaruvchi serializer.
+    """
     user_info = UserShortInfoSerializer(source="user", read_only=True)
 
     class Meta:
@@ -383,6 +423,10 @@ class FaceLogSerializer(RegionDistrictBranchMixin, serializers.ModelSerializer):
 
 
 class GpsLogSerializer(RegionDistrictBranchMixin, serializers.ModelSerializer):
+    """
+    Tizimga kelib tushgan barcha GPS lokatsiyalar va ularning geozonaga
+    to'g'ri kelish yoki kelmaslik tarixini ko'rsatish uchun serializer.
+    """
     user_info = UserShortInfoSerializer(source="user", read_only=True)
     geozone_info = GeozoneShortSerializer(source="geozone", read_only=True)
 
@@ -407,6 +451,10 @@ class GpsLogSerializer(RegionDistrictBranchMixin, serializers.ModelSerializer):
 
 
 class SignatureLogSerializer(RegionDistrictBranchMixin, serializers.ModelSerializer):
+    """
+    Oflayn rejimda davomat yuborilganda vaqt imzosining (signature) qanchalik
+    to'g'ri bo'lganligini tasdiqlovchi audit jurnali.
+    """
     user_info = UserShortInfoSerializer(source="user", read_only=True)
 
     class Meta:

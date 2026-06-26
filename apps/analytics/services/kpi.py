@@ -8,8 +8,18 @@ logger = logging.getLogger(__name__)
 
 
 class KPIService:
+    """
+    Xodimlarning bir oylik mehnat intizomi (KPI) va umumiy reytingini
+    avtomatik hisoblovchi yordamchi servis.
+    Bu servis oylik maoshni hisoblashda eng asosiysi hisoblanadi.
+    """
     @classmethod
     def calculate_user_kpi(cls, user, year, month):
+        """
+        Berilgan xodim, yil va oy uchun uning kunlik davomatlari yig'indisini
+        hisoblaydi hamda umumiy reyting foizlarini (total_score, monthly_kpi) ishlab chiqadi.
+        Natija KPIResult jadvalida saqlanadi yoki yangilanadi.
+        """
         start_date = date(year, month, 1)
         _, num_days = calendar.monthrange(year, month)
         end_date = date(year, month, num_days)

@@ -43,6 +43,10 @@ COMMON_ANALYTICS_PARAMS = [
 
 @extend_schema(tags=["Analitika va KPI"])
 class KPIResultViewSet(viewsets.ReadOnlyModelViewSet):
+    """
+    Xodimlarning oylik KPI va umumiy (total_score) reytinglarini ko'rish uchun API.
+    Foydalanuvchining huquqlariga mos ravishda barcha xodimlar yoki faqat filial xodimlari ko'rsatiladi.
+    """
     queryset = KPIResult.objects.select_related("user").all()
     serializer_class = KPIResultSerializer
     filter_backends = [
@@ -96,6 +100,10 @@ class KPIResultViewSet(viewsets.ReadOnlyModelViewSet):
     )
     @action(detail=False, methods=["post"], url_path="calculate-kpi")
     def calculate_kpi(self, request):
+        """
+        Tanlangan xodim va ko'rsatilgan oy uchun KPI natijalarini zudlik bilan qaytadan
+        hisoblab chiqish va bazaga yozish API'si. Asosan qo'lda majburiy yangilash uchun ishlatiladi.
+        """
         if not (
             request.user.is_superuser
             or request.user.has_permission("analytics_calculate")
@@ -135,6 +143,10 @@ class KPIResultViewSet(viewsets.ReadOnlyModelViewSet):
 
 @extend_schema(tags=["Analitika va KPI"])
 class DailyAttendanceViewSet(viewsets.ReadOnlyModelViewSet):
+    """
+    Xodimlarning kunlik davomat kesimidagi qatnashganlik (present), kechikkanlik (late),
+    absent (kelmaganlik) va erta ketish xulosalari (snapshot'lari) ni ko'rish API'si.
+    """
     queryset = DailyAttendance.objects.select_related("user").all()
     serializer_class = DailyAttendanceSerializer
     filter_backends = [
@@ -176,6 +188,10 @@ class DailyAttendanceViewSet(viewsets.ReadOnlyModelViewSet):
 
 @extend_schema(tags=["Dashboard"])
 class DashboardViewSet(viewsets.ViewSet):
+    """
+    Admin panel va rahbarlar oynasidagi bosh sahifa (Dashboard) ko'rsatkichlarini
+    vidjetlar orqali qismlab uzatish API'si.
+    """
     permission_classes = [permissions.IsAuthenticated]
 
     def _get_dashboard_params(self, request):
@@ -231,6 +247,10 @@ class DashboardViewSet(viewsets.ViewSet):
     )
     @action(detail=False, methods=["get"], url_path="summary")
     def dashboard_summary(self, request):
+        """
+        Bosh sahifaning eng yuqorisida joylashadigan yig'indi ko'rsatkichlar:
+        - Jami davomatlar, Umumiy xodimlar, Filiallar soni va Geozonalar statistikasi.
+        """
         params = self._get_dashboard_params(request)
         stats = DashboardService.get_dashboard_stats(
             request.user, **params, widgets=["summary"]
@@ -247,6 +267,10 @@ class DashboardViewSet(viewsets.ViewSet):
     )
     @action(detail=False, methods=["get"], url_path="weekly-dynamics")
     def dashboard_weekly_dynamics(self, request):
+        """
+        Oxirgi kunlar (Haftalik dinamika) kesimida kelganlar, kechikkanlar
+        va erta ketganlarni chiziqli grafikda (line chart) ko'rsatish ma'lumotlari.
+        """
         params = self._get_dashboard_params(request)
         stats = DashboardService.get_dashboard_stats(
             request.user, **params, widgets=["weekly_dynamics"]
@@ -263,6 +287,10 @@ class DashboardViewSet(viewsets.ViewSet):
     )
     @action(detail=False, methods=["get"], url_path="today-status")
     def dashboard_today_status(self, request):
+        """
+        Bugungi kun holatiga ko'ra xodimlarning davomat holati taqsimoti
+        (Necha kishi vaqtida keldi, necha kishi kechikdi, nechtasi umuman kelmadi). Doiraviy grafik (Pie chart) uchun.
+        """
         params = self._get_dashboard_params(request)
         stats = DashboardService.get_dashboard_stats(
             request.user, **params, widgets=["today_status"]
@@ -279,6 +307,10 @@ class DashboardViewSet(viewsets.ViewSet):
     )
     @action(detail=False, methods=["get"], url_path="branch-ratings")
     def dashboard_branch_ratings(self, request):
+        """
+        Tashkilot, viloyat yoki tumanlar kesimida filiallar va bo'limlarning intizom
+        bo'yicha TOP yoki ENG YOMON reytinglarini qaytaradi.
+        """
         params = self._get_dashboard_params(request)
         stats = DashboardService.get_dashboard_stats(
             request.user, **params, widgets=["branch_ratings"]
@@ -292,6 +324,10 @@ class DashboardViewSet(viewsets.ViewSet):
 
 @extend_schema(tags=["Hisobotlar"])
 class ReportViewSet(viewsets.ViewSet):
+    """
+    Kengaytirilgan tahlil (Excel, Buxgalteriya uchun jadvallar) yaratuvchi xodimlar
+    va filiallar kesimidagi batafsil Analytics hisobotlar API'si.
+    """
     @extend_schema(
         summary="Xodimlar bo'yicha hisobot",
         parameters=COMMON_ANALYTICS_PARAMS
@@ -312,6 +348,10 @@ class ReportViewSet(viewsets.ViewSet):
     )
     @action(detail=False, methods=["get"], url_path="by-employee")
     def by_employee(self, request):
+        """
+        Har bir xodimni oylik KPI ko'rsatkichlari, kechikishlari, erta ketishlari
+        hamda reytingi foizlarda sanalgan jadval ma'lumotlarini qaytaradi.
+        """
         return self._get_report(request, "employee")
 
     @extend_schema(
@@ -320,6 +360,10 @@ class ReportViewSet(viewsets.ViewSet):
     )
     @action(detail=False, methods=["get"], url_path="by-branch")
     def by_branch(self, request):
+        """
+        Umumiy filial miqyosida KPI ni baholaydi. Qaysi filial qanchalik intizomli 
+        ishlayotganini qiyosiy tahlil qilish uchun o'rtacha ko'rsatkichlar qaytaradi.
+        """
         return self._get_report(request, "branch")
 
     def _get_report(self, request, report_type):

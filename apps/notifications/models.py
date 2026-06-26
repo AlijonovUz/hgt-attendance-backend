@@ -4,6 +4,10 @@ from apps.users.models import User
 
 
 class Notification(BaseModel):
+    """
+    Tizim bo'ylab foydalanuvchiga yuborilgan barcha bildirishnomalarni (Kechikdingiz, 
+    Erta ketdingiz kabi) 3 xil tilda saqlovchi model.
+    """
     user = models.ForeignKey(
         User,
         on_delete=models.PROTECT,
@@ -44,6 +48,10 @@ class Notification(BaseModel):
 
 
 class UserDevice(BaseModel):
+    """
+    Foydalanuvchining mobil qurilmasi ma'lumotlari (FCM Token, OS) ni saqlovchi model.
+    Pusn Notification yuborishda faqat tizimga kirgan va saqlangan qurilmalarga jo'natiladi.
+    """
     user = models.ForeignKey(User, on_delete=models.PROTECT, related_name="devices")
     fcm_token = models.TextField(unique=True)
     device_type = models.CharField(

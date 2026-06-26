@@ -11,6 +11,9 @@ from .managers import UserManager
 
 
 class Permission(BaseModel):
+    """
+    Tizimdagi individual huquqlarni (masalan, 'kpi_view_all') saqlovchi model.
+    """
     name = models.CharField(max_length=255, verbose_name="Ruxsat nomi")
     code = models.CharField(max_length=100, unique=True, verbose_name="Ruxsat kodi")
 
@@ -23,6 +26,10 @@ class Permission(BaseModel):
 
 
 class Role(BaseModel):
+    """
+    Tizim Rollari (Admin, Xodim) ni ifodalovchi model.
+    Rolga tegishli Permission larni o'z ichiga oladi.
+    """
     name = models.CharField(max_length=255, unique=True, verbose_name="Rol nomi")
     permissions = models.ManyToManyField(
         Permission, blank=True, verbose_name="Ruxsatlar"
@@ -37,6 +44,7 @@ class Role(BaseModel):
 
 
 class Region(BaseModel):
+    """Viloyatlar ro'yxatini saqlovchi model (Masalan: Toshkent shahar, Samarqand)."""
     name = models.CharField(max_length=255, verbose_name="Viloyat nomi")
 
     class Meta(BaseModel.Meta):
@@ -48,6 +56,7 @@ class Region(BaseModel):
 
 
 class District(BaseModel):
+    """Viloyatga qarashli tumanlarni saqlovchi model."""
     name = models.CharField(max_length=255, verbose_name="Tuman nomi")
     region = models.ForeignKey(
         Region,
@@ -65,6 +74,10 @@ class District(BaseModel):
 
 
 class Branch(BaseModel):
+    """
+    Tashkilotning xususiy filiallarini (ish joylarini) saqlovchi model.
+    Xodimlar filialga qarab guruhlanadi.
+    """
     name = models.CharField(max_length=255, verbose_name="Filial nomi")
     region = models.ForeignKey(
         Region,
@@ -92,6 +105,7 @@ class Branch(BaseModel):
 
 
 class Department(BaseModel):
+    """Har bir filial ichidagi kichik bo'limlar (Kassa, HR, IT)."""
     name = models.CharField(max_length=255, verbose_name="Bo'lim nomi")
     branch = models.ForeignKey(
         Branch,
@@ -109,6 +123,7 @@ class Department(BaseModel):
 
 
 class Position(BaseModel):
+    """Xodimlarning tashkilotdagi rasmiy ish lavozimlari ro'yxati."""
     name = models.CharField(max_length=255, verbose_name="Lavozim nomi")
     department = models.ForeignKey(
         Department,
@@ -126,6 +141,7 @@ class Position(BaseModel):
 
 
 class WeekDay(BaseModel):
+    """Haftaning 7 kunini ko'rsatuvchi ma'lumotnoma (Reference) modeli."""
     name = models.CharField(max_length=50, verbose_name="Hafta kuni")
     day_number = models.IntegerField(unique=True, verbose_name="Raqami (0-6)")
 
@@ -139,6 +155,7 @@ class WeekDay(BaseModel):
 
 
 class Holiday(BaseModel):
+    """Davlat miqyosidagi yoki ichki dam olish kunlari (bayramlar)."""
     title = models.CharField(max_length=255, verbose_name="Bayram nomi")
     start_date = models.DateField(verbose_name="Boshlanish sanasi")
     end_date = models.DateField(verbose_name="Tugash sanasi")
@@ -161,6 +178,10 @@ class Holiday(BaseModel):
 
 
 class WorkSchedule(BaseModel):
+    """
+    Ish grafiki jadvallari. Bunga ko'ra qaysi soatda ish boshlanishi, tushlik vaqti
+    va qaysi kunlari ish majburiy/ixtiyoriyligi belgilanadi.
+    """
     name = models.CharField(max_length=255, verbose_name="Jadval nomi")
     work_start_time = models.TimeField(
         default=time(9, 0), verbose_name="Ish boshlanishi"
@@ -192,6 +213,10 @@ class WorkSchedule(BaseModel):
 
 
 class User(AbstractUser):
+    """
+    Tizimdagi asosiy foydalanuvchi va xodim modeli. 
+    Ushbu model o'zida Face ID, Telegram ID va Ishga tegishli barcha holatlarni saqlaydi.
+    """
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     full_name = models.CharField(max_length=255, unique=True, verbose_name="F.I.Sh")
     jshshir = models.CharField(

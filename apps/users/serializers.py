@@ -28,6 +28,10 @@ from .models import (
 
 
 class PermissionSerializer(serializers.ModelSerializer):
+    """
+    Ruxsatlar (permissions) ni qaytaruvchi serializer. 
+    Bunda barcha ruxsatlar o'z moduliga qarab guruhlab qaytariladi (many_init yordamida).
+    """
     class Meta:
         model = Permission
         fields = ["id", "name", "code", "created_at"]
@@ -69,18 +73,21 @@ class PermissionSerializer(serializers.ModelSerializer):
 
 
 class RoleShortSerializer(serializers.ModelSerializer):
+    """Ro'yxatlarda qisqacha ko'rsatish uchun Rollar serializatori."""
     class Meta:
         model = Role
         fields = ["id", "name"]
 
 
 class RegionSerializer(serializers.ModelSerializer):
+    """Viloyatlarni qaytaruvchi va tahrirlovchi serializer."""
     class Meta:
         model = Region
         fields = ["id", "name", "created_at"]
 
 
 class DistrictSerializer(serializers.ModelSerializer):
+    """Tumanlarni qaytaruvchi serializer. Viloyat ma'lumotlarini ham (nested) o'z ichiga oladi."""
     region_info = RegionSerializer(source="region", read_only=True)
 
     class Meta:
@@ -90,6 +97,7 @@ class DistrictSerializer(serializers.ModelSerializer):
 
 
 class BranchSerializer(serializers.ModelSerializer):
+    """Tashkilot filiallarini ro'yxatga olish va tahrirlash serializatori."""
     region_info = RegionSerializer(source="region", read_only=True)
     district_info = DistrictSerializer(source="district", read_only=True)
 
@@ -112,30 +120,35 @@ class BranchSerializer(serializers.ModelSerializer):
 
 
 class DepartmentShortSerializer(serializers.ModelSerializer):
+    """Boshqa modellarga ulanish uchun Bo'limlarning qisqa serializatori."""
     class Meta:
         model = Department
         fields = ["id", "name"]
 
 
 class PositionShortSerializer(serializers.ModelSerializer):
+    """Boshqa modellarga ulanish uchun Lavozimlarning qisqa serializatori."""
     class Meta:
         model = Position
         fields = ["id", "name"]
 
 
 class UserShortInfoSerializer(serializers.ModelSerializer):
+    """Xodimning eng zaruriy ma'lumotlari (Ismi va rasmi) ni qaytaruvchi serializator."""
     class Meta:
         model = User
         fields = ["id", "full_name", "face_image"]
 
 
 class WeekDaySerializer(serializers.ModelSerializer):
+    """Hafta kunlarini (Dushanba, Seshanba va h.k.) ko'rsatish serializatori."""
     class Meta:
         model = WeekDay
         fields = ["id", "name", "day_number"]
 
 
 class HolidaySerializer(serializers.ModelSerializer):
+    """Bayramlar va qizil sanalar bo'yicha serializer. Boshlanish sanasi tugashidan katta bo'lmasligini tekshiradi."""
     class Meta:
         model = Holiday
         fields = ["id", "title", "start_date", "end_date"]
@@ -152,6 +165,7 @@ class HolidaySerializer(serializers.ModelSerializer):
 
 
 class WorkScheduleShortSerializer(serializers.ModelSerializer):
+    """Foydalanuvchi ma'lumotlariga qo'shib yuborish uchun qisqartirilgan Ish grafiki serializatori."""
     mandatory_days_info = WeekDaySerializer(
         source="mandatory_days", read_only=True, many=True
     )
@@ -174,6 +188,7 @@ class WorkScheduleShortSerializer(serializers.ModelSerializer):
 
 
 class RoleSerializer(serializers.ModelSerializer):
+    """Tizim Rollari (M: Admin, Menenjer) va ularning barcha ruxsatlarini tahrirlash serializatori."""
     permissions_info = PermissionSerializer(
         source="permissions", read_only=True, many=True
     )
@@ -185,6 +200,7 @@ class RoleSerializer(serializers.ModelSerializer):
 
 
 class DepartmentSerializer(serializers.ModelSerializer):
+    """Bo'limlar (HR, IT, Kassa) ma'lumotlarini qabul qiluvchi va qaytaruvchi serializer."""
     branch_info = BranchSerializer(source="branch", read_only=True)
 
     class Meta:
@@ -194,6 +210,7 @@ class DepartmentSerializer(serializers.ModelSerializer):
 
 
 class PositionSerializer(serializers.ModelSerializer):
+    """Xodim lavozimlari ma'lumotlarini qabul qiluvchi va qaytaruvchi serializer."""
     department_info = DepartmentSerializer(source="department", read_only=True)
 
     class Meta:
@@ -203,6 +220,10 @@ class PositionSerializer(serializers.ModelSerializer):
 
 
 class WorkScheduleSerializer(serializers.ModelSerializer):
+    """
+    To'liq ish grafiki serializatori. Qaysi kunlar majburiy, qaysilari ixtiyoriy 
+    ekanligini avtomat ajratib (validate qilib) yozadi.
+    """
     mandatory_days_info = WeekDaySerializer(
         source="mandatory_days", many=True, read_only=True
     )
@@ -239,6 +260,9 @@ class WorkScheduleSerializer(serializers.ModelSerializer):
 
 
 class UserSerializer(serializers.ModelSerializer):
+    """
+    Xodimlarning to'liq ma'lumotlarini (CRUD uchun) boshqaradigan yirik serializer.
+    """
     role_info = RoleShortSerializer(source="role", read_only=True)
     branch_info = BranchSerializer(source="branch", read_only=True)
     department_info = DepartmentShortSerializer(source="department", read_only=True)
@@ -328,6 +352,10 @@ class UserSerializer(serializers.ModelSerializer):
 
 
 class ProfileSerializer(serializers.ModelSerializer):
+    """
+    Foydalanuvchi profilining barcha ma'lumotlarini (Telegram bot havolasi va 
+    joriy oy uchun KPI natijalarini qo'shgan holda) qaytaruvchi serializer.
+    """
     current_month_kpi = serializers.SerializerMethodField()
     telegram_url = serializers.SerializerMethodField()
     role_info = RoleShortSerializer(source="role", read_only=True)
@@ -368,6 +396,7 @@ class ProfileSerializer(serializers.ModelSerializer):
         ]
 
     def get_telegram_url(self, obj):
+        """Telegram botga o'tish va xodimni avtomatik tanish uchun maxsus havola yaratadi."""
         from django.conf import settings
 
         bot_username = getattr(settings, "TELEGRAM_BOT_USERNAME", None)
@@ -376,6 +405,10 @@ class ProfileSerializer(serializers.ModelSerializer):
         return f"https://t.me/{bot_username}?start={obj.id}"
 
     def get_current_month_kpi(self, obj):
+        """
+        Xodimning profilida ko'rsatish uchun joriy oyning KPI foizlarini va statistikasini 
+        hisoblaydi yoki bazadan oladi.
+        """
         now = timezone.localtime()
         current_month = date(now.year, now.month, 1)
 
@@ -406,6 +439,7 @@ class ProfileSerializer(serializers.ModelSerializer):
         }
 
     def validate_face_image(self, value):
+        """Profil rasmi (Face ID) yuklanayotganda haqiqatdan ham inson yuzi borligini tekshiradi."""
         if value:
             is_valid, msg = verify_face_image(value)
             if not is_valid:
@@ -415,6 +449,10 @@ class ProfileSerializer(serializers.ModelSerializer):
 
 
 class ChangePasswordSerializer(serializers.Serializer):
+    """
+    Foydalanuvchi parolini o'zgartirish jarayonida eski va yangi parolni qabul qilib,
+    ularni tasdiqlash uchun mo'ljallangan serializator.
+    """
     old_password = serializers.CharField(write_only=True)
     new_password = serializers.CharField(
         write_only=True,
@@ -458,10 +496,15 @@ class ChangePasswordSerializer(serializers.Serializer):
 
 
 class FaceVerificationSerializer(serializers.Serializer):
+    """Yuzni (Selfie) rasm orqali aniqlash testini o'tkazish uchun yordamchi serializator."""
     image = serializers.ImageField(required=True, label="Selfie rasm")
 
 
 class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
+    """
+    Standart JWT Tokenga qo'shimcha ravishda xodimning ismini, rasmini va 
+    qaysi bo'limga tegishli ekanligini (extra ma'lumotlar) qo'shib beradigan serializator.
+    """
     @classmethod
     def get_token(cls, user):
         token = super().get_token(user)

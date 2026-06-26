@@ -2,6 +2,10 @@ from rest_framework import permissions, viewsets
 
 
 class BaseManageViewSet(viewsets.ModelViewSet):
+    """
+    CRUD amallari uchun bazaviy ViewSet. action_permissions lug'ati (dict) yordamida 
+    har bir metod uchun qaysi ruxsat talab qilinishini dinamik ravishda tekshiradi.
+    """
     action_permissions = {}
 
     def get_permissions(self):
@@ -24,6 +28,10 @@ class BaseManageViewSet(viewsets.ModelViewSet):
 
 
 class BaseReadOnlyViewSet(viewsets.ReadOnlyModelViewSet):
+    """
+    Faqat o'qish amallari (List, Retrieve) uchun mo'ljallangan bazaviy ViewSet. 
+    Bu ham action_permissions orqali huquqlarni tekshiradi.
+    """
     action_permissions = {}
 
     def get_permissions(self):
