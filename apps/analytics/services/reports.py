@@ -123,7 +123,7 @@ class ReportService:
                 total_score = (
                     monthly_kpi + attendance_kpi + (discipline_coefficient * 100)
                 ) / 3
-                discipline_kpi = round(total_score)
+                discipline_kpi = round(total_score, 2)
             else:
                 discipline_kpi = 0
                 total_expected_actions = 0
@@ -221,7 +221,7 @@ class ReportService:
                 active_users_count += 1
 
         avg_kpi = (
-            round(summary["total_kpi"] / active_users_count)
+            round(summary["total_kpi"] / active_users_count, 2)
             if active_users_count > 0
             else 0
         )
@@ -303,7 +303,7 @@ class ReportService:
 
         for b_id, b in branch_stats.items():
             avg_kpi = (
-                round(b["total_kpi"] / b["employee_count"])
+                round(b["total_kpi"] / b["employee_count"], 2)
                 if b["employee_count"] > 0
                 else 0
             )
@@ -333,7 +333,7 @@ class ReportService:
                 active_branches_count += 1
 
         overall_avg_kpi = (
-            round(summary["total_kpi"] / active_branches_count)
+            round(summary["total_kpi"] / active_branches_count, 2)
             if active_branches_count > 0
             else 0
         )

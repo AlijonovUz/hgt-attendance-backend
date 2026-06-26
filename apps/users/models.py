@@ -148,6 +148,14 @@ class Holiday(BaseModel):
         verbose_name_plural = "Bayramlar"
         ordering = ["start_date"]
 
+    def clean(self):
+        super().clean()
+        if self.start_date and self.end_date and self.start_date > self.end_date:
+            from django.core.exceptions import ValidationError
+            raise ValidationError(
+                {"start_date": "Boshlanish sanasi tugash sanasidan katta bo'lishi mumkin emas."}
+            )
+
     def __str__(self):
         return self.title
 
