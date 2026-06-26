@@ -13,6 +13,10 @@ logger = logging.getLogger(__name__)
 
 
 def get_dirty_fields(instance):
+    """
+    Model saqlanishidan oldin, uning qaysi maydonlari (fields) o'zgarganini 
+    eski bazadagi holati bilan solishtirib topuvchi va qaytaruvchi yordamchi funksiya.
+    """
     if not instance.pk:
         return {}
 
@@ -35,6 +39,7 @@ def get_dirty_fields(instance):
 
 @receiver(pre_save)
 def capture_old_values(sender, instance, **kwargs):
+    """Model obyekti saqlanishidan (save bo'lishidan) darhol oldin ishlab, uning eski holatini xotirada olib qoladi."""
     if not (issubclass(sender, BaseModel) or sender == User):
         return
     instance._dirty_fields = get_dirty_fields(instance)
@@ -42,6 +47,10 @@ def capture_old_values(sender, instance, **kwargs):
 
 @receiver(post_save)
 def audit_log_save(sender, instance, created, **kwargs):
+    """
+    Obyekt muvaffaqiyatli saqlangach, nima harakat (Yaratish yoki Tahrirlash) bo'lganini 
+    AuditLog jadvaliga yozib qo'yuvchi Signal.
+    """
     if not (issubclass(sender, BaseModel) or sender == User):
         return
 
@@ -96,6 +105,10 @@ def audit_log_save(sender, instance, created, **kwargs):
 
 @receiver(post_delete)
 def audit_log_delete(sender, instance, **kwargs):
+    """
+    Obyekt bazadan o'chirib yuborilganda ishlari o'chirilganligini Audit logida 
+    qayd etadigan Signal.
+    """
     if not (issubclass(sender, BaseModel) or sender == User):
         return
 
