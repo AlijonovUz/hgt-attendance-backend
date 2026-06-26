@@ -10,8 +10,19 @@ logger = logging.getLogger(__name__)
 
 
 class AttendanceService:
+    """
+    Davomat va statistikaga oid hisob-kitoblarni amalga oshiradigan yordamchi servis.
+    Bu servis View'lar tomonidan logikalarni alohida ajratib olish (decouple) uchun ishlatiladi.
+    """
     @staticmethod
     def get_personal_stats(user, start_date, end_date) -> dict:
+        """
+        Berilgan sana oralig'ida xodimning quyidagi shaxsiy statistikasini hisoblab beradi:
+        - `present_days`: Ishga kelgan jami kunlari.
+        - `late_days`: Kechikkan kunlari soni.
+        - `avg_check_in`: O'rtacha ishga kelish vaqti (Masalan, "08:55").
+        - `total_worked_hours`: Ishda bo'lgan umumiy ishlangan soatlari (tushlik soatlari olib tashlangan holda).
+        """
         stats = DailyAttendance.objects.filter(
             user=user, date__gte=start_date, date__lte=end_date
         ).aggregate(

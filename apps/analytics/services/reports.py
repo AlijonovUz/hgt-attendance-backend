@@ -5,6 +5,11 @@ from apps.attendance.models import Attendance
 
 
 class ReportService:
+    """
+    Buxgalteriya va rahbarlar uchun moslashtirilgan, tashkilot, viloyat, filial yoki bitta
+    xodim kesimida KPI hisobotlari, kunlik va oylik reytinglarni shakllantirib beruvchi yordamchi servis.
+    Filtrlash huquqlarini (permissions) inobatga olgan holda ro'yxat qaytaradi.
+    """
     @staticmethod
     def _get_users(
         request_user, region_id=None, district_id=None, branch_id=None, position_id=None

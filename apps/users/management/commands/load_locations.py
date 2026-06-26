@@ -3,9 +3,14 @@ from apps.users.models import Region, District, Branch
 
 
 class Command(BaseCommand):
+    """
+    O'zbekistonning barcha viloyat, tuman va ularga moslashtirilgan filiallarini (Hududgaz, Tumangaz kabi) 
+    bazaga avtomatik kiritish uchun yozilgan boshqaruv (management) komandasi.
+    """
     help = "O'zbekistonning barcha viloyat, tuman va ularning filiallarini bazaga avtomatik kiritish"
 
     def handle(self, *args, **options):
+        """Asosiy ishga tushuvchi skript. Barcha hududlarni tekshirib, yo'q bo'lsa yaratib chiqadi."""
         data = {
             "Andijon viloyati": [
                 "Oltinko'l tumani",

@@ -5,6 +5,10 @@ from django.db import models
 
 
 class AuditLog(models.Model):
+    """
+    Kiritilgan, o'zgartirilgan va o'chirilgan ma'lumotlarning (Audit trail) eski va yangi 
+    holatlarini IP manzil va vaqti bilan birga xavfsizlik maqsadida saqlab qoluvchi model.
+    """
     class ActionType(models.TextChoices):
         CREATE = "create", "Yaratildi"
         UPDATE = "update", "Yangilandi"

@@ -51,6 +51,9 @@ logger = logging.getLogger(__name__)
 
 @extend_schema(tags=["Viloyatlar"])
 class RegionViewSet(BaseManageViewSet):
+    """
+    Viloyatlar ro'yxatini qaytarish va boshqarish (CRUD) API'si.
+    """
     queryset = Region.objects.active()
     serializer_class = RegionSerializer
     filter_backends = [DjangoFilterBackend, filters.SearchFilter]
@@ -65,6 +68,9 @@ class RegionViewSet(BaseManageViewSet):
 
 @extend_schema(tags=["Tumanlar"])
 class DistrictViewSet(BaseManageViewSet):
+    """
+    Viloyatlarga tegishli tumanlarni qaytarish va boshqarish API'si.
+    """
     queryset = District.objects.select_related("region").active()
     serializer_class = DistrictSerializer
     filter_backends = [DjangoFilterBackend, filters.SearchFilter]
@@ -80,6 +86,10 @@ class DistrictViewSet(BaseManageViewSet):
 
 @extend_schema(tags=["Filiallar"])
 class BranchViewSet(BaseManageViewSet):
+    """
+    Tumanlardagi filiallar ro'yxatini boshqarish API'si.
+    Aynan shu filiallar bo'yicha geozona va xodimlar taqsimlanadi.
+    """
     queryset = Branch.objects.select_related("region", "district").active()
     serializer_class = BranchSerializer
     filter_backends = [DjangoFilterBackend, filters.SearchFilter]
@@ -95,6 +105,9 @@ class BranchViewSet(BaseManageViewSet):
 
 @extend_schema(tags=["Bo'limlar"])
 class DepartmentViewSet(BaseManageViewSet):
+    """
+    Filial ichidagi maxsus bo'limlarni (Masalan: HR, Kassa, IT) boshqarish API'si.
+    """
     queryset = Department.objects.select_related(
         "branch", "branch__region", "branch__district"
     ).active()
@@ -112,6 +125,9 @@ class DepartmentViewSet(BaseManageViewSet):
 
 @extend_schema(tags=["Lavozimlar"])
 class PositionViewSet(BaseManageViewSet):
+    """
+    Xodimlarning tashkilotdagi ish lavozimlarini boshqarish API'si.
+    """
     queryset = Position.objects.select_related(
         "department", "department__branch"
     ).active()
@@ -129,6 +145,9 @@ class PositionViewSet(BaseManageViewSet):
 
 @extend_schema(tags=["Ruxsatlar"])
 class PermissionViewSet(viewsets.ReadOnlyModelViewSet):
+    """
+    Tizimdagi barcha mavjud huquqlar (ruxsatlar) ro'yxatini qaytaradi.
+    """
     queryset = Permission.objects.active()
     serializer_class = PermissionSerializer
     permission_classes = [permissions.IsAuthenticated]
@@ -139,6 +158,10 @@ class PermissionViewSet(viewsets.ReadOnlyModelViewSet):
 
 @extend_schema(tags=["Rollar"])
 class RoleViewSet(BaseManageViewSet):
+    """
+    Xodimlarga biriktiriladigan Rollar (M: Admin, Oddiy Xodim, Menejer) va ularning 
+    huquqlarini kompleks boshqarish API'si.
+    """
     queryset = Role.objects.prefetch_related("permissions").active()
     serializer_class = RoleSerializer
     filter_backends = [DjangoFilterBackend, filters.SearchFilter]
@@ -153,6 +176,9 @@ class RoleViewSet(BaseManageViewSet):
 
 @extend_schema(tags=["Hafta Kunlari"])
 class WeekDayViewSet(viewsets.ReadOnlyModelViewSet):
+    """
+    Tizimdagi haftaning 7 kunini ko'rsatuvchi statik ma'lumotlar ro'yxati.
+    """
     queryset = WeekDay.objects.active().order_by("day_number")
     serializer_class = WeekDaySerializer
     permission_classes = [permissions.IsAuthenticated]
@@ -161,6 +187,10 @@ class WeekDayViewSet(viewsets.ReadOnlyModelViewSet):
 
 @extend_schema(tags=["Bayramlar"])
 class HolidayViewSet(BaseManageViewSet):
+    """
+    Dam olish kunlari va davlat miqyosidagi qizil sanalarni (Bayramlar) boshqarish API'si.
+    Bu kunlar hisobot va KPI hisobida ish kunlari qatoriga kiritilmasligi (xodimlar kechikdi deb hisoblanmasligi) uchun muhimdir.
+    """
     queryset = Holiday.objects.active().order_by("-start_date")
     serializer_class = HolidaySerializer
     filter_backends = [filters.SearchFilter]
@@ -178,6 +208,10 @@ class HolidayViewSet(BaseManageViewSet):
 
 @extend_schema(tags=["Ish Grafiklari"])
 class WorkScheduleViewSet(BaseManageViewSet):
+    """
+    Har xil turdagi ish jadvallarini (Masalan 5/2 yoki Smenali) tuzish API'si.
+    Qaysi kun majburiy va qaysi biri ixtiyoriy ish kuni ekanligi shu yerda o'rnatiladi.
+    """
     queryset = WorkSchedule.objects.prefetch_related(
         "mandatory_days", "optional_days"
     ).active()
@@ -197,6 +231,11 @@ class WorkScheduleViewSet(BaseManageViewSet):
 
 @extend_schema(tags=["Xodimlar"])
 class UserViewSet(BaseManageViewSet):
+    """
+    Xodimlarni boshqarish API'si (CRUD).
+    Xodimlarni ishga olish, ma'lumotlarini tahrirlash, ishdan bo'shatish (fire) yoki bloklash (block) vazifalarini bajaradi.
+    Tashkilot iyerarxiyasiga ko'ra xodimlarni filtrlash (faqat o'z bo'limini yoki o'z filialini ko'rish) ni ta'minlaydi.
+    """
     queryset = User.objects.select_related(
         "branch", "department", "position", "role"
     ).all()
@@ -312,6 +351,10 @@ class UserViewSet(BaseManageViewSet):
 
 @extend_schema(tags=["Avtorizatsiya"])
 class CustomTokenObtainPairView(ThrottleExceptionHandlerMixin, TokenObtainPairView):
+    """
+    Tizimga kirish (Login) API'si. Login parolni qabul qilib, JWT Token qaytaradi.
+    Brute-force (parolni buzish) hujumlaridan himoya qilish uchun Throttle (limit) o'rnatilgan.
+    """
     serializer_class = CustomTokenObtainPairSerializer
     throttle_classes = [CustomScopedRateThrottle]
     throttle_scope = "login"
@@ -338,11 +381,18 @@ class CustomTokenObtainPairView(ThrottleExceptionHandlerMixin, TokenObtainPairVi
 
 @extend_schema(tags=["Avtorizatsiya"])
 class CustomTokenRefreshView(TokenRefreshView):
+    """
+    Eskirgan JWT Token o'rniga yangisini (refresh token orqali) olish uchun API.
+    """
     pass
 
 
 @extend_schema(tags=["Profil"])
 class ProfileView(generics.RetrieveUpdateAPIView):
+    """
+    Foydalanuvchining o'z shaxsiy ma'lumotlarini ko'rishi va (ba'zi qismlarini) 
+    tahrirlashi uchun mo'ljallangan API.
+    """
     serializer_class = ProfileSerializer
     permission_classes = [permissions.IsAuthenticated]
     http_method_names = ["get", "patch"]
@@ -353,6 +403,11 @@ class ProfileView(generics.RetrieveUpdateAPIView):
 
 @extend_schema(tags=["Profil"])
 class ChangePasswordView(generics.UpdateAPIView):
+    """
+    Foydalanuvchining o'z parolini o'zgartirishi uchun API.
+    Muvaffaqiyatli almashtirilgandan so'ng, Oflayn ishlash uchun ishlatiladigan
+    yangi oflayn parolni (offline_secret) ham qaytaradi.
+    """
     serializer_class = ChangePasswordSerializer
     permission_classes = [permissions.IsAuthenticated]
     http_method_names = ["put"]
@@ -386,6 +441,10 @@ class ChangePasswordView(generics.UpdateAPIView):
 
 @extend_schema(tags=["Profil"], request=FaceVerificationSerializer)
 class FaceVerificationView(APIView):
+    """
+    Tizimga qo'shimcha tasdiq sifatida o'z yuzini (Face ID) tekshirib ko'rish API'si.
+    Davomatga emas, balki shunchaki "Yuzim taniladimi" degan test uchun ishlatiladi.
+    """
     permission_classes = [permissions.IsAuthenticated]
 
     def post(self, request, *args, **kwargs):

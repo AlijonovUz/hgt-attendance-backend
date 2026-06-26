@@ -9,6 +9,11 @@ logger = logging.getLogger(__name__)
 
 
 class DashboardService:
+    """
+    Bosh sahifa (Dashboard) ma'lumotlarini tezkor tayyorlab beruvchi servis.
+    Bu servis tizimning umumiy xodimlar sonini, bugungi kelish ko'rsatkichini,
+    haftalik grafiklarni va filiallar reytingini yig'ib qaytaradi.
+    """
     @staticmethod
     def get_dashboard_stats(
         user,
@@ -19,6 +24,12 @@ class DashboardService:
         branch_id=None,
         widgets=None,
     ):
+        """
+        Kiritilgan parametrlarga qarab dashboard qismlarini (widgets) hisoblaydi.
+        Agar `widgets` ko'rsatilmasa, sukut bo'yicha barcha (summary, weekly_dynamics, 
+        today_status, branch_ratings) bloklarni qaytaradi. Xodimlar sonini 
+        ko'rish/ruxsat huquqlariga ko'ra filtrlaydi.
+        """
         if widgets is None:
             widgets = ["summary", "weekly_dynamics", "today_status", "branch_ratings"]
 

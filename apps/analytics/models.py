@@ -5,6 +5,10 @@ from apps.utils.models import BaseModel
 
 
 class KPIResult(BaseModel):
+    """
+    Xodimning har oy yakunidagi KPI hisob-kitoblarini (Reyting, intizom koeffitsienti va 
+    ballarini) yig'ib saqlovchi jadval. Maosh tayinlashda shu model asos vazifani bajaradi.
+    """
     class RatingCategory(models.TextChoices):
         EXCELLENT = "excellent", "A'lo"
         GOOD = "good", "Yaxshi"
@@ -57,6 +61,10 @@ class KPIResult(BaseModel):
 
 
 class DailyAttendance(BaseModel):
+    """
+    Xodimning kunlik davomat qisqacha xulosasi (snapshot). Bugun u keldimi, 
+    kechikdimi yoki umuman kelmadimi degan aniq faktlar shu jadvalda qayd etiladi.
+    """
     user = models.ForeignKey(
         User,
         on_delete=models.CASCADE,
