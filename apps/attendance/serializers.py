@@ -347,9 +347,10 @@ class AttendanceCreateSerializer(serializers.ModelSerializer):
             )
 
         from apps.analytics.tasks import update_kpi_for_user_task
+        from django.db import transaction
 
         dt = timezone.localtime(instance.created_at)
-        update_kpi_for_user_task.delay(user.id, dt.year, dt.month)
+        transaction.on_commit(lambda: update_kpi_for_user_task.delay(user.id, dt.year, dt.month))
 
         return instance
 
