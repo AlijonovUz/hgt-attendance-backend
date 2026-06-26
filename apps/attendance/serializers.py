@@ -297,7 +297,8 @@ class AttendanceCreateSerializer(serializers.ModelSerializer):
 
         user = instance.user
         event = instance.event_type
-        current_time = timezone.localtime(instance.created_at).time()
+        current_dt = timezone.localtime(instance.created_at)
+        current_time = current_dt.time()
 
         st = time(9, 0)
         let = time(14, 0)
@@ -308,43 +309,47 @@ class AttendanceCreateSerializer(serializers.ModelSerializer):
             let = user.schedule.lunch_end_time
             et = user.schedule.work_end_time
 
-        if event == Attendance.EventType.CHECK_IN and current_time > st:
-            Notification.objects.create(
-                user=user,
-                title_uz_latn="Kechikish",
-                title_uz_cyrl="Кечикиш",
-                title_ru="Опоздание",
-                message_uz_latn=f"Siz bugun ishga kechikib keldingiz. (Belgilangan vaqt: {st.strftime('%H:%M')})",
-                message_uz_cyrl=f"Сиз бугун ишга кечикиб келдингиз. (Белгиланган вақт: {st.strftime('%H:%M')})",
-                message_ru=f"Вы сегодня опоздали на работу. (Установленное время: {st.strftime('%H:%M')})",
-                extra_data={"event": "LATE_CHECK_IN"},
-            )
-        elif (
-            event == Attendance.EventType.LUNCH_END
-            and let is not None
-            and current_time > let
-        ):
-            Notification.objects.create(
-                user=user,
-                title_uz_latn="Tushlikdan kechikish",
-                title_uz_cyrl="Тушликдан кечикиш",
-                title_ru="Опоздание с обеда",
-                message_uz_latn=f"Siz tushlikdan kech qaytdingiz. (Belgilangan vaqt: {let.strftime('%H:%M')})",
-                message_uz_cyrl=f"Сиз тушликдан кеч қайтдингиз. (Белгиланган вақт: {let.strftime('%H:%M')})",
-                message_ru=f"Вы опоздали с обеденного перерыва. (Установленное время: {let.strftime('%H:%M')})",
-                extra_data={"event": "LATE_LUNCH_RETURN"},
-            )
-        elif event == Attendance.EventType.CHECK_OUT and current_time < et:
-            Notification.objects.create(
-                user=user,
-                title_uz_latn="Erta ketish",
-                title_uz_cyrl="Эрта кетиш",
-                title_ru="Ранний уход",
-                message_uz_latn=f"Siz ish vaqti tugamasdan oldin ketdingiz. (Belgilangan vaqt: {et.strftime('%H:%M')})",
-                message_uz_cyrl=f"Сиз иш вақти тугамасдан олдин кетдингиз. (Белгиланган вақт: {et.strftime('%H:%M')})",
-                message_ru=f"Вы ушли до окончания рабочего времени. (Установленное время: {et.strftime('%H:%M')})",
-                extra_data={"event": "EARLY_CHECK_OUT"},
-            )
+        from apps.analytics.services.schedule import ScheduleHelper
+
+        day_info = ScheduleHelper.get_day_info(user, current_dt.date())
+        if day_info.get("is_mandatory", True):
+            if event == Attendance.EventType.CHECK_IN and current_time > st:
+                Notification.objects.create(
+                    user=user,
+                    title_uz_latn="Kechikish",
+                    title_uz_cyrl="Кечикиш",
+                    title_ru="Опоздание",
+                    message_uz_latn=f"Siz bugun ishga kechikib keldingiz. (Belgilangan vaqt: {st.strftime('%H:%M')})",
+                    message_uz_cyrl=f"Сиз бугун ишга кечикиб келдингиз. (Белгиланган вақт: {st.strftime('%H:%M')})",
+                    message_ru=f"Вы сегодня опоздали на работу. (Установленное время: {st.strftime('%H:%M')})",
+                    extra_data={"event": "LATE_CHECK_IN"},
+                )
+            elif (
+                event == Attendance.EventType.LUNCH_END
+                and let is not None
+                and current_time > let
+            ):
+                Notification.objects.create(
+                    user=user,
+                    title_uz_latn="Tushlikdan kechikish",
+                    title_uz_cyrl="Тушликдан кечикиш",
+                    title_ru="Опоздание с обеда",
+                    message_uz_latn=f"Siz tushlikdan kech qaytdingiz. (Belgilangan vaqt: {let.strftime('%H:%M')})",
+                    message_uz_cyrl=f"Сиз тушликдан кеч қайтдингиз. (Белгиланган вақт: {let.strftime('%H:%M')})",
+                    message_ru=f"Вы опоздали с обеденного перерыва. (Установленное время: {let.strftime('%H:%M')})",
+                    extra_data={"event": "LATE_LUNCH_RETURN"},
+                )
+            elif event == Attendance.EventType.CHECK_OUT and current_time < et:
+                Notification.objects.create(
+                    user=user,
+                    title_uz_latn="Erta ketish",
+                    title_uz_cyrl="Эрта кетиш",
+                    title_ru="Ранний уход",
+                    message_uz_latn=f"Siz ish vaqti tugamasdan oldin ketdingiz. (Belgilangan vaqt: {et.strftime('%H:%M')})",
+                    message_uz_cyrl=f"Сиз иш вақти тугамасдан олдин кетдингиз. (Белгиланган вақт: {et.strftime('%H:%M')})",
+                    message_ru=f"Вы ушли до окончания рабочего времени. (Установленное время: {et.strftime('%H:%M')})",
+                    extra_data={"event": "EARLY_CHECK_OUT"},
+                )
 
         from apps.analytics.tasks import update_kpi_for_user_task
         from django.db import transaction
