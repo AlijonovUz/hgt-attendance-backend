@@ -30,6 +30,10 @@ from .serializers import (
 
 @extend_schema(tags=["Geozonalar"])
 class GeozoneViewSet(BaseManageViewSet):
+    """
+    Ish joylari (Geozonalar) ni yaratish, tahrirlash va o'chirish uchun mas'ul API.
+    Faqatgina tegishli huquqi bor xodimlar boshqara oladi.
+    """
     queryset = Geozone.objects.select_related("branch").active()
     serializer_class = GeozoneSerializer
     filter_backends = [DjangoFilterBackend, filters.SearchFilter]
@@ -45,6 +49,10 @@ class GeozoneViewSet(BaseManageViewSet):
 
 @extend_schema(tags=["Davomat"])
 class AttendanceViewSet(BaseManageViewSet):
+    """
+    Xodimlarning davomatlarini qayd etish (Kelish/Ketish) va tarixini ko'rish uchun mo'ljallangan API.
+    Shuningdek xodimning shaxsiy statistikasini ham hisoblab qaytaradi.
+    """
     queryset = Attendance.objects.select_related("user").active()
     filter_backends = [
         DjangoFilterBackend,
@@ -63,6 +71,13 @@ class AttendanceViewSet(BaseManageViewSet):
     }
 
     def get_queryset(self):
+        """
+        So'rov yuborgan foydalanuvchining huquqlariga qarab bazadagi yozuvlarni filtrlaydi.
+        Masalan:
+        - Superadmin barchasini ko'radi.
+        - Viloyat yoki tuman filiali rahbari faqat o'ziga tegishlilarini ko'radi.
+        - Oddiy xodim esa faqat o'z davomatini ko'radi.
+        """
         qs = self.queryset
         user = self.request.user
 
@@ -95,6 +110,7 @@ class AttendanceViewSet(BaseManageViewSet):
         return qs.none()
 
     def get_serializer_class(self):
+        """Amalga (yozish yoki o'qish) qarab to'g'ri Serializer ni tanlaydi."""
         if self.action == "create":
             return AttendanceCreateSerializer
         return AttendanceListSerializer
@@ -129,6 +145,12 @@ class AttendanceViewSet(BaseManageViewSet):
     )
     @action(detail=False, methods=["get"], url_path="personal-stats")
     def personal_stats(self, request):
+        """
+        Xodimning joriy yoki tanlangan oydagi shaxsiy statistikasini hisoblaydi:
+        - Jami ishlagan soatlari.
+        - Kechikkan kunlari.
+        - O'rtacha kelish vaqti.
+        """
         user = request.user
 
         start_str = request.query_params.get("start_date")
@@ -168,6 +190,9 @@ class AttendanceViewSet(BaseManageViewSet):
 
 @extend_schema(tags=["Face Logs"])
 class FaceLogViewSet(BaseReadOnlyViewSet):
+    """
+    Yuzni tekshirish tizimidagi urinishlar ro'yxatini (Logs) ko'rsatish API'si.
+    """
     queryset = FaceLog.objects.select_related(
         "user", "user__branch", "user__branch__region", "user__branch__district"
     ).active()
@@ -190,6 +215,10 @@ class FaceLogViewSet(BaseReadOnlyViewSet):
 
 @extend_schema(tags=["GPS Logs"])
 class GpsLogViewSet(BaseReadOnlyViewSet):
+    """
+    Foydalanuvchilar qayerda turib davomat qayd etgani (Geozonaga tushgan yoki yo'q) haqida
+    hisobot qaytarish API'si.
+    """
     queryset = GpsLog.objects.select_related(
         "user",
         "user__branch",
@@ -216,6 +245,10 @@ class GpsLogViewSet(BaseReadOnlyViewSet):
 
 @extend_schema(tags=["Imzo Loglari"])
 class SignatureLogViewSet(BaseReadOnlyViewSet):
+    """
+    Oflayn ishlash rejimida telefon tomonidan yaratilgan vaqt imzolari
+    qanchalik haqiqiy ekanligini kuzatib boruvchi Logs API'si.
+    """
     queryset = SignatureLog.objects.select_related(
         "user", "user__branch", "user__branch__region", "user__branch__district"
     ).active()

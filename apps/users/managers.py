@@ -2,6 +2,10 @@ from django.contrib.auth.models import BaseUserManager
 
 
 class UserManager(BaseUserManager):
+    """
+    User modeli uchun maxsus menejer. Superadminlarni yaratish hamda aktiv, bloklangan yoki 
+    ishdan bo'shatilgan xodimlarni filtrlash uchun foydalaniladi.
+    """
     def create_user(self, full_name, password=None, **extra_fields):
         if not full_name:
             raise ValueError("Xodimning ism-sharifi (full_name) kiritilishi shart")

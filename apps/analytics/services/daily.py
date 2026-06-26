@@ -10,8 +10,18 @@ logger = logging.getLogger(__name__)
 
 
 class DailyKPIService:
+    """
+    Har bir kun uchun individual ravishda xodimning davomat holatini (snapshot) hisoblaydigan xizmat.
+    Xodimning ish grafigi (smene) asosida u bugun qancha ishlashi kerak edi va haqiqatda qancha ishladi, 
+    shularni aniqlab `DailyAttendance` jadvaliga yozadi.
+    """
     @classmethod
     def calculate_daily_snapshot(cls, user, target_date: date):
+        """
+        Berilgan sana uchun xodimning barcha davomat yozuvlarini yig'adi va tahlil qiladi.
+        Agar kun majburiy ish kuni bo'lsa va xodim kelmagan bo'lsa "Absent", 
+        kechikkan bo'lsa "Late", erta ketgan bo'lsa "Left Early" kabi maqomlarni hisoblab saqlaydi.
+        """
         schedule_map = ScheduleHelper.get_period_schedule(
             user.schedule, target_date, target_date
         )

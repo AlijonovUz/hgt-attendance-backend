@@ -11,6 +11,10 @@ from .serializers import AuditLogSerializer
 
 @extend_schema(tags=["Audit jurnallari"])
 class AuditLogViewSet(BaseReadOnlyViewSet):
+    """
+    Tizimda qaysi xodim nima amallarni bajargani (CRUD: yaratish, tahrirlash, o'chirish) tarixini 
+    ko'rsatuvchi Audit loglari API'si. Faqat ruxsati bor xodimlar ko'ra oladi (readonly).
+    """
     queryset = AuditLog.objects.select_related(
         "user", "user__branch", "user__branch__region", "user__branch__district"
     ).all()

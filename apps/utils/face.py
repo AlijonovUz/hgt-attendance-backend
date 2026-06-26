@@ -24,6 +24,10 @@ REQUIRE_ANTISPOOFING = True
 
 @contextmanager
 def _temp_jpeg_files(*labels):
+    """
+    Rasm solishtirish davrida vaqtinchalik JPG fayllar yaratib turadigan va ish tugagach
+    xotirani tozalash uchun ularni o'chirib yuboradigan (context manager) funksiya.
+    """
     request_id = uuid.uuid4().hex
     temp_dir = tempfile.gettempdir()
     paths = [os.path.join(temp_dir, f"{label}_{request_id}.jpg") for label in labels]
@@ -39,6 +43,10 @@ def _temp_jpeg_files(*labels):
 
 
 def _save_as_rgb_jpeg(source, dest_path):
+    """
+    Har qanday formatdagi rasmni (masalan PNG, HEIC) DeepFace o'qiy olishi uchun 
+    standart RGB rangdagi JPEG formatiga o'tkazib saqlaydi.
+    """
     with Image.open(source) as image:
         image.load()
         if image.mode != "RGB":
@@ -47,6 +55,10 @@ def _save_as_rgb_jpeg(source, dest_path):
 
 
 def _check_liveness(image_path):
+    """
+    Rasmda haqiqatdan ham jonli inson yuzi bor yoki yo'qligini, yoki rasm (ekran) 
+    orqali aldamoqchi bo'layotganligini (anti-spoofing) tekshiruvchi himoya funksiyasi.
+    """
     try:
         faces = DeepFace.extract_faces(
             img_path=image_path,
@@ -72,6 +84,10 @@ def _check_liveness(image_path):
 
 
 def verify_face_image(uploaded_file):
+    """
+    Xodim birinchi bor (yoki o'zgartirish maqsadida) tizimga o'z yuz rasmini yuklayotganda
+    rasmning sifatli, faqat bitta odam yuzi borligi hamda jonli inson ekanligini tasdiqlaydi.
+    """
     if not DEEPFACE_AVAILABLE:
         logger.error("DeepFace o'rnatilmagan — profil rasmi rad etildi.")
         return False, "Tekshiruv tizimi tayyor emas. Administratorga murojaat qiling."
@@ -117,6 +133,11 @@ def verify_face_image(uploaded_file):
 
 
 def hash_compare(employee, uploaded_file):
+    """
+    Xodim davomat qilayotganida jo'natgan Face ID rasm (Selfie) ni bazadagi saqlangan 
+    rasmi (Profil rasmi) bilan Cosine Distance usulida solishtirib % aniqlikni o'lchaydi.
+    Hamda jonlilik (Anti-spoofing) tekshiruvidan ham o'tkazadi.
+    """
     if not DEEPFACE_AVAILABLE:
         logger.error("DeepFace o'rnatilmagan — davomat rad etildi.")
         return False, "Tekshiruv tizimi tayyor emas. Administratorga murojaat qiling."

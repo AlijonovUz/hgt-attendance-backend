@@ -5,6 +5,10 @@ from apps.utils.serializers import RegionDistrictBranchMixin
 
 
 class KPIResultSerializer(RegionDistrictBranchMixin, serializers.ModelSerializer):
+    """
+    Oylik KPI natijalarini formatlab frontend (yoki Excel) ga uzatuvchi serializator.
+    Tarkibida xodimning to'liq filiali, bo'limi ma'lumotlarini (Mixin orqali) o'z ichiga oladi.
+    """
     user_info = UserShortInfoSerializer(source="user", read_only=True)
     rating_display = serializers.CharField(
         source="get_rating_category_display", read_only=True
@@ -38,6 +42,9 @@ class KPIResultSerializer(RegionDistrictBranchMixin, serializers.ModelSerializer
 
 
 class DailyAttendanceSerializer(RegionDistrictBranchMixin, serializers.ModelSerializer):
+    """
+    Xodimlarning kunlik davomat xulosalarini (present, late, absent) ro'yxatda qaytaruvchi serializator.
+    """
     user_info = UserShortInfoSerializer(source="user", read_only=True)
 
     class Meta:

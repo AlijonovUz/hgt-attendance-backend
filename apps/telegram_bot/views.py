@@ -15,6 +15,7 @@ logger = logging.getLogger(__name__)
 bot = telebot.TeleBot(settings.TELEGRAM_BOT_TOKEN)
 
 def get_language_keyboard(uuid_str):
+    """Foydalanuvchiga Telegram bot tilini tanlash uchun Inline klaviaturani (keyboard) qaytaradi."""
     markup = InlineKeyboardMarkup()
     markup.add(InlineKeyboardButton("🇺🇿 O'zbekcha (Lotin)", callback_data=f"lang:uz_latn:{uuid_str}"))
     markup.add(InlineKeyboardButton("🇺🇿 Ўзбекча (Кирил)", callback_data=f"lang:uz_cyrl:{uuid_str}"))
@@ -23,6 +24,7 @@ def get_language_keyboard(uuid_str):
 
 
 def get_connect_keyboard(uuid_str, lang="uz_latn"):
+    """Tilni tanlagandan keyin profilni botga ulash tugmasini (Tilga moslab) qaytaruvchi funksiya."""
     if lang == "uz_latn":
         text = "✅ Telegramga ulanish"
     elif lang == "uz_cyrl":
@@ -36,6 +38,7 @@ def get_connect_keyboard(uuid_str, lang="uz_latn"):
 
 
 def get_disconnect_keyboard(uuid_str, lang="uz_latn"):
+    """Profil allaqachon ulangan bo'lsa, uni uzish (disconnect) qilish tugmasini qaytaradi."""
     if lang == "uz_latn":
         text = "❌ Telegramdan uzish"
     elif lang == "uz_cyrl":
@@ -50,6 +53,10 @@ def get_disconnect_keyboard(uuid_str, lang="uz_latn"):
 
 @bot.message_handler(commands=['start'])
 def start_command_handler(message):
+    """
+    Botning /start komandasini qabul qilib, foydalanuvchini identifikatsiya qiladigan asosiy funksiya.
+    Agar u link orqali (Deep link) kirgan bo'lsa ID sini taniydi va til tanlashni taklif qiladi.
+    """
     payload = message.text.split(" ")
     if len(payload) > 1:
         uuid_str = payload[1].strip()
@@ -119,6 +126,10 @@ def start_command_handler(message):
 
 @bot.message_handler(commands=['language'])
 def language_command_handler(message):
+    """
+    Foydalanuvchi ixtiyoriy ravishda /language komandasi orqali bot tilini 
+    o'zgartirishni so'raganda ishga tushadigan funksiya.
+    """
     try:
         user = User.objects.get(telegram_id=message.from_user.id)
         bot.send_message(
@@ -139,6 +150,10 @@ def language_command_handler(message):
 
 @bot.callback_query_handler(func=lambda call: call.data.startswith("connect:"))
 def connect_selection_handler(call):
+    """
+    'Telegramga ulanish' tugmasi bosilganda ishlaydigan Callback.
+    Foydalanuvchining ID sini olib, uni telegram_id bilan bog'laydi (Saqlaydi).
+    """
     _, uuid_str = call.data.split(":")
     try:
         user = User.objects.get(id=uuid_str)
@@ -165,6 +180,10 @@ def connect_selection_handler(call):
 
 @bot.callback_query_handler(func=lambda call: call.data.startswith("disconnect:"))
 def disconnect_selection_handler(call):
+    """
+    Foydalanuvchi botdan uzilish tugmasini bosganda ishlaydi. 
+    Uning telegram_id maydonini tozalab (None), tizimdan uzib qo'yadi.
+    """
     _, uuid_str = call.data.split(":")
     try:
         user = User.objects.get(id=uuid_str)
@@ -193,6 +212,10 @@ def disconnect_selection_handler(call):
 
 @bot.callback_query_handler(func=lambda call: call.data.startswith("lang:"))
 def language_selection_handler(call):
+    """
+    Klaviaturadan tillaridan birortasi (O'zbek, Rus) bosilganda ishlaydigan Callback.
+    Tanlangan tilni bazaga saqlaydi hamda Telegram Menu Buyruqlarini o'sha tilga o'zgartiradi.
+    """
     _, lang, uuid_str = call.data.split(":")
     try:
         user = User.objects.get(id=uuid_str)
