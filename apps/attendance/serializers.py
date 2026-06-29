@@ -7,6 +7,7 @@ from rest_framework import serializers
 
 from apps.utils.face import hash_compare
 from apps.utils.geo import haversine
+from apps.utils.serializers import RegionDistrictBranchMixin
 from apps.users.serializers import UserShortInfoSerializer
 from apps.users.models import User
 from apps.notifications.models import Notification
@@ -44,9 +45,6 @@ class GeozoneShortSerializer(serializers.ModelSerializer):
     class Meta:
         model = Geozone
         fields = ["id", "name", "zone_type", "latitude", "longitude", "radius"]
-
-
-from apps.utils.serializers import RegionDistrictBranchMixin
 
 
 class AttendanceListSerializer(RegionDistrictBranchMixin, serializers.ModelSerializer):
@@ -347,7 +345,8 @@ class AttendanceCreateSerializer(serializers.ModelSerializer):
 
         from apps.analytics.services.schedule import ScheduleHelper
 
-        day_info = ScheduleHelper.get_day_info(user, current_dt.date())
+        schedule_map = ScheduleHelper.get_period_schedule(user.schedule if hasattr(user, 'schedule') else None, current_dt.date(), current_dt.date())
+        day_info = schedule_map.get(current_dt.date(), {})
         if day_info.get("is_mandatory", True):
             if event == Attendance.EventType.CHECK_IN and current_time > st:
                 Notification.objects.create(
