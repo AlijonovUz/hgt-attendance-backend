@@ -18,6 +18,10 @@ app.conf.beat_schedule = {
         'task': 'apps.analytics.tasks.recalculate_all_kpis_daily_task',
         'schedule': crontab(hour=23, minute=55),
     },
+    'check-late-attendances-every-minute': {
+        'task': 'apps.attendance.tasks.check_late_attendances_task',
+        'schedule': crontab(minute='*'),
+    },
 }
 
 app.autodiscover_tasks()
